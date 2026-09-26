@@ -1,0 +1,12 @@
+/* Painel lateral (slide-over) */
+/* ---------- Painel lateral (slide-over) ---------- */
+#side-panel{ position:fixed; inset:0; z-index:70; pointer-events:none; }
+#side-panel .panel-backdrop{ position:absolute; inset:0; background:rgba(15,15,20,.5); opacity:0; transition:opacity .25s; }
+#side-panel .panel-body{ position:absolute; top:0; right:0; height:100%; width:min(420px,92vw); background:var(--bg);
+  box-shadow:-20px 0 60px rgba(0,0,0,.25); transform:translateX(100%); transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  display:flex; flex-direction:column; }
+#side-panel.open{ pointer-events:auto; }
+#side-panel.open .panel-backdrop{ opacity:1; }
+#side-panel.open .panel-body{ transform:translateX(0); }
+.panel-head{ display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.3rem; border-bottom:1px solid var(--border); background:var(--card); }
+.panel-content{ padding:1.3rem; overflow-y:auto; flex:1; }

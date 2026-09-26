@@ -1,0 +1,19 @@
+/* Calendário (Eventos) */
+/* ---------- Calendário ----------
+   Célula quadrada de verdade (aspect-ratio, não padding-a-esmo) — antes a
+   grade de 7 colunas esticava as células e o dia marcado virava uma oval,
+   não um círculo. */
+.cal-day{ aspect-ratio:1; border-radius:999px; color:var(--text); display:flex; align-items:center; justify-content:center; font-size:.85rem; }
+.cal-day-on{ background:var(--wine); color:#fff; font-weight:700; }
+.cal-day-today{ box-shadow:inset 0 0 0 1.5px var(--wine); font-weight:700; }
+
+/* ---------- Calendário — mês completo (Eventos) ---------- */
+.month-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:.5rem; }
+.month-cell{ aspect-ratio:1; border-radius:.7rem; border:1px solid var(--border); padding:.4rem;
+  display:flex; flex-direction:column; gap:.25rem; overflow:hidden; background:var(--card); }
+.month-cell.is-muted{ opacity:.35; }
+.month-cell.has-event{ border-color:var(--wine); background:var(--wine-50); }
+.dark .month-cell.has-event{ background:rgba(142,27,46,.14); }
+.month-cell-num{ font-size:.78rem; font-weight:700; color:var(--text); }
+.month-cell-tag{ font-size:.6rem; font-weight:700; color:var(--wine); background:var(--card); border-radius:.3rem;
+  padding:.05rem .3rem; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

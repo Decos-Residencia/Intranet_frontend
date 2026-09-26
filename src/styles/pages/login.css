@@ -1,0 +1,14 @@
+/* Login */
+/* ---------- Login ---------- */
+.login-wrap{ min-height:100vh; display:flex; flex-direction:column; background:linear-gradient(120deg,#f7eef0,#efd6dc 40%,var(--wine)); }
+.dark .login-wrap{ background:linear-gradient(120deg,#1a0d12,#2a1018 40%,var(--wine-dark)); }
+.login-topbar{ display:flex; align-items:center; justify-content:space-between; padding:1.1rem 2rem; }
+.login-main{ flex:1; display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+.login-card{ display:flex; width:100%; max-width:1180px; background:var(--card); border-radius:1.5rem; overflow:hidden; box-shadow:0 30px 70px rgba(80,10,25,.25); }
+.login-photo{ flex:1; min-height:520px; }
+@media (max-width:820px){ .login-photo{ display:none; } }
+.login-form{ flex:1; padding:3.5rem; display:flex; flex-direction:column; justify-content:center; }
+.login-input{ width:100%; background:var(--card); border:1px solid var(--border); border-radius:.8rem; padding:1rem 1.1rem; font-size:.95rem; color:var(--text); outline:none; }
+.login-input:focus{ border-color:var(--wine); }
+.login-footer{ display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; color:rgba(255,255,255,.85); font-size:.8rem; }
+.pill-restrito{ display:inline-flex; align-items:center; gap:.4rem; background:var(--card); color:var(--wine); font-size:.78rem; font-weight:700; padding:.5rem 1rem; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.06); }

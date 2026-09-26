@@ -1,0 +1,9 @@
+/* FAQ */
+/* ---------- FAQ ---------- */
+.faq-hero{ border-radius:1rem; padding:2rem; background:linear-gradient(100deg,var(--wine-dark),var(--wine)); }
+.faq-search{ display:flex; align-items:center; gap:.6rem; background:var(--card); border-radius:999px; padding:.7rem 1.2rem; max-width:640px; margin:0 auto; }
+.faq-item{ overflow:hidden; }
+.faq-q{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:1rem; text-align:left; padding:1.1rem 1.4rem; }
+.faq-a{ padding:0 1.4rem 1.2rem; }
+.faq-chevron{ transition:.2s; }
+.rotate-180{ transform:rotate(180deg); }

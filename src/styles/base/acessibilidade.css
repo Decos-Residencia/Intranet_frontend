@@ -1,0 +1,8 @@
+/* Transição de tela e foco visível */
+/* transição suave ao trocar de tela */
+.page-fade{ animation:fadeUp .32s ease; }
+@keyframes fadeUp{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+/* acessibilidade: foco visível */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+  outline:2px solid var(--wine); outline-offset:2px; border-radius:.4rem; }
+@media (prefers-reduced-motion:reduce){ .page-fade{ animation:none; } * { scroll-behavior:auto; } }

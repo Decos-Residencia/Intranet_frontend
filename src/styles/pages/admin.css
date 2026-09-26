@@ -1,0 +1,28 @@
+/* Telas administrativas */
+/* ---------- Admin ---------- */
+.stat-danger{ background:var(--crimson) !important; border-color:var(--crimson) !important; }
+.act-btn{ width:32px; height:32px; border-radius:.45rem; display:inline-flex; align-items:center; justify-content:center; color:var(--muted); background:var(--bg); border:1px solid var(--border); }
+.dark .act-btn{ background:#0e1420; }
+.act-btn:hover{ color:var(--wine); }
+.act-btn-danger:hover{ color:var(--crimson); border-color:var(--crimson); }
+.perm-badge{ display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700; padding:.25rem .6rem; border-radius:.45rem; }
+.perm-download{ background:var(--wine-50); color:var(--wine); } .dark .perm-download{ background:rgba(142,27,46,.2); color:#f2a8b4; }
+.perm-view{ background:#e5e7eb; color:#4b5563; } .dark .perm-view{ background:#334155; color:#cbd5e1; }
+.prio-opt{ padding:.65rem; border-radius:.6rem; border:1px solid var(--border); font-weight:700; font-size:.85rem; color:var(--muted); background:var(--card); }
+.prio-active{ border-color:var(--wine); color:var(--wine); background:var(--wine-50); }
+.dark .prio-active{ background:rgba(142,27,46,.16); }
+.prio-danger.prio-active{ border-color:var(--crimson); color:var(--crimson); background:rgba(245,51,77,.1); }
+.editor{ border:1px solid var(--border); border-radius:.7rem; overflow:hidden; }
+.editor-toolbar{ display:flex; align-items:center; gap:.8rem; padding:.55rem .9rem; border-bottom:1px solid var(--border); font-size:.82rem; color:var(--muted); background:var(--bg); }
+.dark .editor-toolbar{ background:#0e1420; }
+.editor-area{ width:100%; padding:.9rem; font-size:.9rem; color:var(--text); background:var(--card); outline:none; border:0; resize:vertical; }
+.dropzone{ border:2px dashed var(--border); border-radius:.8rem; padding:2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; cursor:pointer; transition:.15s; }
+.dropzone:hover{ border-color:var(--wine); }
+.file-uploaded{ display:flex; align-items:center; gap:.8rem; border:1px solid var(--border); border-radius:.7rem; padding:.8rem; }
+.file-uploaded .flex-1{ min-width:0; }
+.file-uploaded .flex-1 > div{ overflow-wrap:anywhere; }
+.perm-opt{ text-align:left; border:1px solid var(--border); border-radius:.8rem; padding:1.1rem; background:var(--card); transition:.15s; }
+.perm-active{ border-color:var(--crimson); box-shadow:0 0 0 1px var(--crimson); }
+.radio{ width:18px; height:18px; border-radius:999px; border:2px solid var(--border); flex-shrink:0; }
+.radio-on{ border-color:var(--crimson); background:var(--crimson); box-shadow:inset 0 0 0 3px var(--card); }
+.restrito-icon{ width:40px; height:40px; border-radius:999px; background:var(--crimson); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }

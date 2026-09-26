@@ -1,0 +1,8 @@
+/* Confete */
+/* ---------- Confete (Parabenizar) ---------- */
+.confetti-piece{ position:absolute; width:7px; height:7px; top:50%; left:50%; pointer-events:none; border-radius:1px;
+  animation:confetti-pop .7s ease-out forwards; }
+@keyframes confetti-pop{
+  0%{ transform:translate(-50%,-50%) scale(0) rotate(0); opacity:1; }
+  100%{ transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity:0; }
+}

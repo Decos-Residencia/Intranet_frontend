@@ -1,0 +1,6 @@
+/* Toast */
+/* ---------- Toast ---------- */
+.toast{ position:fixed; bottom:24px; left:50%; transform:translate(-50%,120%); z-index:60;
+  display:flex; align-items:center; gap:.5rem; background:var(--wine); color:#fff; font-weight:600; font-size:.9rem;
+  padding:.8rem 1.3rem; border-radius:999px; box-shadow:0 12px 30px rgba(80,10,25,.35); transition:transform .3s cubic-bezier(.2,.9,.3,1.2); }
+.toast-show{ transform:translate(-50%,0); }

@@ -1,0 +1,11 @@
+/* Modal de confirmação */
+/* ---------- Modal de confirmação ---------- */
+#modal{ position:fixed; inset:0; z-index:80; pointer-events:none; display:flex; align-items:center; justify-content:center; padding:1rem; }
+#modal .modal-backdrop{ position:absolute; inset:0; background:rgba(15,15,20,.55); opacity:0; transition:opacity .2s; }
+#modal .modal-card{ position:relative; background:var(--card); border-radius:1rem; padding:2rem; width:min(420px,94vw);
+  box-shadow:0 30px 70px rgba(0,0,0,.3); transform:scale(.94); opacity:0; transition:transform .2s, opacity .2s; text-align:center; }
+#modal.open{ pointer-events:auto; }
+#modal.open .modal-backdrop{ opacity:1; }
+#modal.open .modal-card{ transform:scale(1); opacity:1; }
+.modal-icon{ width:52px; height:52px; border-radius:999px; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; }
+.dark .modal-icon{ background:rgba(220,38,38,.2); }

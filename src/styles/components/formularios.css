@@ -1,0 +1,16 @@
+/* Formulários */
+/* ---------- Formulários ---------- */
+.field-label{ display:block; font-size:.7rem; font-weight:700; letter-spacing:.03em; color:var(--muted); margin-bottom:.35rem; }
+.field-input{ width:100%; background:var(--bg); border:1px solid var(--border); border-radius:.6rem; padding:.7rem .9rem; font-size:.9rem; color:var(--text); outline:none; transition:.15s; }
+.dark .field-input{ background:#0e1420; }
+.field-input:focus{ border-color:var(--wine); }
+.field-hint{ font-size:.72rem; color:var(--muted); margin-top:.3rem; }
+
+/* ---------- Selects / empty state / botão perigo ---------- */
+.select-field{ background:var(--card); border:1px solid var(--border); border-radius:.6rem; padding:.5rem .8rem;
+  font-size:.8rem; font-weight:700; color:var(--text); outline:none; cursor:pointer; }
+.select-field:focus{ border-color:var(--wine); }
+.dark .select-field{ background:#0e1420; }
+.btn-danger{ background:#dc2626; color:#fff; font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; transition:.15s; }
+.btn-danger:hover{ background:#b91c1c; }
+.empty-state{ text-align:center; padding:3rem 1rem; }

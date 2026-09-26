@@ -1,0 +1,13 @@
+/* Itens de notificação */
+/* ---------- Notificações ---------- */
+.notif-item{ display:flex; gap:1rem; padding:1.1rem 1.4rem; }
+.notif-unread{ background:var(--wine-50); }
+.dark .notif-unread{ background:rgba(142,27,46,.1); }
+.notif-urgent{ box-shadow:inset 4px 0 0 #dc2626; }
+.notif-urgent.notif-unread{ background:#fef2f2; }
+.dark .notif-urgent.notif-unread{ background:rgba(220,38,38,.12); }
+.notif-urgent .notif-icon{ background:#dc2626; border-color:#dc2626; color:#fff; }
+.bell-urgent{ animation:bell-pulse 1.6s ease-out infinite; }
+@keyframes bell-pulse{ 0%{ box-shadow:0 0 0 0 rgba(220,38,38,.6); } 70%,100%{ box-shadow:0 0 0 7px rgba(220,38,38,0); } }
+@media (prefers-reduced-motion: reduce){ .bell-urgent{ animation:none; } }
+.notif-icon{ width:40px; height:40px; border-radius:.6rem; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--wine); flex-shrink:0; }

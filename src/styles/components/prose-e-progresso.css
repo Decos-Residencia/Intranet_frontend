@@ -1,0 +1,7 @@
+/* Texto longo e barra de progresso */
+/* ---------- Prose ---------- */
+.prose-decos p{ color:var(--muted); line-height:1.75; font-size:.95rem; }
+
+/* ---------- Progress ---------- */
+.progress{ height:8px; background:var(--border); border-radius:999px; overflow:hidden; }
+.progress-bar{ height:100%; background:var(--wine); border-radius:999px; }

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intranet Corporativa · Hospital Decós</title>
+  <meta name="description" content="Intranet corporativa do Hospital Decós — avisos, eventos, documentos, POPs, ramais e painel administrativo.">
+
+  <!-- Tailwind CSS (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            wine: { DEFAULT:'#8E1B2E', 50:'#FCE9ED', 100:'#F7D6DD', 600:'#8E1B2E', 700:'#6E0F22', 800:'#5A0C1C' },
+            crimson: { DEFAULT:'#F5334D', 500:'#F5334D' },
+          },
+          fontFamily: { sans:['Public Sans','system-ui','sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <!-- Fonte: Public Sans — desenhada para clareza institucional (USWDS), escolha
+       deliberada para um sistema corporativo hospitalar: mais confiança e menos
+       "padrão SaaS" que a Inter genérica. Peso 500 cobre o texto médio (em vez de
+       recorrer sempre a 700), 800 fica reservado para os poucos momentos de destaque. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <!-- Estilos: base → layout → componentes → telas -->
+  <link rel="stylesheet" href="src/styles/base/tokens-e-temas.css">
+  <link rel="stylesheet" href="src/styles/base/tipografia.css">
+  <link rel="stylesheet" href="src/styles/base/acessibilidade.css">
+  <link rel="stylesheet" href="src/styles/layout/layout.css">
+  <link rel="stylesheet" href="src/styles/layout/sidebar.css">
+  <link rel="stylesheet" href="src/styles/layout/topbar.css">
+  <link rel="stylesheet" href="src/styles/layout/quick-fab.css">
+  <link rel="stylesheet" href="src/styles/components/avatar.css">
+  <link rel="stylesheet" href="src/styles/components/card.css">
+  <link rel="stylesheet" href="src/styles/components/badges-e-pills.css">
+  <link rel="stylesheet" href="src/styles/components/botoes.css">
+  <link rel="stylesheet" href="src/styles/components/chips-e-paginacao.css">
+  <link rel="stylesheet" href="src/styles/components/hero.css">
+  <link rel="stylesheet" href="src/styles/components/data-chip.css">
+  <link rel="stylesheet" href="src/styles/components/prose-e-progresso.css">
+  <link rel="stylesheet" href="src/styles/components/fotos.css">
+  <link rel="stylesheet" href="src/styles/components/formularios.css">
+  <link rel="stylesheet" href="src/styles/components/notificacoes.css">
+  <link rel="stylesheet" href="src/styles/components/painel.css">
+  <link rel="stylesheet" href="src/styles/components/modal.css">
+  <link rel="stylesheet" href="src/styles/components/toast.css">
+  <link rel="stylesheet" href="src/styles/components/confete.css">
+  <link rel="stylesheet" href="src/styles/pages/dashboard.css">
+  <link rel="stylesheet" href="src/styles/pages/avisos.css">
+  <link rel="stylesheet" href="src/styles/pages/eventos.css">
+  <link rel="stylesheet" href="src/styles/pages/documentos.css">
+  <link rel="stylesheet" href="src/styles/pages/faq.css">
+  <link rel="stylesheet" href="src/styles/pages/login.css">
+  <link rel="stylesheet" href="src/styles/pages/admin.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Ordem importa: cada camada só usa o que veio antes dela -->
+  <!-- 1. base: namespaces, dados (mock) e estado -->
+  <script src="src/app/namespaces.js"></script>
+  <script src="src/data/mock.js"></script>
+  <script src="src/app/store.js"></script>
+
+  <!-- 2. shared: peças de interface, layout e utilidades -->
+  <script src="src/shared/ui/icones.js"></script>
+  <script src="src/shared/ui/helpers.js"></script>
+  <script src="src/shared/ui/documento.js"></script>
+  <script src="src/shared/ui/parabens-botao.js"></script>
+  <script src="src/shared/ui/notificacao-item.js"></script>
+  <script src="src/shared/ui/acesso-rapido.js"></script>
+  <script src="src/shared/ui/toast.js"></script>
+  <script src="src/shared/ui/painel.js"></script>
+  <script src="src/shared/ui/modal.js"></script>
+  <script src="src/shared/ui/confete.js"></script>
+  <script src="src/shared/layout/logo.js"></script>
+  <script src="src/shared/layout/menu.js"></script>
+  <script src="src/shared/layout/sidebar.js"></script>
+  <script src="src/shared/layout/topbar.js"></script>
+  <script src="src/shared/layout/quick-fab.js"></script>
+  <script src="src/shared/lib/listas.js"></script>
+  <script src="src/shared/lib/carrosseis.js"></script>
+  <script src="src/shared/lib/arquivos.js"></script>
+
+  <!-- 3. features: ações do usuário (painéis, busca, downloads, tema) -->
+  <script src="src/features/aparencia.js"></script>
+  <script src="src/features/trocar-papel.js"></script>
+  <script src="src/features/notificacoes-painel.js"></script>
+  <script src="src/features/busca.js"></script>
+  <script src="src/features/formularios-painel.js"></script>
+  <script src="src/features/downloads.js"></script>
+
+  <!-- 4. pages: uma tela por arquivo -->
+  <script src="src/pages/login/login.js"></script>
+  <script src="src/pages/dashboard/dashboard.js"></script>
+  <script src="src/pages/avisos/mural.js"></script>
+  <script src="src/pages/avisos/detalhe.js"></script>
+  <script src="src/pages/aniversariantes/mes.js"></script>
+  <script src="src/pages/aniversariantes/dia.js"></script>
+  <script src="src/pages/eventos/lista.js"></script>
+  <script src="src/pages/eventos/detalhe.js"></script>
+  <script src="src/pages/documentos/central.js"></script>
+  <script src="src/pages/documentos/visualizar.js"></script>
+  <script src="src/pages/faq/faq.js"></script>
+  <script src="src/pages/diretorio/diretorio.js"></script>
+  <script src="src/pages/perfil/perfil.js"></script>
+  <script src="src/pages/notificacoes/notificacoes.js"></script>
+  <script src="src/pages/admin/_comum.js"></script>
+  <script src="src/pages/admin/noticias/lista.js"></script>
+  <script src="src/pages/admin/noticias/formulario.js"></script>
+  <script src="src/pages/admin/documentos/lista.js"></script>
+  <script src="src/pages/admin/documentos/formulario.js"></script>
+  <script src="src/pages/admin/documentos/restrito.js"></script>
+  <script src="src/pages/admin/usuarios/usuarios.js"></script>
+  <script src="src/pages/admin/auditoria/auditoria.js"></script>
+
+  <!-- 5. app: rotas, roteador, ações globais e boot (sempre por último) -->
+  <script src="src/app/routes.js"></script>
+  <script src="src/app/router.js"></script>
+  <script src="src/app/actions.js"></script>
+  <script src="src/app/main.js"></script>
+</body>
+</html>

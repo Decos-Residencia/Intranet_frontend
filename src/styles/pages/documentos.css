@@ -1,0 +1,20 @@
+/* Documentos e visualizador (zoom, cópia bloqueada, impressão) */
+/* ---------- Documentos ---------- */
+.doc-icon{ width:48px; height:44px; border-radius:.5rem; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.7rem; flex-shrink:0; }
+.pdf-page{ background:#fff; color:#1e2433; margin:1.25rem; padding:2rem; border-radius:.5rem; box-shadow:0 1px 3px rgba(0,0,0,.08); min-height:420px; }
+.dark .pdf-page{ box-shadow:0 1px 3px rgba(0,0,0,.4); }
+.zoom-btn{ width:30px; height:30px; border-radius:.5rem; border:1px solid var(--border); font-weight:700; color:var(--muted); background:var(--card); }
+
+/* ---------- Visualizador de documento: zoom, cópia bloqueada, impressão ---------- */
+.pdf-scroll{ overflow:auto; }
+.doc-viewer .pdf-page{ zoom:var(--zoom,1); }
+.no-copy{ user-select:none; -webkit-user-select:none; }
+.dropzone-over{ border-color:var(--wine); background:var(--wine-50); }
+a.cal-day{ cursor:pointer; }
+a.month-cell-tag:hover{ text-decoration:underline; }
+@media print{
+  body *{ visibility:hidden !important; }
+  .doc-viewer .pdf-page, .doc-viewer .pdf-page *{ visibility:visible !important; }
+  .doc-viewer .pdf-page{ position:absolute; left:0; top:0; width:100%; zoom:1; box-shadow:none; margin:0; }
+  .quick-fab, .toast{ display:none !important; }
+}

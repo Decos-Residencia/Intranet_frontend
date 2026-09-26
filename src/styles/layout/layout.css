@@ -1,0 +1,24 @@
+/* Estrutura geral: sidebar + área principal */
+/* ---------- Layout ---------- */
+.layout{ display:flex; align-items:stretch; min-height:100vh; }
+/* Sem altura fixa: o flex "stretch" (padrão) estica a sidebar até a altura
+   real da coluna de conteúdo — em páginas mais altas que a tela, o fundo dela
+   acompanha até o final em vez de parar em 100vh e deixar vão embaixo.
+   position:sticky ainda prende a navegação no topo durante a rolagem. */
+.sidebar{ width:264px; flex-shrink:0; background:var(--sidebar); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; position:sticky; top:0; align-self:stretch; min-height:100vh; }
+.main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.topbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:.5rem;
+  padding:.9rem 1.5rem; background:var(--card); border-bottom:1px solid var(--border); }
+.content{ padding:1.75rem; flex:1; }
+.drawer-backdrop{ display:none; }
+.sidebar-handle{ display:none; } /* só aparece em telas largas, ver @media (min-width:861px) abaixo */
+@media (max-width:860px){
+  .content{ padding:1rem; }
+  .sidebar{ position:fixed; top:0; left:0; z-index:50; transform:translateX(-100%);
+    transition:transform .28s cubic-bezier(.2,.8,.2,1); box-shadow:0 20px 60px rgba(0,0,0,.25); }
+  .sidebar-open{ transform:translateX(0); }
+  .drawer-backdrop{ display:block; position:fixed; inset:0; z-index:40; background:rgba(15,15,20,.5);
+    opacity:0; pointer-events:none; transition:opacity .25s; }
+  .drawer-backdrop.show{ opacity:1; pointer-events:auto; }
+}

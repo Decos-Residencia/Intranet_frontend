@@ -1,0 +1,12 @@
+/* Tipografia */
+/* ---------- Tipografia ---------------------------------------------------
+   Sistema deliberado, não os tamanhos default do Tailwind sem critério:
+   - Escala modular ~1.2 (terça menor) para os poucos lugares com tipo de
+     destaque (saudação do dashboard, "Olá, colaborador" do login).
+   - Números tabulares em contextos de dado (ramais, contadores, paginação,
+     datas) para alinhamento real — não é decoração, é legibilidade de tabela.
+   - "font-bold" (700) no corpo do produto passa a herdar o desenho mais
+     contido da Public Sans em vez do 700 mais "gritado" da Inter; extrabold
+     (800) fica reservado para os 2-3 momentos de saudação/hero. */
+.text-hero{ font-size:clamp(1.75rem,1.4rem + 1.4vw,2.75rem); line-height:1.08; letter-spacing:-0.01em; }
+.date-chip, .date-chip-lg, .birthday-pill, .pg, .ramal-btn, .content table td{ font-variant-numeric:tabular-nums; }

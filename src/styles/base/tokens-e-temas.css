@@ -1,0 +1,74 @@
+/* Variáveis de cor e os 3 temas (Claro / Escuro / Vinho) + transição entre temas */
+:root{
+  --wine:#8E1B2E; --wine-dark:#6E0F22; --wine-50:#FCE9ED; --wine-100:#F7D6DD;
+  --crimson:#F5334D;
+  --bg:#f1f2f4; --card:#ffffff; --sidebar:#ffffff; --border:#edeff2;
+  --text:#1e2433; --muted:#6b7280;
+}
+.dark{
+  --bg:#120c0f; --card:#1c1216; --sidebar:#150e11; --border:#2c1c22;
+  --text:#e5e7eb; --muted:#ab98a0;
+}
+/* Tema Vinho — ~50/50: superfícies claras (fundo blush, cartões brancos),
+   com o vinho carregado nos elementos de identidade (sidebar sólida, botões,
+   banners, estados ativos) em vez de pintar a interface inteira de escuro.
+   Por isso NÃO herda a classe .dark — usa a base clara do Tailwind, só com
+   neutros mais quentes (rosados) no lugar dos cinzas neutros do tema Claro. */
+.theme-red{
+  --bg:#fbeef0; --card:#ffffff; --sidebar:#5c1220; --border:#f3d7db;
+  --text:#2a0a10; --muted:#8c5f66;
+}
+/* A sidebar do tema Vinho é o "metade vermelha" sólida — dentro dela as
+   variáveis viram claras (texto branco, chips translúcidos) só naquele
+   trecho, sem afetar o resto da página, que segue clara/branca por fora. */
+.theme-red .sidebar{
+  --text:#ffffff; --muted:rgba(255,255,255,.78); --border:rgba(255,255,255,.16); --card:rgba(255,255,255,.08);
+}
+/* Itens do menu (não-ativos) em branco quase pleno — um rosa da mesma família
+   do fundo vinho tem contraste "no papel" mas lê mal na prática; branco não
+   deixa dúvida. */
+.theme-red .sidebar .nav-link{ color:rgba(255,255,255,.85); }
+/* O item ATIVO tem pílula rosa clara — precisa de texto vinho, não branco
+   (branco em cima de rosa claro quase some). Especificidade maior que a
+   regra acima pra garantir que vence nesse caso específico. */
+.theme-red .sidebar .nav-link.nav-link-active{ color:var(--wine); }
+/* Logo vinho sobre fundo vinho = invisível — mesmo problema do texto do
+   menu. Sem um arquivo branco à parte, "brightness(0) invert(1)" vira
+   qualquer pixel colorido em branco puro, preservando a transparência do
+   PNG. Mesma correção no tema Escuro, pelo mesmo motivo (fundo escuro). */
+.theme-red .sidebar .logo-img, .dark .sidebar .logo-img{ filter:brightness(0) invert(1); }
+.theme-red .sidebar .nav-link:hover{ background:rgba(255,255,255,.08); color:#fff; }
+.theme-red .sidebar .nav-count{ background:rgba(255,255,255,.18); color:#fff; }
+.theme-red .sidebar-handle{ background:var(--card); }
+.theme-red .sidebar .nav-sublink{ color:rgba(255,255,255,.7); }
+.theme-red .sidebar .nav-sublink:hover{ background:rgba(255,255,255,.08); color:#fff; }
+.theme-red .sidebar .nav-sublink.nav-sublink-active{ color:var(--wine); }
+/* Texto da sidebar via variável (não classe Tailwind fixa) — assim os 3 temas
+   (inclusive o Vinho, que só sobrescreve --text/--muted DENTRO da sidebar)
+   resolvem a cor certa sem precisar de condicional por tema no JS. */
+.sb-text{ color:var(--text); }
+.sb-muted{ color:var(--muted); }
+.sb-border-t{ border-top:1px solid var(--border); }
+*{ -webkit-font-smoothing:antialiased; }
+
+/* ---------- Transição suave entre temas (Claro / Escuro / Vinho) ----------
+   A troca de tema agora só alterna classes no <html> em vez de reconstruir a
+   página (ver applyThemeLive em app.js) — é o que permite essas cores
+   fazerem um crossfade de verdade em vez de trocar num corte seco. Cobre
+   qualquer elemento que use as variáveis de tema (fundo, texto, borda,
+   sombra), tanto na tela de login quanto na aplicação inteira. */
+*, *::before, *::after{
+  transition: background-color .38s ease, color .32s ease, border-color .38s ease,
+              box-shadow .38s ease, fill .32s ease;
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ transition:none !important; }
+}
+/* O botão de aparência ganha um "pulso" ao trocar — feedback de que a ação
+   foi registrada, sincronizado com o crossfade de cor ao redor dele. */
+.theme-pop{ animation:theme-pop .26s ease; }
+@keyframes theme-pop{ 0%{ transform:scale(1); } 40%{ transform:scale(.82); } 100%{ transform:scale(1); } }
+
+body{ background:var(--bg); color:var(--text); font-family:'Public Sans',system-ui,sans-serif; }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-thumb{ background:rgba(120,120,130,.28); border-radius:8px; border:2px solid transparent; background-clip:content-box; }

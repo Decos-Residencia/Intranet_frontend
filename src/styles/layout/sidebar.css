@@ -1,0 +1,89 @@
+/* Sidebar (colapsável, submenus, selo de papel) */
+/* ---------- Sidebar colapsável (desktop) ----------
+   O hambúrguer no topo agora funciona nas duas larguras: no mobile abre/fecha
+   a gaveta (comportamento já existente); no desktop recolhe a barra lateral
+   para uma trilha só de ícones — dá mais espaço de leitura em telas de tabela
+   densas (Diretório, Gerenciar Documentos) sem perder a navegação de vista. */
+@media (min-width:861px){
+  .sidebar{ transition:width .22s cubic-bezier(.2,.8,.2,1); position:relative; }
+  /* Fixo no meio vertical da tela, sobre a borda da barra (largura - 13px):
+     a barra estica com a página, então "meio da barra" sumiria ao rolar. */
+  .sidebar-handle{ display:flex; position:fixed; top:50%; left:251px; transform:translateY(-50%); width:26px; height:26px;
+    border-radius:999px; background:var(--card); border:1px solid var(--border); color:var(--muted);
+    align-items:center; justify-content:center; z-index:30; cursor:pointer;
+    transition:left .22s cubic-bezier(.2,.8,.2,1), color .2s, border-color .2s, transform .2s; }
+  .sidebar-collapsed .sidebar-handle{ left:63px; }
+  .sidebar-handle:hover{ color:var(--wine); border-color:var(--wine); transform:translateY(-50%) scale(1.08); }
+  .sidebar-handle svg{ transition:transform .22s; }
+  .sidebar-collapsed .sidebar-handle svg{ transform:rotate(180deg); }
+  .sidebar-collapsed{ width:76px; }
+  .sidebar-collapsed .sb-label{ display:none; }
+  .sidebar-collapsed .px-5{ padding-left:1rem; padding-right:1rem; }
+  .sidebar-collapsed .user-chip{ justify-content:center; padding:.5rem; }
+  .sidebar-collapsed .role-badge{ justify-content:center; padding:.5rem; }
+  .sidebar-collapsed .nav-link{ justify-content:center; padding:.65rem; }
+  .sidebar-collapsed .nav-count{ position:absolute; top:2px; right:2px; transform:scale(.85); }
+  .sidebar-collapsed .nav-link{ position:relative; }
+  .sidebar-collapsed a[href="#/perfil"]{ justify-content:center; }
+  .sidebar-collapsed [data-action="logout"]{ justify-content:center; }
+  .sidebar-collapsed .px-4{ padding-left:1rem; padding-right:1rem; }
+  .sidebar-collapsed .nav-group-toggle{ justify-content:center; padding:.65rem; }
+  .sidebar-collapsed .nav-submenu{ display:none; }
+  /* Minimizado: só o símbolo, sem o nome "Decós Hospital" */
+  .sidebar-collapsed .logo-full{ display:none; }
+  .sidebar-collapsed .logo-mark{ display:block; }
+}
+
+
+/* ---------- Sidebar ---------- */
+.logo-mark{ display:none; }
+.text-wine{ color:var(--wine); } .bg-wine{ background:var(--wine); }
+.text-crimson{ color:var(--crimson); }
+.nav-link{ display:flex; align-items:center; gap:.75rem; padding:.6rem .85rem; border-radius:.7rem;
+  font-size:.9rem; font-weight:700; line-height:1.3; letter-spacing:-.005em; color:var(--muted); transition:.15s; }
+.nav-link:hover{ background:rgba(142,27,46,.06); color:var(--wine); }
+.nav-link-active{ background:var(--wine-50); color:var(--wine); font-weight:800; }
+.dark .nav-link-active{ background:rgba(142,27,46,.18); color:#f7b8c2; }
+.nav-count{ font-size:.7rem; font-weight:700; background:#e2e8f0; color:#475569; border-radius:999px; padding:0 .45rem; }
+.dark .nav-count{ background:#334155; color:#cbd5e1; }
+
+/* ---------- Submenus da sidebar (grupos expansíveis) ----------
+   Peso mais leve (500) nos filhos marca a subordinação ao grupo mesmo antes
+   de olhar o recuo; o item ativo ganha peso 700 + pílula colorida, igual ao
+   tratamento do nível principal, então "selecionado" sempre lê do mesmo jeito
+   em qualquer profundidade do menu. */
+.nav-group-toggle{ width:100%; background:transparent; border:0; font-family:inherit; text-align:left; cursor:pointer; }
+.nav-caret{ transition:transform .2s; flex-shrink:0; }
+.nav-group-open .nav-caret{ transform:rotate(180deg); }
+.nav-submenu{ overflow:hidden; max-height:0; transition:max-height .25s ease; }
+.nav-group-open .nav-submenu{ max-height:16rem; }
+.nav-submenu-inner{ padding:.2rem .1rem .3rem 2.15rem; display:flex; flex-direction:column; gap:.15rem; }
+.nav-sublink{ display:flex; align-items:center; gap:.6rem; padding:.45rem .7rem; border-radius:.6rem;
+  font-size:.83rem; font-weight:600; line-height:1.3; color:var(--muted); transition:.15s; }
+.nav-sublink:hover{ background:rgba(142,27,46,.06); color:var(--wine); }
+.nav-sublink-active{ background:var(--wine-50); color:var(--wine); font-weight:800; }
+.dark .nav-sublink-active{ background:rgba(142,27,46,.18); color:#f7b8c2; }
+.nav-sub-dot{ width:5px; height:5px; border-radius:999px; background:currentColor; opacity:.55; flex-shrink:0; }
+.user-chip{ display:flex; align-items:center; gap:.6rem; padding:.6rem; border:1px solid var(--border); border-radius:.8rem; }
+
+/* ---------- Papéis / mais vermelho ---------- */
+/* (a .sidebar já é position:sticky/fixed — não sobrescrever aqui, senão quebra o mobile) */
+.sidebar-accent{ position:absolute; top:0; left:0; width:4px; height:100%; background:linear-gradient(var(--wine),var(--wine-dark)); }
+/* Contornado, não preenchido — é o segundo bloco vinho maciço da sidebar
+   (o primeiro é o avatar logo acima). Par com .user-chip: os dois viram
+   cartões claros com um respiro de branco entre eles, e o vinho volta a ser
+   sinal de "isto é clicável/importante" em vez de parede de cor repetida. */
+.role-badge{ display:flex; align-items:center; gap:.4rem; width:100%; font-size:10px; font-weight:800; letter-spacing:.05em;
+  color:var(--wine); background:var(--wine-50); border:1px solid var(--wine-100); padding:.4rem .7rem; border-radius:.55rem; transition:.15s; }
+.role-badge:hover{ background:var(--wine-100); }
+.dark .role-badge{ background:rgba(142,27,46,.14); border-color:rgba(142,27,46,.35); color:#f2a8b4; }
+.role-opt{ display:flex; align-items:center; gap:.8rem; width:100%; text-align:left; border:1px solid var(--border);
+  border-radius:.7rem; padding:.8rem; background:var(--card); transition:.15s; }
+.role-opt:hover{ border-color:var(--wine); }
+.role-opt-on{ border-color:var(--wine); background:var(--wine-50); }
+.dark .role-opt-on{ background:rgba(142,27,46,.16); }
+.role-ic{ width:38px; height:38px; border-radius:.6rem; background:var(--wine-50); color:var(--wine); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.dark .role-ic{ background:rgba(142,27,46,.2); color:#f2a8b4; }
+.theme-swatch{ width:38px; height:38px; border-radius:.6rem; flex-shrink:0; border:1px solid rgba(0,0,0,.08);
+  display:flex; align-items:flex-end; justify-content:flex-start; gap:3px; padding:5px; }
+.theme-swatch span{ display:block; border-radius:999px; width:9px; height:9px; box-shadow:0 0 0 1px rgba(0,0,0,.08); }
