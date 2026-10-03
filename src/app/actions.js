@@ -3,10 +3,10 @@
    Todo botão/link com data-action="..." é tratado aqui.
    ========================================================================= */
 (function () {
-  const { state, ROLE_ORDER, THEMES } = App;
+  const { state, THEMES } = App;
 
   function wireGlobal() {
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", async (e) => {
       if (!e.target.closest("#quick-fab")) App.toggleFab(false);
       const el = e.target.closest("[data-action]");
       if (!el) return;
@@ -29,28 +29,59 @@
           if (handle) handle.title = state.sidebarCollapsed ? "Expandir menu" : "Minimizar menu";
         }
       }
-      else if (a === "cycle-role") { const i = ROLE_ORDER.indexOf(state.role); state.role = ROLE_ORDER[(i + 1) % ROLE_ORDER.length]; App.save();
-        App.toast("Papel: " + App.roleInfo().label); App.render(); }
-      else if (a === "set-role") { state.role = el.dataset.role; App.save(); App.closePanel(); App.toast("Papel: " + App.roleInfo().label); App.render(); }
       else if (a === "set-aniversario") { state.aniversarianteHoje = el.dataset.val === "true"; App.save(); App.closePanel();
         App.toast(state.aniversarianteHoje ? "🎉 Cenário: hoje é seu aniversário" : "Cenário: dia normal"); App.render(); }
-      else if (a === "open-roles") { e.preventDefault(); App.openRolePanel(); }
+      else if (a === "open-roles") { e.preventDefault(); App.openScenarioPanel(); }
       else if (a === "open-notif") { e.preventDefault(); App.openNotifPanel(); }
       else if (a === "close-panel") { App.closePanel();
         App.marcarLida(el.dataset.nid); }
       else if (a === "toggle-fab") { App.onFabClick(); }
       else if (a === "close-fab") { App.toggleFab(false); }
-      else if (a === "logout") { state.auth = false; App.save(); App.go("#/login"); }
-      else if (a === "save-noticia") { e.preventDefault(); PagesAdmin.submitNoticia(el.dataset.status); }
-      else if (a === "save-documento") { e.preventDefault(); PagesAdmin.submitDocumento(el.dataset.status); }
+      else if (a === "logout") { App.logout(); }
+      else if (a === "retry-session") { e.preventDefault(); App.render(); App.restoreSession(); }
+      else if (a === "save-noticia") { e.preventDefault();
+        try { await PagesAdmin.submitNoticia(el.dataset.status); }
+        catch (err) { App.toast(err.message || "Não foi possível salvar a notícia."); } }
+      else if (a === "save-documento") { e.preventDefault();
+        try { await PagesAdmin.submitDocumento(el.dataset.status); }
+        catch (err) { App.toast(err.message || "Não foi possível salvar o documento."); } }
       else if (a === "delete-row") { e.preventDefault();
         const row = el.closest("tr"), alvo = el.dataset.alvo, tipo = el.dataset.tipo, { coll, id } = el.dataset;
-        App.openConfirm("Excluir item?", `Tem certeza que deseja excluir <b>${UI.esc(alvo || "este item")}</b>?<br>Esta ação será registrada na auditoria.`, () => {
-          App.logAudit("excluiu", alvo || "item", tipo || "item");
-          if (coll && id) App.removeItem(coll, id);
-          if (row) { row.style.transition = ".25s"; row.style.opacity = "0"; row.style.transform = "translateX(20px)"; setTimeout(() => App.render(), 250); }
-          App.toast("Item removido");
+        App.openConfirm("Excluir item?", `Tem certeza que deseja excluir <b>${UI.esc(alvo || "este item")}</b>?<br>Esta ação será registrada na auditoria.`, async () => {
+          try {
+            await App.deleteRemoteItem(coll, id);
+            App.logAudit("excluiu", alvo || "item", tipo || "item");
+            if (row) { row.style.transition = ".25s"; row.style.opacity = "0"; row.style.transform = "translateX(20px)"; }
+            await App.loadApiData();
+            setTimeout(() => App.render(), row ? 250 : 0);
+            App.toast("Item removido");
+          } catch (err) {
+            App.toast(err.message || "Não foi possível remover o item.");
+          }
         }); }
+      else if (a === "deactivate-usuario") { e.preventDefault();
+        const { id, nome } = el.dataset;
+        App.openConfirm("Desativar usuário?", `<b>${UI.esc(nome || "Este usuário")}</b> não conseguirá mais entrar na intranet. O cadastro não é apagado.`, async () => {
+          try {
+            await Services.usuarios.remove(id);
+            App.logAudit("desativou", `Usuário: ${nome}`, "usuario");
+            await App.loadApiData(); App.render();
+            App.toast("Usuário desativado");
+          } catch (err) { App.toast(err.message || "Não foi possível desativar o usuário."); }
+        }, "Sim, desativar"); }
+      else if (a === "delete-setor") { e.preventDefault();
+        const { id, nome } = el.dataset;
+        App.openConfirm("Excluir setor?", `Tem certeza que deseja excluir o setor <b>${UI.esc(nome)}</b>?<br>Setores com usuários vinculados não podem ser excluídos.`, async () => {
+          try {
+            await Services.setores.remove(id);
+            App.logAudit("excluiu", `Setor: ${nome}`, "setor");
+            await App.loadApiData(); App.render();
+            App.toast("Setor excluído");
+          } catch (err) { App.toast(err.message || "Não foi possível excluir o setor."); }
+        }); }
+      else if (a === "open-setor") { e.preventDefault(); App.openSetorPanel(el.dataset.id); }
+      else if (a === "open-faq-nova") { e.preventDefault(); App.openFaqPanel(); }
+      else if (a === "open-doc-url") { e.preventDefault(); App.abrirDocumento(el.dataset.id); }
       else if (a === "open-chamado") { e.preventDefault(); App.toggleFab(false); App.openChamadoPanel(el.dataset.tipo || "geral"); }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
       else if (a === "open-pedido") { e.preventDefault(); App.openPedidoPanel(); }
@@ -62,11 +93,6 @@
         App.toast(on ? "Inscrição cancelada" : `Inscrição confirmada: ${ev?.titulo || "evento"}`); App.render(); }
       else if (a === "add-agenda") { e.preventDefault(); App.baixarIcs(DB.eventos.find((x) => x.id === +el.dataset.id)); }
       else if (a === "download-doc") { e.preventDefault(); App.baixarDocumento(el.dataset.id); }
-      else if (a === "print-doc") { e.preventDefault(); window.print(); }
-      else if (a === "zoom") { e.preventDefault(); const box = el.closest(".doc-viewer"); if (!box) return;
-        const z = Math.min(1.6, Math.max(0.6, (+box.dataset.zoom || 1) + (+el.dataset.dir) * 0.1));
-        box.dataset.zoom = z.toFixed(1); box.style.setProperty("--zoom", z);
-        box.querySelector(".zoom-label").textContent = Math.round(z * 100) + "%"; }
       else if (a === "copy-ramal") { e.preventDefault(); App.copiar(el.dataset.ramal, `Ramal ${el.dataset.ramal} (${el.dataset.nome}) copiado`); }
       else if (a === "export-audit") { e.preventDefault(); PagesAdmin.exportarAuditoria(); }
       else if (a === "read-notif") { App.marcarLida(el.dataset.nid); }

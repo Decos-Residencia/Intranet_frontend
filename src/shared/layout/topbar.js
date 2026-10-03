@@ -2,11 +2,11 @@
    Topbar
    ========================================================================= */
 (function () {
-  const { icon, foto } = UI;
+  const { icon, foto, esc, iniciais } = UI;
 
   function topbar(state, title) {
-    const u = DB.usuario;
-    const rl = DB.roles[state.role];
+    const u = state.user || { nome: "—", cargo: "" };
+    const rl = App.roleInfo();
     const roleTag = `<span class="ml-2 text-[10px] font-bold text-wine">${rl.curto}</span>`;
     const themeIcon = { light: "sun", dark: "moon", red: "wine" }[state.theme] || "sun";
     return `<header class="topbar">
@@ -26,15 +26,15 @@
           ${icon("bell", "w-5 h-5")}
           ${App.unreadCount() ? `<span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 ${App.unreadUrgent() ? "bg-red-600 bell-urgent" : "bg-wine"} text-white text-[10px] font-bold rounded-full flex items-center justify-center">${App.unreadCount()}</span>` : ""}
         </button>
-        <button data-action="open-roles" class="icon-btn ${state.role === "rh" || state.role === "admin" ? "icon-btn-on" : ""}" title="Trocar papel de acesso">
-          ${icon(rl.icon, "w-5 h-5")}
+        <button data-action="open-roles" class="icon-btn ${state.aniversarianteHoje ? "icon-btn-on" : ""}" title="Cenário do dia (simulação)">
+          ${icon("gift", "w-5 h-5")}
         </button>
         <a href="#/perfil" class="flex items-center gap-2.5 pl-2 md:pl-3 md:border-l border-slate-200 dark:border-slate-700">
           <div class="text-right hidden sm:block leading-tight">
-            <div class="text-sm font-bold text-slate-800 dark:text-slate-100">${u.nome}${roleTag}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">${u.cargoCurto}</div>
+            <div class="text-sm font-bold text-slate-800 dark:text-slate-100">${esc(u.nome)}${roleTag}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">${esc(u.cargo || "")}</div>
           </div>
-          <div class="avatar avatar-wine">${foto(u.nome)}${u.iniciais}</div>
+          <div class="avatar avatar-wine">${foto(u.nome)}${esc(iniciais(u.nome))}</div>
         </a>
       </div>
     </header>`;

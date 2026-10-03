@@ -19,7 +19,7 @@
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(n.autor)}</td>
         <td>${statusBadge(n.status)}</td>
         <td>${prioBadge(n.prioridade)}</td>
-        <td class="text-sm text-slate-500 dark:text-slate-400">${n.leituras || 0}</td>
+        <td class="text-sm text-slate-400" title="Contagem de leituras ainda não existe no servidor">—</td>
         <td>${acoes("preview-noticia", n.id, `#/admin/noticias/${n.id}/editar`, "Notícia: " + n.titulo, "noticia", "noticias")}</td>
       </tr>`).join("");
 
@@ -40,8 +40,8 @@
         <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-slate-800 dark:text-slate-100">Filtrar Notícias</h3>
         <span class="text-xs text-slate-400" id="not-count"></span></div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          ${filtro("fn-tipo", "CATEGORIA", TIPOS_NOTICIA)}${filtro("fn-status", "STATUS", ["Publicado", "Agendado", "Rascunho"])}
-          ${filtro("fn-prio", "PRIORIDADE", [{ value: "normal", label: "Normal" }, { value: "relevante", label: "Relevante" }, { value: "urgente", label: "Urgente" }])}
+          ${filtro("fn-tipo", "CATEGORIA", TIPOS_NOTICIA)}${filtro("fn-status", "STATUS", ["Publicado"])}
+          ${filtro("fn-prio", "PRIORIDADE", [{ value: "normal", label: "Normal" }, { value: "urgente", label: "Urgente" }])}
         </div>
       </div>
       <div class="card overflow-x-auto">
@@ -66,11 +66,11 @@
   function previewNoticia(id) {
     const n = App.findItem("noticias", id);
     if (!n) return;
-    const noMural = n.own && n.status === "Publicado";
+    const noMural = n.status === "Publicado";
     App.openPanel("Pré-visualização", `
       <div class="flex gap-2 flex-wrap mb-3">${statusBadge(n.status)} ${prioBadge(n.prioridade)} ${badge("blue", esc(n.tipo).toUpperCase())}</div>
       <h3 class="text-lg font-extrabold text-slate-800 dark:text-slate-100 mb-2">${esc(n.titulo)}</h3>
-      <div class="text-xs text-slate-400 mb-4">${esc(n.autor)} • ${esc(n.quando)} • ${n.leituras || 0} leituras</div>
+      <div class="text-xs text-slate-400 mb-4">${esc(n.autor)} • ${esc(n.quando)}</div>
       ${typeof n.imagem === "string" ? `<img src="${n.imagem}" alt="" class="w-full rounded-xl mb-4 max-h-48 object-cover">` : ""}
       <div class="prose-decos space-y-3 text-sm">${(n.corpo || "Sem conteúdo cadastrado.").split(/\n+/).map((p) => `<p>${esc(p)}</p>`).join("")}</div>
       <div class="flex gap-2 mt-6">

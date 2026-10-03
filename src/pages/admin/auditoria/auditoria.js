@@ -11,10 +11,10 @@
     const seed = DB.auditoria.concat();
     const proprios = App.state.auditLog || [];
     let logs = [...proprios, ...seed];
-    if (soMinhas) logs = logs.filter((l) => l.autorRole === "rh" || l.autor === DB.usuario.nome);
+    if (soMinhas) logs = logs.filter((l) => l.autor === App.state.user?.nome);
 
     const tipoIcon = { noticia: "megaphone", documento: "file-text", usuario: "user-cog", setor: "users" };
-    const roleTag = (r) => badge(r === "admin" ? "red" : "amber", (DB.roles[r]?.curto) || r);
+    const roleTag = (r) => badge(r === "admin" ? "red" : "amber", (DB.roles[r]?.curto) || String(r || "").toUpperCase());
     ultimosLogs = logs;
     const rows = logs.map((l) => `
       <div class="audit-row flex gap-3 p-4 border-b border-slate-50 dark:border-slate-800 last:border-0" data-tipo="${l.tipo}">

@@ -2,13 +2,13 @@
    Sidebar
    ========================================================================= */
 (function () {
-  const { icon, logo, foto, menuItems } = UI;
+  const { icon, logo, foto, menuItems, esc, iniciais } = UI;
 
   function sidebar(state, activeRoute) {
-    const u = DB.usuario;
-    const role = state.role;
+    const u = state.user || { nome: "—", cargo: "" };
+    const role = App.role();
     const items = menuItems(role);
-    const rl = DB.roles[role];
+    const rl = App.roleInfo();
 
     const isActive = (route) => activeRoute && (activeRoute === route || activeRoute.startsWith(route + "/"));
     const link = (it) => `<a href="${it.route}" class="nav-link ${isActive(it.route) ? "nav-link-active" : ""}" title="${it.label}">
@@ -42,21 +42,20 @@
       </div>
 
       <div class="px-4 mb-4">
-        <button data-action="open-roles" class="role-badge" title="Perfil: ${rl.label} — clique para trocar">
+        <div class="role-badge" title="Perfil: ${rl.label}">
           ${icon(rl.icon, "w-3.5 h-3.5")} <span class="sb-label">PERFIL: ${rl.curto}</span>
-          <span class="sb-label ml-auto text-[9px] opacity-70">trocar ›</span>
-        </button>
+        </div>
       </div>
 
       <div class="sb-label px-5 mb-2 text-[11px] font-extrabold tracking-wide sb-muted">MENU PRINCIPAL</div>
       <nav class="px-3 space-y-1 flex-1 overflow-y-auto">${navLinks}</nav>
 
       <div class="mt-auto px-4 pt-4 pb-4 sb-border-t">
-        <a href="#/perfil" class="flex items-center gap-3 mb-3" title="${u.nome}">
-          <div class="avatar avatar-soft text-xs">${foto(u.nome)}${u.iniciais}</div>
+        <a href="#/perfil" class="flex items-center gap-3 mb-3" title="${esc(u.nome)}">
+          <div class="avatar avatar-soft text-xs">${foto(u.nome)}${esc(iniciais(u.nome))}</div>
           <div class="sb-label min-w-0">
-            <div class="font-bold text-sm truncate sb-text">${u.nome}</div>
-            <div class="text-xs sb-muted truncate">${u.cargoCurto}</div>
+            <div class="font-bold text-sm truncate sb-text">${esc(u.nome)}</div>
+            <div class="text-xs sb-muted truncate">${esc(u.cargo || "")}</div>
           </div>
         </a>
         <button data-action="logout" class="flex items-center gap-2 text-sm sb-muted hover:text-wine transition-colors" title="Sair da Conta">

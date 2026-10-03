@@ -2,6 +2,7 @@
    Painel lateral (slide-over)
    ========================================================================= */
 (function () {
+  let openFrame = 0; // frame pendente que adiciona .open (cancelado se o painel for fechado antes)
   function openPanel(title, html) {
     let p = document.getElementById("side-panel");
     if (!p) {
@@ -13,9 +14,10 @@
       <div class="panel-head"><h3 class="font-extrabold text-slate-800 dark:text-slate-100">${title}</h3>
         <button data-action="close-panel" class="icon-btn w-9 h-9">${UI.icon("x","w-5 h-5")}</button></div>
       <div class="panel-content">${html}</div>`;
-    requestAnimationFrame(() => p.classList.add("open"));
+    cancelAnimationFrame(openFrame);
+    openFrame = requestAnimationFrame(() => p.classList.add("open"));
   }
-  function closePanel() { document.getElementById("side-panel")?.classList.remove("open"); }
+  function closePanel() { cancelAnimationFrame(openFrame); document.getElementById("side-panel")?.classList.remove("open"); }
 
   Object.assign(App, { openPanel, closePanel });
 })();

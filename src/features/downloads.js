@@ -2,24 +2,22 @@
    Baixar documento (PDF/DOC) e adicionar evento à agenda (.ics)
    ========================================================================= */
 (function () {
+  // O arquivo real está numa URL externa (backend só guarda a URL). Abre em nova
+  // aba, sem enviar referrer e sem acesso ao window.opener. Só http(s).
+  function abrirDocumento(id) {
+    const d = App.documentosAll().find((x) => String(x.id) === String(id));
+    if (!d) { App.toast("Documento não encontrado"); return; }
+    let url;
+    try { url = new URL(d.url); } catch (_) { url = null; }
+    if (!url || !/^https?:$/.test(url.protocol)) { App.toast("O endereço deste documento é inválido"); return; }
+    window.open(url.href, "_blank", "noopener,noreferrer");
+  }
   function baixarDocumento(id) {
     const d = App.documentosAll().find((x) => String(x.id) === String(id));
     if (!d) return;
     if (!d.download || !App.can("download")) { App.toast("Download não permitido para este documento"); return; }
-    const linhas = [
-      "HOSPITAL DECÓS CORPORATIVO - Sistema de Gestão da Qualidade", "",
-      `#Tipo: ${d.tipo}   Versão: ${d.versao}`, `Setor responsável: ${d.setor}   Criado por: ${d.criadoPor}`,
-      `Última atualização: ${d.atualizado}`, "", "#Resumo", d.desc, "",
-      "#Observação", "Cópia gerada pela Intranet Decós. Consulte sempre a versão vigente na Central de Documentos.",
-      `Baixado por ${DB.usuario.nome} (${DB.usuario.matricula}).`,
-    ];
-    if (d.icone === "W") {
-      const html = `<html><head><meta charset="utf-8"></head><body><h1>${UI.esc(d.titulo)}</h1>${linhas.map((l) => `<p>${UI.esc(l.replace(/^#/, ""))}</p>`).join("")}</body></html>`;
-      App.downloadFile(d.arquivo.replace(/\.docx$/i, ".doc"), html, "application/msword");
-    } else {
-      App.downloadFile(d.arquivo.endsWith(".pdf") ? d.arquivo : d.arquivo + ".pdf", App.makePdf(d.titulo, linhas));
-    }
-    App.toast(`Baixando ${d.arquivo}`);
+    abrirDocumento(id);
+    App.toast(`Abrindo ${d.arquivo}`);
   }
   function baixarIcs(ev) {
     if (!ev) return;
@@ -32,5 +30,5 @@
     App.toast("Evento adicionado — abra o arquivo para salvar na agenda");
   }
 
-  Object.assign(App, { baixarDocumento, baixarIcs });
+  Object.assign(App, { abrirDocumento, baixarDocumento, baixarIcs });
 })();

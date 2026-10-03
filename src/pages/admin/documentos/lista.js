@@ -43,8 +43,6 @@
         <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-slate-800 dark:text-slate-100">Filtrar Documentação</h3></div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           ${filtro("fd-tipo", "CATEGORIA", TIPOS_DOC.map((t) => ({ value: t.value, label: t.value })))}
-          ${filtro("fd-status", "STATUS", ["Publicado", "Em Revisão", "Rascunho"])}
-          ${filtro("fd-perm", "PERMISSÃO", [{ value: "download", label: "Download Disponível" }, { value: "view", label: "Somente Visualização" }])}
         </div>
       </div>
       <div class="card overflow-x-auto">
@@ -60,8 +58,8 @@
       </div>`,
       init() {
         wireList({ containerId: "doc-rows", itemSel: "tr", size: 5, pagerId: "docr-pager", infoId: "docr-info", label: "documentos", crimson: true,
-          controls: ["#fd-tipo", "#fd-status", "#fd-perm"], onEmpty: "Nenhum documento com esses filtros.",
-          filterFn: (el) => (!sel("fd-tipo") || el.dataset.tipo === sel("fd-tipo")) && (!sel("fd-status") || el.dataset.status === sel("fd-status")) && (!sel("fd-perm") || el.dataset.perm === sel("fd-perm")) });
+          controls: ["#fd-tipo"], onEmpty: lista.length ? "Nenhum documento com esses filtros." : "Nenhum documento encontrado.",
+          filterFn: (el) => !sel("fd-tipo") || el.dataset.tipo === sel("fd-tipo") });
       },
     };
   }
@@ -69,16 +67,13 @@
   function previewDocumento(id) {
     const d = App.findItem("docsAdm", id);
     if (!d) return;
-    const publico = d.own && d.status === "Publicado";
     App.openPanel("Detalhes do documento", `
-      <div class="flex gap-2 flex-wrap mb-3">${badge(corDoc(d.cor), d.tipo)} ${statusBadge(d.status)}</div>
+      <div class="flex gap-2 flex-wrap mb-3">${badge(corDoc(d.cor), esc(d.tipo))} ${statusBadge(d.status)}</div>
       <h3 class="text-lg font-extrabold text-slate-800 dark:text-slate-100 mb-3">${esc(d.titulo)}</h3>
-      ${d.desc ? `<p class="text-sm text-slate-500 dark:text-slate-400 mb-4">${esc(d.desc)}</p>` : ""}
-      <div class="space-y-2 text-sm mb-4">${kv("Autor / Dep.", esc(d.autor))}${kv("Setor", esc(d.setor || "—"))}${kv("Versão", esc(d.versao || "—"))}${kv("Arquivo", esc(d.arquivo || "—"))}${kv("Tamanho", esc(d.tamanho))}${kv("Atualizado", esc(d.quando))}</div>
-      <div class="mb-6">${permBadge(d.permissao)}</div>
+      <div class="space-y-2 text-sm mb-4">${kv("Categoria", esc(d.tipo))}${kv("Arquivo", esc(d.arquivo || "—"))}${kv("Publicado em", esc(d.quando))}</div>
       <div class="flex gap-2">
-        <a href="#/admin/documentos/${d.id}/editar" class="btn-crimson flex-1 py-2.5 text-center">Editar</a>
-        ${publico ? `<a href="${d.permissao === "download" ? `#/documentos/${d.id}` : `#/documentos/${d.id}/restrito`}" class="btn-outline flex-1 py-2.5 text-center">Ver na central</a>` : ""}
+        <a href="#/admin/documentos/${esc(d.id)}/editar" class="btn-crimson flex-1 py-2.5 text-center">Editar</a>
+        <a href="#/documentos/${esc(d.id)}" class="btn-outline flex-1 py-2.5 text-center">Ver na central</a>
       </div>`);
   }
 

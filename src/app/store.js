@@ -1,104 +1,321 @@
 /* =========================================================================
-   Store — estado global persistido, papéis/permissões e auditoria
-   Estado salvo em localStorage + coleções derivadas (avisos, documentos,
-   notificações) que juntam o mock com o que a gestão publicou.
+   Store — estado global, sessão, papéis/permissões e dados da API
+   Duas famílias de dados, nunca misturadas:
+   • PERSISTIDO (localStorage): preferências visuais e funcionalidades locais
+     que ainda não têm backend (notificações lidas, inscrições, chamados...).
+   • EM MEMÓRIA: sessão (usuário, papel) e tudo que vem da API. Nada disso é
+     gravado no navegador; o JWT fica à parte, em decos_intranet_token (api.js).
+   O papel da interface vem exclusivamente de GET /auth/me → user.perfil.
    ========================================================================= */
 (function () {
   const LS = "decos_intranet_state";
-  const ROLE_ORDER = ["leitura", "normal", "rh", "admin"];
+  const ROLE_ORDER = ["normal", "admin"];
+  const PERFIL_ROLE = { ADMIN: "admin", COLABORADOR: "normal" };
   const THEMES = {
     light: { label: "Claro", icon: "sun" },
     dark: { label: "Escuro", icon: "moon" },
     red: { label: "Vinho", icon: "wine" },
   };
 
-  const state = Object.assign(
-    { theme: "light", role: "normal", auth: false, sidebarCollapsed: false, myNoticias: [], myDocs: [], auditLog: [], readNotifs: [],
-      inscricoes: [], parabens: [], chamados: [], perfilPedidos: [] },
-    JSON.parse(localStorage.getItem(LS) || "{}")
-  );
-  // migra valores antigos (2 perfis -> 4 papéis)
-  if (state.role === "user") state.role = "normal";
-  if (state.role === "editor") state.role = "rh";
-  if (!ROLE_ORDER.includes(state.role)) state.role = "normal";
+  // Única lista do que pode ir para o localStorage.
+  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner", "auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos", "aniversarianteHoje"];
+  // Funcionalidades locais que pertencem a quem estava logado: zeradas quando outro usuário entra.
+  const PER_USER = ["auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos"];
+
+  const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], setores: [], loaded: false });
+
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
+
+  const state = {
+    theme: "light", sidebarCollapsed: false, localOwner: null,
+    auditLog: [], readNotifs: [], inscricoes: [], parabens: [], chamados: [], perfilPedidos: [], aniversarianteHoje: false,
+    // ---- somente em memória ----
+    ready: false, auth: false, user: null, loadError: null,
+    api: emptyApi(), noticias: [], docsAdm: [], usuarios: [],
+  };
+  PERSISTED.forEach((k) => { if (k in stored) state[k] = stored[k]; });
   if (!THEMES[state.theme]) state.theme = "light";
-  ["myNoticias", "myDocs", "auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
-  // Coleções editáveis (notícias, documentos e usuários da gestão) vivem no
-  // state a partir da primeira visita, semeadas do mock — assim criar, editar
-  // e excluir persistem entre recarregamentos. myNoticias/myDocs são o formato
-  // antigo (só o que o usuário criou) e entram na semente como "próprios".
-  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  if (!Array.isArray(state.noticias)) state.noticias = [...state.myNoticias.map((n) => ({ ...n, own: true })), ...DB.adminNoticias].map((n) => ({ id: uid(), ...n }));
-  if (!Array.isArray(state.docsAdm)) state.docsAdm = [...state.myDocs.map((d) => ({ ...d, own: true })), ...DB.adminDocumentos].map((d) => ({ id: uid(), ...d }));
+  ["auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
+  state.sidebarCollapsed = !!state.sidebarCollapsed;
+  state.aniversarianteHoje = !!state.aniversarianteHoje;
   // readNotifs antigo guardava a posição (0..6); converte para os ids atuais.
   state.readNotifs = state.readNotifs.map((x) => typeof x === "number" ? "n" + (x + 1) : x);
-  if (!Array.isArray(state.usuarios)) state.usuarios = DB.usuariosAdmin.map((u) => ({ id: uid(), ...u }));
-  // cenário "hoje é meu aniversário" — parte do painel de perfil, não da
-  // permissão de papel; começa alinhado ao mock (DB.usuario.diaAniversario)
-  // mas pode ser alternado manualmente para demonstrar as duas telas.
-  if (typeof state.aniversarianteHoje !== "boolean") state.aniversarianteHoje = DB.usuario.diaAniversario === DB.hojeDia;
 
-  function save() { localStorage.setItem(LS, JSON.stringify(state)); }
+  function save() {
+    const out = {};
+    PERSISTED.forEach((k) => { out[k] = state[k]; });
+    try { localStorage.setItem(LS, JSON.stringify(out)); } catch (_) { /* armazenamento indisponível */ }
+  }
+  save(); // regrava só a lista branca: descarta chaves legadas (token, user, role, api, noticias...)
 
-  /* ---------- permissões ---------- */
-  function can(cap) { return (DB.roles[state.role]?.caps || []).includes(cap); }
-  function roleInfo() { return DB.roles[state.role]; }
+  /* ---------- papel e permissões (derivados do usuário real) ---------- */
+  function role() { return PERFIL_ROLE[state.user?.perfil] || null; }
+  // Somente leitura: não existe mais como "preferência" que alguém possa gravar.
+  Object.defineProperty(state, "role", { get: role, enumerable: false });
+  function can(cap) { const r = role(); return !!r && (DB.roles[r]?.caps || []).includes(cap); }
+  function roleInfo() { return DB.roles[role()] || DB.roles.normal; }
 
-  /* ---------- auditoria ---------- */
+  /* ---------- sessão ---------- */
+  function resetServerData() {
+    state.api = emptyApi();
+    state.noticias = [];
+    state.docsAdm = [];
+    state.usuarios = [];
+  }
+
+  function setSession(user) {
+    if (state.localOwner !== user.id) {
+      PER_USER.forEach((k) => { state[k] = []; });
+      state.localOwner = user.id;
+    }
+    state.auth = true;
+    state.user = user;
+    save();
+  }
+
+  // Remove JWT, usuário, papel e todo cache vindo do servidor. Preferências
+  // (tema, menu) e funcionalidades locais permanecem.
+  function clearSession() {
+    App.API.clearToken();
+    state.auth = false;
+    state.user = null;
+    state.loadError = null;
+    resetServerData();
+    save();
+  }
+
+  let expiring = false;
+  function expireSession(message) {
+    if (expiring || (!state.auth && !App.API.getToken())) return;
+    expiring = true;
+    try {
+      clearSession();
+      App.closePanel?.(); App.closeModal?.();
+      App.toast?.(message || "Sessão expirada. Faça login novamente.");
+      if (location.hash !== "#/login") location.hash = "#/login"; // dispara render
+      else App.render();
+    } finally { expiring = false; }
+  }
+
+  // Valida o token com GET /auth/me e carrega os dados. Lança ApiError se falhar.
+  async function startSession(accessToken) {
+    App.API.setToken(accessToken);
+    let user;
+    try { user = await Services.auth.me(); }
+    catch (err) { App.API.clearToken(); throw err; }
+    App.setSession(user);
+    await loadApiData();
+    return user;
+  }
+
+  async function restoreSession() {
+    state.ready = false;
+    state.loadError = null;
+    const token = App.API.getToken();
+    if (!token) {
+      clearSession();
+      App.API.wake(); // acorda o backend enquanto o usuário digita as credenciais
+    } else {
+      try {
+        const user = await Services.auth.me();
+        App.setSession(user);
+        await loadApiData();
+      } catch (err) {
+        if (err.status === 401) { clearSession(); }       // token inválido/expirado
+        else { state.loadError = err.message; }           // API fora do ar: mantém o token
+      }
+    }
+    state.ready = true;
+    // Se o hash vai mudar, o evento hashchange já renderiza (evita renderizar duas vezes).
+    const alvo = state.loadError ? null : !state.auth ? "#/login" : (!location.hash || location.hash === "#/login") ? "#/dashboard" : null;
+    if (alvo && location.hash !== alvo) { location.hash = alvo; return; }
+    App.render();
+  }
+
+  function logout() {
+    clearSession();
+    App.closePanel?.(); App.closeModal?.();
+    App.go("#/login");
+  }
+
+  /* ---------- auditoria local (sem backend) ---------- */
   function logAudit(acao, alvo, tipo) {
-    state.auditLog.unshift({ quando: "Agora mesmo", autor: DB.usuario.nome, autorRole: state.role, acao, alvo, tipo });
-    App.save();
+    state.auditLog.unshift({ quando: "Agora mesmo", autor: state.user?.nome || "—", autorRole: role(), acao, alvo, tipo });
+    save();
   }
-  // Insere (sem id) ou substitui (com id) um item de uma coleção do state.
-  function upsert(coll, obj) {
-    const list = state[coll], i = obj.id ? list.findIndex((x) => x.id === obj.id) : -1;
-    if (i >= 0) list[i] = { ...list[i], ...obj }; else list.unshift({ ...obj, id: obj.id || uid() });
-    App.save();
-    return i >= 0 ? "editou" : "criou";
-  }
-  function removeItem(coll, id) { state[coll] = state[coll].filter((x) => x.id !== id); App.save(); }
+  function removeItem(coll, id) { state[coll] = state[coll].filter((x) => x.id !== id); }
   function findItem(coll, id) { return state[coll].find((x) => x.id === id); }
-  const acaoAudit = (status, verbo) => status === "Rascunho" ? "salvou rascunho" : status === "Agendado" ? "agendou" : verbo === "editou" ? "editou" : "publicou";
-  function saveNoticia(obj) { const v = App.upsert("noticias", obj); App.logAudit(acaoAudit(obj.status, v), "Notícia: " + obj.titulo, "noticia"); }
-  function saveDocumento(obj) { const v = App.upsert("docsAdm", obj); App.logAudit(acaoAudit(obj.status, v), "Documento: " + obj.titulo, "documento"); }
+  async function deleteRemoteItem(coll, id) {
+    const item = coll && id ? App.findItem(coll, id) : null;
+    if (!item?.apiId) return;
+    if (coll === "noticias") await Services.avisos.remove(item.apiId);
+    else if (coll === "docsAdm") await Services.documentos.remove(item.apiId);
+  }
 
-  /* ---------- conteúdo publicado pela gestão aparece para todos ---------- */
-  const CAT_DE_TIPO = { "Comunicado": "comunicado", "Evento": "evento", "Promoção": "promocao", "Notícia": "noticia" };
-  function noticiaParaAviso(n) {
-    const cat = CAT_DE_TIPO[n.tipo] || "comunicado";
-    const corpo = (n.corpo || "").trim();
+  /* ---------- API → formato das telas ---------- */
+  const fmtCurta = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  const fmtLonga = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const fmtHora = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  function fmt(formatter, value, vazio = "—") {
+    if (!value) return vazio;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? vazio : formatter.format(d);
+  }
+
+  const TIPO_DE_CATEGORIA = { comunicado: "Comunicado", evento: "Evento", promocao: "Promoção", noticia: "Notícia", urgente: "Comunicado" };
+
+  function nomeDoUsuario(id) {
+    return state.api.usuariosRaw.find((u) => u.id === id)?.nome || null;
+  }
+
+  function apiAvisoParaCard(a) {
+    const categoria = DB.categorias[a.categoria] ? a.categoria : "comunicado";
+    const conteudo = (a.conteudo || "").trim();
+    // O backend só devolve autor_id: resolve pelo diretório; sem isso, texto neutro.
+    const autor = nomeDoUsuario(a.autor_id) || "Autor não identificado";
     return {
-      id: n.id, own: true, categoria: n.prioridade === "urgente" ? "urgente" : cat, extra: n.prioridade === "urgente" ? cat : undefined,
-      titulo: n.titulo, resumo: corpo.length > 180 ? corpo.slice(0, 180) + "…" : corpo || "Sem conteúdo.",
-      data: n.quando, dataCurta: n.quando, autor: n.autor, autorSigla: UI.iniciais(n.autor), imagem: n.imagem,
-      cta: "Ler comunicado na íntegra", conteudo: corpo ? corpo.split(/\n+/) : ["Sem conteúdo."], tags: [],
+      id: String(a.id), apiId: a.id, source: "api", own: true, categoria,
+      titulo: a.titulo, resumo: conteudo.length > 180 ? conteudo.slice(0, 180) + "…" : conteudo || "Sem conteúdo.",
+      data: fmt(fmtLonga, a.data_publicacao), dataCurta: fmt(fmtCurta, a.data_publicacao),
+      autor, autorSigla: nomeDoUsuario(a.autor_id) ? UI.iniciais(autor) : "?", imagem: "",
+      cta: "Ler comunicado na íntegra", conteudo: conteudo ? conteudo.split(/\n+/) : ["Sem conteúdo."], tags: [],
     };
   }
-  function avisosAll() {
-    return [...state.noticias.filter((n) => n.own && n.status === "Publicado").map(noticiaParaAviso), ...DB.avisos];
-  }
-  function docParaPublico(d) {
+
+  function apiAvisoParaAdmin(a) {
     return {
-      id: d.id, own: true, tipo: d.tipo, cor: d.cor, titulo: d.titulo, data: d.quando, desc: d.desc || "Documento publicado pela gestão.",
-      tamanho: d.tamanho, download: d.permissao === "download", icone: /\.docx?$/i.test(d.arquivo || "") ? "W" : undefined,
-      arquivo: d.arquivo || d.titulo + ".pdf", versao: d.versao || "1.0", criadoPor: d.autor, setor: d.setor || "—", atualizado: d.quando,
+      id: String(a.id), apiId: a.id, source: "api", own: true, status: "Publicado", prioridade: a.categoria === "urgente" ? "urgente" : "normal",
+      tipo: TIPO_DE_CATEGORIA[a.categoria] || "Comunicado",
+      titulo: a.titulo, corpo: a.conteudo || "", quando: fmt(fmtHora, a.data_publicacao), autor: nomeDoUsuario(a.autor_id) || "Autor não identificado",
+      leituras: null,
     };
   }
-  function documentosAll() {
-    return [...state.docsAdm.filter((d) => d.own && d.status === "Publicado").map(docParaPublico), ...DB.documentos];
+
+  function nomeDoArquivo(url) {
+    try {
+      const u = new URL(url);
+      const ultimo = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
+      return ultimo || u.hostname;
+    } catch (_) { return url; }
   }
-  // Notícia urgente publicada pela gestão vira notificação urgente para todos.
+
+  // O backend guarda só título, categoria e URL. O resto não existe (BACKEND FUTURO).
+  function apiDocumentoParaPublico(d) {
+    const tipo = (d.categoria || "DOCUMENTO").toUpperCase();
+    const def = (window.AdminUI?.TIPOS_DOC || []).find((t) => t.value === tipo);
+    const arquivo = nomeDoArquivo(d.url_arquivo);
+    return {
+      id: String(d.id), apiId: d.id, source: "api", tipo, cor: def?.cor || "blue",
+      titulo: d.titulo, data: fmt(fmtLonga, d.data_upload), desc: "",
+      tamanho: "—", download: true, icone: /\.docx?$/i.test(arquivo) ? "W" : undefined,
+      arquivo, url: d.url_arquivo, versao: "—", criadoPor: "—", setor: "—", atualizado: fmt(fmtCurta, d.data_upload),
+    };
+  }
+
+  function apiDocumentoParaAdmin(d) {
+    const pub = apiDocumentoParaPublico(d);
+    return { ...pub, own: true, status: "Publicado", permissao: "download", quando: fmt(fmtHora, d.data_upload), autor: "—" };
+  }
+
+  function apiFaqParaView(f) {
+    return { id: String(f.id), cat: f.categoria || "geral", pergunta: f.pergunta, resposta: f.resposta };
+  }
+
+  function apiUsuarioParaRamal(u) {
+    return {
+      id: String(u.id), nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", andar: "—",
+      email: u.email, ramal: u.setor?.ramal || "—",
+    };
+  }
+
+  function apiUsuarioParaAdmin(u) {
+    return {
+      id: String(u.id), apiId: u.id, source: "api", nome: u.nome, email: u.email, setor: u.setor?.nome || "—", setorId: u.setor_id,
+      cargo: u.cargo || "—", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
+    };
+  }
+
+  const ROTULO = { avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores" };
+
+  async function loadApiData() {
+    if (!state.auth || !App.API.getToken()) return;
+    const jobs = {
+      avisos: () => Services.listAll(Services.avisos.list),
+      documentos: () => Services.listAll(Services.documentos.list),
+      faqs: () => Services.listAll(Services.faq.list),
+      usuarios: () => Services.listAll(Services.usuarios.list),
+      setores: () => Services.listAll(Services.setores.list),
+    };
+    const keys = Object.keys(jobs);
+    const results = await Promise.allSettled(keys.map((k) => jobs[k]()));
+    if (!state.auth) return; // um 401 encerrou a sessão no meio do caminho
+
+    const data = {}, falhas = [];
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") data[keys[i]] = r.value;
+      else falhas.push(ROTULO[keys[i]]);
+    });
+
+    // Usuários primeiro: avisos precisam do diretório para resolver o autor.
+    if (data.usuarios) {
+      state.api.usuariosRaw = data.usuarios;
+      state.api.usuarios = data.usuarios.map(apiUsuarioParaRamal);
+      state.usuarios = can("manage_users") ? data.usuarios.map(apiUsuarioParaAdmin) : [];
+    }
+    if (data.setores) state.api.setores = data.setores;
+    if (data.avisos) {
+      state.api.avisos = data.avisos.map(apiAvisoParaCard);
+      state.noticias = data.avisos.map(apiAvisoParaAdmin);
+    }
+    if (data.documentos) {
+      state.api.documentos = data.documentos.map(apiDocumentoParaPublico);
+      state.docsAdm = data.documentos.map(apiDocumentoParaAdmin);
+    }
+    if (data.faqs) state.api.faqs = data.faqs.map(apiFaqParaView);
+    state.api.loaded = true;
+    if (falhas.length) App.toast?.("Não foi possível carregar: " + falhas.join(", ") + ".");
+  }
+
+  /* ---------- coleções exibidas pelas telas (somente API) ---------- */
+  function avisosAll() { return state.api.avisos; }
+  function documentosAll() { return state.api.documentos; }
+  function faqsAll() { return state.api.faqs; }
+  function ramaisAll() { return state.api.usuarios; }
+  function setoresAll() { return state.api.setores; }
+
+  // Aniversariantes derivados de GET /usuarios (campo `aniversario` {dia, mes}).
+  function aniversariantesAll() {
+    return state.api.usuariosRaw
+      .filter((u) => u.aniversario)
+      .map((u) => ({ id: u.id, nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", dia: u.aniversario.dia, mes: u.aniversario.mes }));
+  }
+  function hoje() { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; }
+  function souAniversariante() {
+    const n = state.user?.aniversario, h = hoje();
+    return state.aniversarianteHoje || !!(n && n.dia === h.dia && n.mes === h.mes);
+  }
+
+  /* ---------- notificações ---------- */
+  // Aviso urgente publicado vira notificação urgente para todos. As demais
+  // notificações ainda são locais/demonstrativas (sem backend).
   function notificacoesAll() {
-    const urgentes = state.noticias.filter((n) => n.own && n.status === "Publicado" && n.prioridade === "urgente").map((n) => ({
+    const urgentes = state.noticias.filter((n) => n.prioridade === "urgente").map((n) => ({
       id: "nt-" + n.id, rota: `#/avisos/${n.id}`, tipo: "urgente", urgente: true, icone: "alert-triangle",
       titulo: n.titulo, texto: (n.corpo || "").slice(0, 160), tempo: n.quando, lida: false,
     }));
     return [...urgentes, ...DB.notificacoes];
   }
   const isLida = (n) => n.lida || state.readNotifs.includes(n.id);
-  function marcarLida(id) { if (id && !state.readNotifs.includes(id)) { state.readNotifs.push(id); App.save(); } }
+  function marcarLida(id) { if (id && !state.readNotifs.includes(id)) { state.readNotifs.push(id); save(); } }
   function unreadCount() { return App.notificacoesAll().filter((n) => !App.isLida(n)).length; }
   function unreadUrgent() { return App.notificacoesAll().filter((n) => n.urgente && !App.isLida(n)).length; }
 
-  Object.assign(App, { ROLE_ORDER, THEMES, state, save, can, roleInfo, logAudit, upsert, removeItem, findItem, saveNoticia, saveDocumento, avisosAll, documentosAll, notificacoesAll, isLida, marcarLida, unreadCount, unreadUrgent });
+  Object.assign(App, {
+    ROLE_ORDER, THEMES, state, save, role, can, roleInfo,
+    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData,
+    logAudit, removeItem, findItem, deleteRemoteItem,
+    avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, hoje, souAniversariante,
+    notificacoesAll, isLida, marcarLida, unreadCount, unreadUrgent,
+  });
 })();

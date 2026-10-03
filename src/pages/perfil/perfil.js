@@ -3,12 +3,15 @@
    Rota: #/perfil
    ========================================================================= */
 (function () {
-  const { icon, badge, foto, esc, kv } = UI;
+  const { icon, badge, foto, esc, kv, iniciais } = UI;
   const { wireFilters } = Lib;
 
   function perfil() {
-    const u = DB.usuario;
+    const u = App.state.user;
     const st = App.state;
+    // Matrícula, unidade, andar e admissão ainda não existem no backend (BACKEND FUTURO).
+    const nascimento = u.data_nascimento ? u.data_nascimento.split("-").reverse().join("/") : "—";
+    const setorNome = u.setor?.nome || "—";
     // Dados cadastrais são mantidos pelo RH: só leitura aqui, alteração via pedido.
     const field = (label, value) => `<div><label class="field-label">${label}</label><input class="field-input opacity-80" value="${esc(value)}" readonly></div>`;
     const pwd = (id, label, ph) => `<div><label class="field-label">${label}</label><input id="${id}" type="password" class="field-input" placeholder="${ph}" autocomplete="new-password"></div>`;
@@ -32,12 +35,12 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="space-y-6">
           <div class="card p-6 text-center">
-            <div class="avatar-birthday w-28 h-28 text-3xl mx-auto mb-3">${foto(u.nome)}${u.iniciais}</div>
-            <div class="font-extrabold text-lg text-slate-800 dark:text-slate-100">${u.nome}</div>
-            <div class="text-sm text-slate-500 dark:text-slate-400">Analista de Gestão da Qualidade</div>
-            <div class="text-sm font-bold text-wine mb-4">Matrícula: ${u.matricula}</div>
+            <div class="avatar-birthday w-28 h-28 text-3xl mx-auto mb-3">${foto(u.nome)}${esc(iniciais(u.nome))}</div>
+            <div class="font-extrabold text-lg text-slate-800 dark:text-slate-100">${esc(u.nome)}</div>
+            <div class="text-sm text-slate-500 dark:text-slate-400">${esc(u.cargo || "—")}</div>
+            <div class="text-sm font-bold text-wine mb-4">Matrícula: —</div>
             <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-sm text-left">
-              ${kv("SETOR","Qualidade")}${kv("UNIDADE",u.unidade)}${kv("ADMISSÃO","15/02/2024")}
+              ${kv("SETOR",esc(setorNome))}${kv("UNIDADE","—")}${kv("ADMISSÃO","—")}
             </div>
           </div>
           <div class="card p-5">
@@ -52,10 +55,10 @@
             <div class="flex items-center justify-between mb-5 flex-wrap gap-3"><h3 class="font-bold text-slate-800 dark:text-slate-100">Dados de Cadastro</h3>
             ${App.can("edit_profile") ? `<button data-action="open-pedido" class="btn-outline text-sm px-4 py-2 flex items-center gap-2">${icon("edit","w-4 h-4")} Solicitar Alteração</button>` : ""}</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              ${field("NOME COMPLETO",u.nomeCompleto)}${field("E-MAIL CORPORATIVO",u.email)}
-              ${field("CARGO",u.cargo)}${field("SETOR",u.setor)}
-              ${field("ANDAR / ALA",u.andar)}${field("RAMAL INTERNO",u.ramal)}
-              ${field("DATA DE ADMISSÃO",u.admissao)}${field("DATA DE NASCIMENTO",u.nascimento)}
+              ${field("NOME COMPLETO",u.nome)}${field("E-MAIL CORPORATIVO",u.email)}
+              ${field("CARGO",u.cargo || "—")}${field("SETOR",setorNome)}
+              ${field("ANDAR / ALA","—")}${field("RAMAL INTERNO",u.setor?.ramal || "—")}
+              ${field("DATA DE ADMISSÃO","—")}${field("DATA DE NASCIMENTO",nascimento)}
             </div>
           </div>
           <form class="card p-6" data-perfil-tab="seguranca" id="form-senha" novalidate>
@@ -93,7 +96,8 @@
           if (!val("pw-atual")) { App.toast("Informe a senha atual"); return; }
           if (!Object.values(regras()).every(Boolean)) { App.toast("A nova senha não atende aos requisitos"); return; }
           if (val("pw-nova") === val("pw-atual")) { App.toast("A nova senha deve ser diferente da atual"); return; }
-          f.reset(); App.toast("Senha atualizada com sucesso!");
+          // Não há endpoint para o próprio usuário trocar a senha (BACKEND FUTURO): não simular sucesso.
+          f.reset(); App.toast("A alteração de senha pelo próprio usuário ainda não está disponível. Procure o administrador.");
         });
         pintar();
       },

@@ -7,7 +7,7 @@
      expansível). O agrupamento acompanha os 3 módulos da spec do projeto:
      Comunicação & Engajamento, Documentos & FAQ, Diretório & Ramais. */
   function menuItems(role) {
-    const gere = role === "rh" || role === "admin"; // gestão de conteúdo
+    const gere = role === "admin"; // gestão de conteúdo (no backend, só ADMIN escreve)
     const items = [{ icon: "home", label: "Início", route: "#/dashboard" }];
 
     const comunicacao = [

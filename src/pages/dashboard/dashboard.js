@@ -10,22 +10,22 @@
     return `<a href="#/avisos/${a.id}" class="card block p-6 hover:shadow-md transition-shadow group dash-aviso" data-cat="${a.categoria}">
       <div class="flex items-center justify-between mb-3">
         <div class="flex gap-2">${badge(tone(a.categoria), catLabel(a.categoria))}</div>
-        <span class="text-xs text-slate-400">${a.dataCurta}</span>
+        <span class="text-xs text-slate-400">${esc(a.dataCurta)}</span>
       </div>
       <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-wine transition-colors">${esc(a.titulo)}</h3>
       <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${esc(a.resumo)}</p>
       <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <span class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span class="avatar-mini">${foto(a.autor)}${a.autorSigla}</span> Publicado por: ${esc(a.autor)}
+          <span class="avatar-mini">${foto(a.autor)}${esc(a.autorSigla)}</span> Publicado por: ${esc(a.autor)}
         </span>
-        <span class="text-sm font-bold text-wine flex items-center gap-1">${a.cta} ${icon("chevron-right","w-4 h-4")}</span>
+        <span class="text-sm font-bold text-wine flex items-center gap-1">${esc(a.cta)} ${icon("chevron-right","w-4 h-4")}</span>
       </div>
     </a>`;
   }
 
   function dashboard() {
-    const u = DB.usuario;
-    const souAniversariante = App.state.aniversarianteHoje;
+    const u = App.state.user;
+    const souAniversariante = App.souAniversariante();
     const todosAvisos = App.avisosAll();
     const avisos = todosAvisos.map((a) => `<div class="dash-aviso-wrap" data-cat="${a.categoria}">${avisoCard(a)}</div>`).join("");
     const eventos = DB.eventos.slice(0, 4).map((e) => `
@@ -34,15 +34,19 @@
         <div class="min-w-0"><div class="font-bold text-sm text-slate-800 dark:text-slate-100">${e.titulo.split(" - ")[0]}</div>
         <div class="text-xs text-slate-500 dark:text-slate-400">${e.desc.slice(0, 44)}...</div></div>
       </a>`).join("");
-    const aniversarios = DB.aniversariantes.map((p) => `
+    const hojeRef = App.hoje();
+    const mesNome = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(new Date(2026, hojeRef.mes - 1, 1));
+    const mesRotulo = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
+    const doMes = App.aniversariantesAll().filter((p) => p.mes === hojeRef.mes).sort((a, b) => a.dia - b.dia).slice(0, 8);
+    const aniversarios = (doMes.length ? doMes : []).map((p) => `
       <div class="flex items-center gap-3 py-2.5 border-b border-slate-50 dark:border-slate-800 last:border-0">
-        <div class="avatar-soft w-9 h-9 text-xs rounded-full flex items-center justify-center shrink-0">${foto(p.nome)}${iniciais(p.nome)}</div>
-        <div class="flex-1 min-w-0"><div class="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">${p.nome}</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">${p.setor}</div></div>
+        <div class="avatar-soft w-9 h-9 text-xs rounded-full flex items-center justify-center shrink-0">${foto(p.nome)}${esc(iniciais(p.nome))}</div>
+        <div class="flex-1 min-w-0"><div class="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">${esc(p.nome)}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">${esc(p.setor)}</div></div>
         <span class="birthday-pill">dia ${p.dia}</span>
-      </div>`).join("");
+      </div>`).join("") || `<div class="text-sm text-slate-400 py-3">Nenhum aniversariante neste mês.</div>`;
 
-    const urgente = DB.avisos.find((a) => a.categoria === "urgente");
+    const urgente = todosAvisos.find((a) => a.categoria === "urgente");
     const proxEvento = DB.eventos[0];
     // 3 slides: a promoção de sempre, o aviso mais urgente do momento, e um
     // destaque leve (próximo evento) — "outras besteiras" que merecem um
@@ -50,8 +54,8 @@
     const slides = [
       { photo: "doctor", pos: "50% 12%", badge: "DOCUMENTOS & POPS", titulo: "Protocolos assistenciais atualizados este mês",
         texto: "Consulte os POPs, manuais e formulários vigentes em um só lugar.", cta: "Acessar central de documentos", href: "#/documentos" },
-      { photo: "news", pos: "50% 28%", shape: "rect", badge: "🔥 URGENTE", titulo: urgente.titulo.split(" - ")[0].slice(0,60),
-        texto: urgente.resumo.slice(0,90) + "…", cta: "Ver comunicado urgente", href: `#/avisos/${urgente.id}` },
+      ...(urgente ? [{ photo: "news", pos: "50% 28%", shape: "rect", badge: "🔥 URGENTE", titulo: esc(urgente.titulo.split(" - ")[0].slice(0,60)),
+        texto: esc(urgente.resumo.slice(0,90) + "…"), cta: "Ver comunicado urgente", href: `#/avisos/${urgente.id}` }] : []),
       { photo: "doctor", pos: "50% 12%", badge: "PRÓXIMO TREINAMENTO", titulo: proxEvento.titulo,
         texto: `${proxEvento.dia} de Setembro · ${proxEvento.local}`, cta: "Ver detalhes do evento", href: `#/eventos/${proxEvento.id}` },
     ];
@@ -76,8 +80,8 @@
     const header = souAniversariante ? `
       <div class="birthday-hero mb-6">
         <div class="birthday-hero-emoji" aria-hidden="true">🎉 🎈 🎂 🎊</div>
-        <div class="birthday-hero-avatar mx-auto mb-4">${foto(u.nome)}${u.iniciais}</div>
-        <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-2">Feliz Aniversário, ${u.nome.split(" ")[0]}! 🎉</h2>
+        <div class="birthday-hero-avatar mx-auto mb-4">${foto(u.nome)}${esc(iniciais(u.nome))}</div>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-2">Feliz Aniversário, ${esc(u.nome.split(" ")[0])}! 🎉</h2>
         <p class="text-white/85 max-w-md mx-auto mb-6">Hoje é o seu dia! Toda a equipe do Hospital Decós deseja muita saúde, alegria e sucesso nesse novo ciclo.</p>
         <div class="flex items-center justify-center gap-3 flex-wrap">
           <button data-action="celebrate" data-auto-confetti="1" data-msg="🎉 Feliz aniversário para você!" class="btn-white">${icon("party","w-4 h-4")} Comemorar</button>
@@ -86,8 +90,8 @@
       </div>`
       : `<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div><div class="text-sm text-slate-400">Hospital Decós Intranet</div>
-        <h2 class="text-hero font-extrabold text-slate-800 dark:text-slate-100">Bom dia, ${u.nome.split(" ").slice(0,2).join(" ")}</h2></div>
-        <a href="#/avisos" class="pill-soft hover:brightness-95 transition">${todosAvisos.length} comunicados ativos esta semana</a>
+        <h2 class="text-hero font-extrabold text-slate-800 dark:text-slate-100">Bom dia, ${esc(u.nome.split(" ").slice(0,2).join(" "))}</h2></div>
+        <a href="#/avisos" class="pill-soft hover:brightness-95 transition">${todosAvisos.length} ${todosAvisos.length === 1 ? "comunicado publicado" : "comunicados publicados"}</a>
       </div>`;
 
     return {
@@ -136,7 +140,7 @@
             <div class="space-y-1">${eventos}</div>
           </div>
           <div class="card p-5">
-            <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">${icon("gift","w-5 h-5 text-wine")} Aniversariantes de Setembro</h3>
+            <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">${icon("gift","w-5 h-5 text-wine")} Aniversariantes de ${mesRotulo}</h3>
             <div>${aniversarios}</div>
             <a href="#/aniversariantes/hoje" class="text-xs font-bold text-wine flex items-center gap-1 mt-3 hover:underline">${icon("gift","w-3.5 h-3.5")} Ver aniversariante do dia</a>
           </div>
@@ -146,7 +150,7 @@
         wireList({
           containerId: "dash-avisos", itemSel: ".dash-aviso-wrap", size: 4,
           pagerId: "dash-pager", infoId: "dash-info", label: "comunicados",
-          filterGroup: "dash", onEmpty: "Nenhum comunicado nesta categoria.",
+          filterGroup: "dash", onEmpty: todosAvisos.length ? "Nenhum comunicado nesta categoria." : "Nenhum aviso encontrado.",
           filterFn: (el, f) => { const cat = CAT_FILTRO[f] || "all"; return cat === "all" || el.dataset.cat === cat; },
         });
         wireCarousel("dash-carousel", slides.length);

@@ -1,31 +1,33 @@
 /* =========================================================================
    Tela: Aniversariante do Dia
    Rota: #/aniversariantes/hoje
+   Fonte: GET /usuarios (campo `aniversario` {dia, mes}).
    ========================================================================= */
 (function () {
-  const { icon, breadcrumb, iniciais, foto, parabensBtn } = UI;
+  const { icon, breadcrumb, iniciais, foto, parabensBtn, esc } = UI;
 
   function aniversarianteDoDia() {
-    const hojeDia = DB.hojeDia;
-    const hoje = DB.aniversariantes.filter((p) => p.dia === hojeDia);
-    const outros = DB.aniversariantes.filter((p) => p.dia !== hojeDia).sort((a, b) => a.dia - b.dia);
+    const hojeRef = App.hoje();
+    const doMes = App.aniversariantesAll().filter((p) => p.mes === hojeRef.mes);
+    const hoje = doMes.filter((p) => p.dia === hojeRef.dia);
+    const outros = doMes.filter((p) => p.dia > hojeRef.dia).sort((a, b) => a.dia - b.dia);
 
     const heroCard = (p) => `
       <div class="card p-8 text-center flex flex-col items-center">
-        <div class="avatar-birthday w-24 h-24 text-2xl mx-auto mb-4">${foto(p.nome)}${iniciais(p.nome)}</div>
-        <div class="font-extrabold text-xl text-slate-800 dark:text-slate-100">${p.nome}</div>
-        <div class="text-sm text-slate-500 dark:text-slate-400 mb-2">${p.cargo}</div>
-        <span class="tag-outline mb-4 inline-block">${p.setor}</span>
+        <div class="avatar-birthday w-24 h-24 text-2xl mx-auto mb-4">${foto(p.nome)}${esc(iniciais(p.nome))}</div>
+        <div class="font-extrabold text-xl text-slate-800 dark:text-slate-100">${esc(p.nome)}</div>
+        <div class="text-sm text-slate-500 dark:text-slate-400 mb-2">${esc(p.cargo)}</div>
+        <span class="tag-outline mb-4 inline-block">${esc(p.setor)}</span>
         ${parabensBtn(p, "btn-wine px-6 py-2.5 flex items-center gap-2")}
       </div>`;
 
     const outrosLista = outros.slice(0, 8).map((p) => `
       <a href="#/aniversariantes" class="flex items-center gap-3 py-2.5 border-b border-slate-50 dark:border-slate-800 last:border-0">
-        <div class="avatar-soft w-9 h-9 text-xs rounded-full flex items-center justify-center shrink-0">${foto(p.nome)}${iniciais(p.nome)}</div>
-        <div class="flex-1 min-w-0"><div class="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">${p.nome}</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">${p.setor}</div></div>
+        <div class="avatar-soft w-9 h-9 text-xs rounded-full flex items-center justify-center shrink-0">${foto(p.nome)}${esc(iniciais(p.nome))}</div>
+        <div class="flex-1 min-w-0"><div class="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">${esc(p.nome)}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">${esc(p.setor)}</div></div>
         <span class="birthday-pill">dia ${p.dia}</span>
-      </a>`).join("");
+      </a>`).join("") || `<div class="text-sm text-slate-400 py-3">Nenhum outro aniversariante neste mês.</div>`;
 
     return {
       title: "Aniversariante do Dia",
