@@ -23,6 +23,54 @@
     </a>`;
   }
 
+  // ---------- números reais (GET /dashboard/resumo): carregando, erro ou valores do banco ----------
+  const num = (n) => Number(n).toLocaleString("pt-BR");
+  function cartaoNumero(rot, valor, sub, rota, tom) {
+    const abre = rota === "notif" ? `<button type="button" data-notif-card class="card p-4 hover:shadow-md transition-shadow block text-left w-full" data-stat="${esc(rot)}">` : `<a href="${rota}" class="card p-4 hover:shadow-md transition-shadow block" data-stat="${esc(rot)}">`;
+    return `${abre}
+      <div class="text-xs font-bold text-slate-500 dark:text-slate-400">${esc(rot)}</div>
+      <div class="text-3xl font-extrabold ${tom === "alerta" ? "text-wine" : "text-slate-800 dark:text-slate-100"} mt-1">${valor === null ? `<span class="animate-pulse text-slate-300">…</span>` : esc(num(valor))}</div>
+      <div class="text-xs text-slate-400 mt-0.5">${esc(sub)}</div>${rota === "notif" ? "</button>" : "</a>"}`;
+  }
+  function cartoes(r) {
+    const p = r ? r.pessoal : null, a = r ? r.admin : null, v = (f) => (r ? f() : null);
+    const pessoais = [
+      cartaoNumero("COMUNICADOS PUBLICADOS", v(() => p.avisos_publicados), "no mural", "#/avisos"),
+      cartaoNumero("PRÓXIMOS EVENTOS", v(() => p.eventos_proximos), r ? `${p.minhas_inscricoes} inscrições suas` : "", "#/eventos"),
+      cartaoNumero("DOCUMENTOS DISPONÍVEIS", v(() => p.documentos_disponiveis), "que você pode acessar", "#/documentos"),
+      cartaoNumero("MINHAS AVALIAÇÕES", v(() => p.avaliacoes_pendentes), "pendentes", "#/avaliacoes", r && p.avaliacoes_pendentes ? "alerta" : ""),
+      cartaoNumero("MEUS CHAMADOS", v(() => p.chamados_abertos), "em aberto", "#/perfil"),
+      cartaoNumero("NOTIFICAÇÕES", v(() => p.notificacoes_nao_lidas), "não lidas", "notif", r && p.notificacoes_nao_lidas ? "alerta" : ""),
+    ];
+    const admin = !r || a ? [
+      cartaoNumero("USUÁRIOS ATIVOS", v(() => a.usuarios_ativos), r ? `${a.usuarios_inativos} inativos · ${a.setores} setores` : "", "#/admin/usuarios"),
+      cartaoNumero("CHAMADOS EM ABERTO", v(() => a.chamados.abertos + a.chamados.em_analise), r ? `${a.chamados.alta_prioridade_pendentes} de alta prioridade` : "", "#/admin/chamados", r && a.chamados.alta_prioridade_pendentes ? "alerta" : ""),
+      cartaoNumero("AVALIAÇÕES PENDENTES", v(() => a.avaliacoes.pendentes + a.avaliacoes.em_analise), r ? `${a.avaliacoes.aprovadas + a.avaliacoes.rejeitadas} concluídas` : "", "#/admin/avaliacoes"),
+      cartaoNumero("SOLICITAÇÕES CADASTRAIS", v(() => a.solicitacoes_pendentes), "aguardando análise", "#/admin/solicitacoes", r && a.solicitacoes_pendentes ? "alerta" : ""),
+      cartaoNumero("AVISOS", v(() => a.avisos.publicados), r ? `${a.avisos.agendados} agendados · ${a.avisos.rascunhos} rascunhos · ${num(a.avisos.leituras)} leituras` : "", "#/admin/noticias"),
+      cartaoNumero("INSCRIÇÕES EM EVENTOS", v(() => a.eventos.inscricoes), r ? `${a.eventos.proximos} eventos próximos` : "", "#/admin/eventos"),
+    ] : [];
+    return { pessoais: pessoais.join(""), admin: admin.join("") };
+  }
+  async function carregarNumeros() {
+    const box = document.getElementById("dash-stats"); if (!box) return;
+    const souAdmin = App.can("manage_users");
+    const pinta = (r) => {
+      const c = cartoes(r);
+      box.setAttribute("aria-busy", r ? "false" : "true");
+      box.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">${c.pessoais}</div>${souAdmin ? `<div class="text-xs font-bold text-slate-400 mt-4 mb-2">VISÃO ADMINISTRATIVA</div><div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">${c.admin}</div>` : ""}`;
+    };
+    if (!box.dataset.wired) { box.dataset.wired = "1"; box.addEventListener("click", (e) => { if (e.target.closest("[data-notif-card]")) App.openNotifPanel(); }); }
+    pinta(null);
+    try { const r = await Services.dashboard.resumo(); if (document.getElementById("dash-stats")) pinta(r); }
+    catch (err) {
+      if (!document.getElementById("dash-stats")) return;
+      box.setAttribute("aria-busy", "false");
+      box.innerHTML = `<div class="card p-4 flex items-center justify-between gap-3 flex-wrap"><span class="text-sm text-slate-500">Não foi possível carregar os números do painel. ${esc(err.message || "")}</span><button class="btn-outline text-xs px-3 py-1.5" id="dash-retry">Tentar novamente</button></div>`;
+      document.getElementById("dash-retry").addEventListener("click", carregarNumeros);
+    }
+  }
+
   function dashboard() {
     const u = App.state.user;
     const souAniversariante = App.souAniversariante();
@@ -53,7 +101,7 @@
     // destaque leve (próximo evento) — "outras besteiras" que merecem um
     // segundo de atenção sem competir com o conteúdo principal da página.
     const slides = [
-      { photo: "doctor", pos: "50% 12%", badge: "DOCUMENTOS & POPS", titulo: "Protocolos assistenciais atualizados este mês",
+      { photo: "doctor", pos: "50% 12%", badge: "DOCUMENTOS & POPS", titulo: "Central de documentos e protocolos",
         texto: "Consulte os POPs, manuais e formulários vigentes em um só lugar.", cta: "Acessar central de documentos", href: "#/documentos" },
       ...(urgente ? [{ photo: "news", pos: "50% 28%", shape: "rect", badge: "🔥 URGENTE", titulo: esc(urgente.titulo.split(" - ")[0].slice(0,60)),
         texto: esc(urgente.resumo.slice(0,90) + "…"), cta: "Ver comunicado urgente", href: `#/avisos/${urgente.id}` }] : []),
@@ -111,6 +159,8 @@
         <div class="qa-viewport"><div class="qa-strip">${acessosRapidos}</div></div>
       </div>
 
+      <div id="dash-stats" class="mb-6" aria-busy="true"></div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="lg:col-span-2 space-y-4">
           <div class="carousel" id="dash-carousel">
@@ -148,6 +198,7 @@
         </div>
       </div>`,
       init() {
+        carregarNumeros();
         wireList({
           containerId: "dash-avisos", itemSel: ".dash-aviso-wrap", size: 4,
           pagerId: "dash-pager", infoId: "dash-info", label: "comunicados",
