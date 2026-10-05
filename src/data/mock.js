@@ -54,9 +54,7 @@ window.DB = (function () {
 
   // id estável: o estado "lida" é salvo por id, então incluir notificações
   // novas não bagunça quais já foram lidas.
-  const stats = {
-    documentos: { total: 124, novos: 18, protocolos: 48, downloads: "1.284", pendencias: 3 },
-  };
+  const stats = {}; // estatísticas reais vêm da API (M10 revisa o restante)
 
   // ---- Papéis (roles) e matriz de permissão ----
   // No modo integrado só existem dois papéis, derivados de GET /auth/me (user.perfil):

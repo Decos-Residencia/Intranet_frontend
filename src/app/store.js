@@ -33,7 +33,7 @@
     inscricoes: [], chamados: [],
     // ---- somente em memória ----
     ready: false, auth: false, user: null, loadError: null,
-    api: emptyApi(), docsAdm: [], usuarios: [],
+    api: emptyApi(), usuarios: [],
     notificacoes: [], naoLidas: 0,
   };
   PERSISTED.forEach((k) => { if (k in stored) state[k] = stored[k]; });
@@ -58,7 +58,6 @@
   /* ---------- sessão ---------- */
   function resetServerData() {
     state.api = emptyApi();
-    state.docsAdm = [];
     state.usuarios = [];
     state.notificacoes = [];
     state.naoLidas = 0;
@@ -146,7 +145,6 @@
   async function deleteRemoteItem(coll, id) {
     const item = coll && id ? App.findItem(coll, id) : null;
     if (!item?.apiId) return;
-    if (coll === "docsAdm") await Services.documentos.remove(item.apiId);
   }
 
   /* ---------- API → formato das telas ---------- */
@@ -180,30 +178,27 @@
     };
   }
 
-  function nomeDoArquivo(url) {
-    try {
-      const u = new URL(url);
-      const ultimo = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
-      return ultimo || u.hostname;
-    } catch (_) { return url; }
-  }
+  const fmtBytes = (n) => {
+    if (!Number.isFinite(n)) return "—";
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${Math.max(1, Math.round(n / 1024))} KB`;
+    return `${(n / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
+  };
+  const extDoArquivo = (nome) => ((String(nome || "").split(".").pop() || "").toLowerCase());
 
-  // O backend guarda só título, categoria e URL. O resto não existe (BACKEND FUTURO).
-  function apiDocumentoParaPublico(d) {
-    const tipo = (d.categoria || "DOCUMENTO").toUpperCase();
-    const def = (window.AdminUI?.TIPOS_DOC || []).find((t) => t.value === tipo);
-    const arquivo = nomeDoArquivo(d.url_arquivo);
+  // Metadados reais do documento (GET /documentos). Nada aqui vem de mock: o arquivo fica no
+  // Storage privado e só é acessado por URL assinada (Services.documentos.download).
+  function apiDocumentoParaView(d) {
+    const tipo = (d.categoria || "").trim();
+    const def = (window.AdminUI?.TIPOS_DOC || []).find((t) => t.value.toLowerCase() === tipo.toLowerCase());
     return {
       id: String(d.id), apiId: d.id, source: "api", tipo, cor: def?.cor || "blue",
-      titulo: d.titulo, data: fmt(fmtLonga, d.data_upload), desc: "",
-      tamanho: "—", download: true, icone: /\.docx?$/i.test(arquivo) ? "W" : undefined,
-      arquivo, url: d.url_arquivo, versao: "—", criadoPor: "—", setor: "—", atualizado: fmt(fmtCurta, d.data_upload),
+      titulo: d.titulo, desc: d.descricao || "", versao: d.versao, setorId: d.setor_id, setor: d.setor || "",
+      arquivo: d.arquivo_nome, ext: extDoArquivo(d.arquivo_nome), mime: d.mime_type, tamanhoBytes: d.tamanho_bytes,
+      tamanho: fmtBytes(d.tamanho_bytes), enviadoPor: d.enviado_por || "—", ativo: d.ativo !== false,
+      data: fmt(fmtLonga, d.data_upload), atualizado: fmt(fmtLonga, d.atualizado_em), atualizadoHora: fmt(fmtHora, d.atualizado_em),
+      download: true,
     };
-  }
-
-  function apiDocumentoParaAdmin(d) {
-    const pub = apiDocumentoParaPublico(d);
-    return { ...pub, own: true, status: "Publicado", permissao: "download", quando: fmt(fmtHora, d.data_upload), autor: "—" };
   }
 
   function apiFaqParaView(f) {
@@ -312,10 +307,8 @@
     if (data.solicitacoes) state.api.solicitacoes = data.solicitacoes;
     if (typeof data.pendentes === "number") state.api.solicitacoesPendentes = data.pendentes;
     if (data.avisos) state.api.avisos = data.avisos.map(apiAvisoParaCard);
-    if (data.documentos) {
-      state.api.documentos = data.documentos.map(apiDocumentoParaPublico);
-      state.docsAdm = data.documentos.map(apiDocumentoParaAdmin);
-    }
+    // O backend já filtra por papel e setor (ADMIN: todos; colaborador: gerais e do seu setor, ativos).
+    if (data.documentos) state.api.documentos = data.documentos.map(apiDocumentoParaView);
     // O ADMIN recebe também as inativas; a tela de leitura (#/faq) mostra só as ativas.
     if (data.faqs) state.api.faqs = data.faqs.filter((f) => f.ativo !== false).map(apiFaqParaView);
     state.api.loaded = true;

@@ -64,7 +64,7 @@
         try { await PagesAdmin.submitNoticia(el.dataset.status); }
         catch (err) { App.toast(err.message || "Não foi possível salvar a notícia."); } }
       else if (a === "save-documento") { e.preventDefault();
-        try { await PagesAdmin.submitDocumento(el.dataset.status); }
+        try { await PagesAdmin.submitDocumento(); }
         catch (err) { App.toast(err.message || "Não foi possível salvar o documento."); } }
       else if (a === "delete-row") { e.preventDefault();
         const row = el.closest("tr"), alvo = el.dataset.alvo, tipo = el.dataset.tipo, { coll, id } = el.dataset;
@@ -122,7 +122,20 @@
           catch (err) { App.toast(err.message || "Não foi possível excluir a pergunta."); }
           await App.loadApiData(); App.render();
         }, "Sim, excluir"); }
-      else if (a === "open-doc-url") { e.preventDefault(); App.abrirDocumento(el.dataset.id); }
+      else if (a === "open-doc-url") { e.preventDefault(); await App.abrirDocumento(el.dataset.id, true); }
+      else if (a === "replace-doc") { e.preventDefault(); await PagesAdmin.substituirDocumento(); }
+      else if (a === "toggle-doc") { e.preventDefault();
+        try { await Services.documentos.update(el.dataset.id, { ativo: el.dataset.ativo === "true" });
+          App.toast(el.dataset.ativo === "true" ? "Documento ativado" : "Documento desativado"); }
+        catch (err) { App.toast(err.message || "Não foi possível alterar o status."); }
+        await App.loadApiData(); App.render(); }
+      else if (a === "delete-doc") { e.preventDefault();
+        const { id, alvo } = el.dataset;
+        App.openConfirm("Excluir documento?", `O documento <b>${UI.esc(alvo || "")}</b> e o arquivo dele serão excluídos definitivamente. Para apenas escondê-lo, use <b>Desativar</b>.`, async () => {
+          try { await Services.documentos.remove(id); App.toast("Documento excluído"); }
+          catch (err) { App.toast(err.message || "Não foi possível excluir o documento."); }
+          await App.loadApiData(); App.render();
+        }, "Sim, excluir"); }
       else if (a === "open-chamado") { e.preventDefault(); App.toggleFab(false); App.openChamadoPanel(el.dataset.tipo || "geral"); }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
       else if (a === "open-pedido") { e.preventDefault(); App.openPedidoPanel(); }
@@ -140,7 +153,6 @@
           catch (err) { App.toast(err.message || "Não foi possível excluir o aviso."); }
           await App.loadApiData(); App.render();
         }); }
-      else if (a === "preview-doc") { e.preventDefault(); PagesAdmin.previewDocumento(el.dataset.id); }
       else if (a === "toggle-inscricao") { e.preventDefault(); const id = +el.dataset.id, ev = DB.eventos.find((x) => x.id === id);
         const on = state.inscricoes.includes(id);
         state.inscricoes = on ? state.inscricoes.filter((x) => x !== id) : [...state.inscricoes, id]; App.save();

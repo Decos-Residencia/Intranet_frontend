@@ -15,7 +15,6 @@
     { re: /^#\/eventos\/(\d+)$/, page: (m) => Pages.eventoDetalhe(m[1]) },
     { re: /^#\/documentos$/, page: () => Pages.documentos() },
     { re: /^#\/documentos\/([\w-]+)$/, page: (m) => Pages.documentoView(m[1]) },
-    { re: /^#\/documentos\/([\w-]+)\/restrito$/, page: (m) => PagesAdmin.adminDocumentoRestrito(m[1]) },
     { re: /^#\/faq$/, page: () => Pages.faq() },
     { re: /^#\/diretorio$/, page: () => Pages.diretorio() },
     { re: /^#\/perfil$/, page: () => Pages.perfil() },
@@ -27,7 +26,6 @@
     { re: /^#\/admin\/documentos$/, page: () => PagesAdmin.adminDocumentos(), need: "manage_docs" },
     { re: /^#\/admin\/documentos\/novo$/, page: () => PagesAdmin.adminDocumentoNovo(), need: "manage_docs" },
     { re: /^#\/admin\/documentos\/([\w-]+)\/editar$/, page: (m) => PagesAdmin.adminDocumentoNovo(m[1]), need: "manage_docs" },
-    { re: /^#\/admin\/documentos\/([\w-]+)\/restrito$/, page: (m) => PagesAdmin.adminDocumentoRestrito(m[1]), need: "manage_docs" },
     // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
     { re: /^#\/admin\/faqs$/, page: () => PagesAdmin.adminFaqs(), need: "manage_faq" },

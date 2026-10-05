@@ -1,23 +1,27 @@
 /* =========================================================================
-   Baixar documento (PDF/DOC) e adicionar evento à agenda (.ics)
+   Abrir/baixar documento (URL assinada) e adicionar evento à agenda (.ics)
    ========================================================================= */
 (function () {
-  // O arquivo real está numa URL externa (backend só guarda a URL). Abre em nova
-  // aba, sem enviar referrer e sem acesso ao window.opener. Só http(s).
-  function abrirDocumento(id) {
-    const d = App.documentosAll().find((x) => String(x.id) === String(id));
-    if (!d) { App.toast("Documento não encontrado"); return; }
-    let url;
-    try { url = new URL(d.url); } catch (_) { url = null; }
-    if (!url || !/^https?:$/.test(url.protocol)) { App.toast("O endereço deste documento é inválido"); return; }
-    window.open(url.href, "_blank", "noopener,noreferrer");
+  // O arquivo fica no Supabase Storage PRIVADO. O backend valida login e permissão por setor e devolve
+  // uma URL assinada de 60 s, usada na hora (nunca guardada). inline=true abre no navegador.
+  async function abrirDocumento(id, inline = true) {
+    try {
+      const r = await Services.documentos.download(id, inline);
+      if (!/^https?:\/\//.test(r.url)) throw new Error("Endereço de download inválido.");
+      const a = document.createElement("a");
+      a.href = r.url; a.rel = "noopener noreferrer";
+      if (inline) a.target = "_blank";
+      document.body.appendChild(a); a.click(); a.remove();
+      return r;
+    } catch (err) {
+      App.toast(err.message || "Não foi possível abrir o documento.");
+      return null;
+    }
   }
-  function baixarDocumento(id) {
-    const d = App.documentosAll().find((x) => String(x.id) === String(id));
-    if (!d) return;
-    if (!d.download || !App.can("download")) { App.toast("Download não permitido para este documento"); return; }
-    abrirDocumento(id);
-    App.toast(`Abrindo ${d.arquivo}`);
+  async function baixarDocumento(id) {
+    if (!App.can("download")) { App.toast("Download não permitido para o seu perfil"); return; }
+    const r = await abrirDocumento(id, false);
+    if (r) App.toast(`Baixando ${r.arquivo_nome}`);
   }
   function baixarIcs(ev) {
     if (!ev) return;

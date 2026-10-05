@@ -1,103 +1,60 @@
 /* =========================================================================
    Tela: Central de Documentos & POPs
    Rota: #/documentos
+   Fonte: GET /documentos (o backend já entrega só o que o usuário pode ver: documentos gerais e do
+   seu setor, ativos). Categorias e contagens vêm dos próprios dados; nada é mock.
    ========================================================================= */
 (function () {
   const { icon, badge, breadcrumb, esc } = UI;
-  const { wireFilters, wireList } = Lib;
+  const { wireList } = Lib;
+
+  const ICONES = { pdf: ["PDF", "bg-red-50 text-red-600 dark:bg-red-500/10"], doc: ["W", "bg-blue-50 text-blue-600 dark:bg-blue-500/10"], docx: ["W", "bg-blue-50 text-blue-600 dark:bg-blue-500/10"], xls: ["X", "bg-green-50 text-green-600 dark:bg-green-500/10"], xlsx: ["X", "bg-green-50 text-green-600 dark:bg-green-500/10"] };
+  const iconeArquivo = (ext, cls = "") => { const [t, c] = ICONES[ext] || ["DOC", "bg-slate-100 text-slate-600"]; return `<div class="doc-icon ${c} ${cls}">${t}</div>`; };
+  const corBadge = (c) => (c === "red" ? "red" : c === "amber" ? "amber" : c === "green" ? "green" : "blue");
 
   function documentos() {
     const docs = App.documentosAll();
-    const vazio = docs.length ? "Nenhum documento neste tipo." : "Nenhum documento encontrado.";
-    const cards = docs.map((d) => docCard(d)).join("");
-    const rows = docs.map((d) => docCardList(d)).join("");
-    const map = { "Todos": "all", "Protocolos": "PROTOCOLO", "Manuais": "MANUAL", "Formulários": "FORMULÁRIO", "POPs": "POP", "Normas": "NORMA" };
-    const filterFn = (el, f) => { const tp = map[f] || "all"; return tp === "all" || el.dataset.tipo === tp; };
+    const categorias = [...new Set(docs.map((d) => d.tipo).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const cards = docs.map((d) => `
+      <div class="card p-5 flex flex-col doc-item" data-tipo="${esc(d.tipo)}" data-busca="${esc((d.titulo + " " + d.desc + " " + d.tipo + " " + d.arquivo).toLowerCase())}">
+        <div class="flex items-center justify-between mb-3">${badge(corBadge(d.cor), esc(d.tipo || "Documento"))}<span class="text-xs text-slate-400">v${esc(d.versao)} · ${esc(d.atualizado)}</span></div>
+        <div class="flex gap-3 mb-3">${iconeArquivo(d.ext)}<div><h3 class="font-bold text-slate-800 dark:text-slate-100 leading-snug">${esc(d.titulo)}</h3>
+          <div class="text-xs text-slate-400 mt-0.5">${d.setor ? `Setor: ${esc(d.setor)}` : "Documento geral"}</div></div></div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 flex-1 mb-4">${esc(d.desc || "Sem descrição.")}</p>
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <span class="text-xs text-slate-400">${esc(d.ext.toUpperCase())} · ${esc(d.tamanho)}</span>
+          <div class="flex items-center gap-2"><a href="#/documentos/${esc(d.id)}" class="btn-outline text-xs px-4 py-2">Detalhes</a>
+            ${App.can("download") ? `<button data-action="download-doc" data-id="${esc(d.id)}" class="btn-wine-soft text-xs px-4 py-2 flex items-center gap-1">${icon("download", "w-3.5 h-3.5")} Baixar</button>` : ""}</div>
+        </div>
+      </div>`).join("");
     return {
       title: "Central de Documentos & POPs",
       html: `
-      ${breadcrumb([{label:"Início",route:"#/dashboard"},{label:"Documentos & POPs"}])}
+      ${breadcrumb([{ label: "Início", route: "#/dashboard" }, { label: "Documentos & POPs" }])}
       <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div class="flex gap-2 flex-wrap" data-filter-group="doc">
-          ${["Todos","Protocolos","Manuais","Formulários","POPs","Normas"].map((f,i)=>`<button class="chip ${i===0?"chip-active":""}" data-filter="${f}">${f}</button>`).join("")}
+          ${[["all", "Todos"], ...categorias.map((c) => [c, c])].map(([k, l], i) => `<button class="chip ${i === 0 ? "chip-active" : ""}" data-filter="${esc(k)}">${esc(l)}</button>`).join("")}
         </div>
-        <div class="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-full p-1" data-filter-group="doc-view">
-          <button class="chip chip-active" data-filter="grid">Grid</button>
-          <button class="chip" data-filter="lista">Lista</button>
-        </div>
+        <div class="search-box w-64"><span>${icon("search", "w-4 h-4 text-slate-400")}</span>
+          <input id="doc-busca" placeholder="Buscar documento..." maxlength="200" class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
       </div>
       <div id="doc-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">${cards}</div>
-      <div id="doc-list-wrap" class="hidden">
-        <div class="card divide-y divide-slate-50 dark:divide-slate-800" id="doc-list">${rows}</div>
-        <div class="flex items-center justify-between text-sm text-slate-400 mt-4 flex-wrap gap-3">
-          <span id="doc-info-list">Exibindo documentos</span>
-          <div class="flex gap-1.5" id="doc-pager-list"></div>
-        </div>
-      </div>
-      <div class="flex items-center justify-between text-sm text-slate-400 mt-6 flex-wrap gap-3" id="doc-grid-footer">
-        <span id="doc-info">Exibindo documentos</span>
-        <div class="flex gap-1.5" id="doc-pager"></div>
+      <div class="flex items-center justify-between text-sm text-slate-400 mt-6 flex-wrap gap-3">
+        <span id="doc-info"></span><div class="flex gap-1.5" id="doc-pager"></div>
       </div>`,
       init() {
         wireList({
-          containerId: "doc-grid", itemSel: ".doc-item", size: 3,
-          pagerId: "doc-pager", infoId: "doc-info", label: "documentos",
-          filterGroup: "doc", onEmpty: vazio, filterFn,
-        });
-        wireList({
-          containerId: "doc-list", itemSel: ".doc-item-list", size: 6,
-          pagerId: "doc-pager-list", infoId: "doc-info-list", label: "documentos",
-          onEmpty: vazio, filterFn,
-        });
-        wireFilters("doc-view", (f) => {
-          document.getElementById("doc-grid").classList.toggle("hidden", f !== "grid");
-          document.getElementById("doc-grid-footer").classList.toggle("hidden", f !== "grid");
-          document.getElementById("doc-list-wrap").classList.toggle("hidden", f !== "lista");
+          containerId: "doc-grid", itemSel: ".doc-item", size: 9, pagerId: "doc-pager", infoId: "doc-info", label: "documentos",
+          filterGroup: "doc", controls: ["#doc-busca"], onEmpty: docs.length ? "Nenhum documento encontrado." : "Nenhum documento disponível para você.",
+          filterFn: (el, f) => {
+            const q = (document.getElementById("doc-busca")?.value || "").trim().toLowerCase();
+            return (f === "all" || el.dataset.tipo === f) && (!q || el.dataset.busca.includes(q));
+          },
         });
       },
     };
   }
-  function docCardList(d) {
-    const fileIcon = d.icone === "W"
-      ? `<div class="doc-icon bg-blue-50 text-blue-600 dark:bg-blue-500/10 !w-10 !h-10 text-[10px]">W</div>`
-      : `<div class="doc-icon bg-red-50 text-red-600 dark:bg-red-500/10 !w-10 !h-10 text-[10px]">PDF</div>`;
-    const acao = !d.download
-      ? `<span class="tag-lock text-xs">${icon("lock","w-3.5 h-3.5")} Só visualização</span>`
-      : App.can("download")
-        ? `<button data-action="download-doc" data-id="${d.id}" class="btn-wine-soft text-xs px-3 py-1.5 flex items-center gap-1">${icon("download","w-3.5 h-3.5")} Baixar</button>`
-        : `<span class="tag-lock text-xs">${icon("lock","w-3.5 h-3.5")} Sem permissão</span>`;
-    return `<div class="flex items-center gap-4 p-4 doc-item-list" data-tipo="${esc(d.tipo)}">
-      ${fileIcon}
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap"><h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">${esc(d.titulo)}</h3>${badge(d.cor==="red"?"red":d.cor==="amber"?"amber":d.cor==="blue"?"blue":"green", esc(d.tipo))}</div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">${esc(d.desc)}</p>
-      </div>
-      <span class="text-xs text-slate-400 hidden sm:block w-16 shrink-0">${esc(d.tamanho)}</span>
-      <span class="text-xs text-slate-400 hidden md:block w-28 shrink-0">${d.data}</span>
-      <div class="flex items-center gap-2 shrink-0">
-        <a href="${d.download ? `#/documentos/${d.id}` : `#/documentos/${d.id}/restrito`}" class="btn-outline text-xs px-3 py-1.5">Ver</a>${acao}
-      </div>
-    </div>`;
-  }
-  function docCard(d) {
-    const fileIcon = d.icone === "W"
-      ? `<div class="doc-icon bg-blue-50 text-blue-600 dark:bg-blue-500/10">W</div>`
-      : `<div class="doc-icon bg-red-50 text-red-600 dark:bg-red-500/10">PDF</div>`;
-    const acao = !d.download
-      ? `<span class="tag-lock text-xs">${icon("lock","w-3.5 h-3.5")} Somente visualização</span>`
-      : App.can("download")
-        ? `<button data-action="download-doc" data-id="${d.id}" class="btn-wine-soft text-xs px-4 py-2 flex items-center gap-1">${icon("download","w-3.5 h-3.5")} Baixar</button>`
-        : `<span class="tag-lock text-xs">${icon("lock","w-3.5 h-3.5")} Sem permissão</span>`;
-    return `<div class="card p-5 flex flex-col doc-item" data-tipo="${esc(d.tipo)}">
-      <div class="flex items-center justify-between mb-3">${badge(d.cor==="red"?"red":d.cor==="amber"?"amber":d.cor==="blue"?"blue":"green", esc(d.tipo))}<span class="text-xs text-slate-400">${d.data}</span></div>
-      <div class="flex gap-3 mb-3">${fileIcon}<div><h3 class="font-bold text-slate-800 dark:text-slate-100 leading-snug">${esc(d.titulo)}</h3></div></div>
-      <p class="text-sm text-slate-500 dark:text-slate-400 flex-1 mb-4">${esc(d.desc)}</p>
-      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <span class="text-xs text-slate-400">${esc(d.tamanho)}</span>
-        <div class="flex items-center gap-2"><a href="${d.download ? `#/documentos/${d.id}` : `#/documentos/${d.id}/restrito`}" class="btn-outline text-xs px-4 py-2">Visualizar</a>${acao}</div>
-      </div>
-    </div>`;
-  }
 
   Object.assign(Pages, { documentos });
+  Object.assign(UI, { iconeArquivoDoc: iconeArquivo });
 })();

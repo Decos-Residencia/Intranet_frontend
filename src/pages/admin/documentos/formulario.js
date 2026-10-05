@@ -1,101 +1,164 @@
 /* =========================================================================
-   Tela: Adicionar / Editar Documento
+   Tela: Adicionar / Editar Documento (ADMIN)
    Rota: #/admin/documentos/novo · #/admin/documentos/:id/editar
-   Persistido no backend (POST/PUT /documentos): título, categoria e
-   url_arquivo (URL https:// do arquivo). Não há upload nesta versão.
-   BACKEND FUTURO (não salvos nem simulados): setor, versão, código,
-   descrição, permissão de download, rascunho e revisão.
+   Upload real: arquivo + metadados vão para POST /documentos (multipart); o backend valida (20 MB; PDF,
+   DOC, DOCX, XLS, XLSX; extensão + MIME + conteúdo) e grava no Supabase Storage privado. Editar muda só
+   os metadados; "Substituir arquivo" usa PUT /documentos/{id}/arquivo (o anterior só some depois do novo).
    ========================================================================= */
 (function () {
-  const { icon, breadcrumb, esc } = UI;
-  const { opts, TIPOS_DOC, fieldLbl, guide } = AdminUI;
+  const { breadcrumb, esc } = UI;
+  const { TIPOS_DOC } = AdminUI;
+
+  const MAX_BYTES = 20 * 1024 * 1024;
+  const EXTENSOES = ["pdf", "doc", "docx", "xls", "xlsx"];
+  const bytes = (n) => (n < 1048576 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1048576).toFixed(1).replace(".", ",")} MB`);
+
+  const fld = (label, html, hint) => `<div><label class="field-label">${label}</label>${html}${hint ? `<div class="field-hint">${hint}</div>` : ""}</div>`;
+  const $ = (i) => document.getElementById(i);
+
+  // Mensagem de estado do envio: idle | enviando | sucesso | erro
+  function estado(tipo, texto) {
+    const el = $("dc-estado");
+    if (!el) return;
+    const cores = { enviando: "text-slate-600 dark:text-slate-300", sucesso: "text-green-600 dark:text-green-400", erro: "text-red-600 dark:text-red-400" };
+    el.className = `text-sm font-semibold ${cores[tipo] || ""} ${texto ? "" : "hidden"}`;
+    el.textContent = texto ? (tipo === "enviando" ? "⏳ " : tipo === "sucesso" ? "✓ " : "⚠ ") + texto : "";
+  }
+  const ocupado = (sim) => document.querySelectorAll("#form-doc button, #form-doc input, #form-doc select, #form-doc textarea").forEach((e) => { e.disabled = sim; });
+
+  function validarArquivo(file) {
+    if (!file) return "Selecione um arquivo.";
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    if (!EXTENSOES.includes(ext)) return "Formato não permitido. Envie PDF, DOC, DOCX, XLS ou XLSX.";
+    if (file.size === 0) return "O arquivo está vazio.";
+    if (file.size > MAX_BYTES) return `O arquivo (${bytes(file.size)}) passa do limite de 20 MB.`;
+    return "";
+  }
 
   function adminDocumentoNovo(id) {
-    const d = id ? App.findItem("docsAdm", id) : null;
-    if (id && !d) return App.missingPage("Documento não encontrado", "Este documento não existe ou foi removido.", "#/admin/documentos", "Voltar aos documentos");
-    const step = (n, t) => `<h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4"><span class="w-1 h-5 bg-crimson rounded-full"></span>${n}. ${t}</h3>`;
+    const setores = App.setoresAll();
+    const categorias = [...new Set([...TIPOS_DOC.map((t) => t.value), ...App.documentosAll().map((d) => d.tipo)].filter(Boolean))];
     return {
-      title: "Central de Documentos & POPs",
+      title: id ? "Editar Documento" : "Adicionar Documento",
       html: `
-      ${breadcrumb([{label:"Início",route:"#/dashboard"},{label:"Documentos & POPs",route:"#/admin/documentos"},{label: d ? "Editar Documento" : "Adicionar Documento"}])}
-      <div class="mb-6"><div class="text-sm text-slate-400">Hospital Decós Intranet • Editor & Gestor</div>
-      <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">${d ? "Editar Documento" : "Criar Nova Publicação de Documento"}</h2></div>
-      <form id="form-doc" data-id="${esc(d?.id || "")}" data-action="prevent" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div class="lg:col-span-2 space-y-6">
-          <div class="card p-6">${step(1,"Informações Básicas do Documento")}
-            <div class="space-y-4">
-              <div>${fieldLbl("Título do Documento ou POP *", "dc-titulo")}<input id="dc-titulo" class="field-input" maxlength="140" placeholder="Digite o título oficial..." value="${esc(d?.titulo || "")}">
-                <div class="field-hint">Insira um título claro e objetivo (Ex: POP - Higienização Simples das Mãos)</div></div>
-              <div>${fieldLbl("Categoria *", "dc-tipo")}<select id="dc-tipo" class="field-input">${opts(TIPOS_DOC, d?.tipo || "POP")}</select></div>
+      ${breadcrumb([{ label: "Início", route: "#/dashboard" }, { label: "Documentos", route: "#/admin/documentos" }, { label: id ? "Editar" : "Novo documento" }])}
+      <div class="mb-6"><div class="text-sm text-slate-400">Hospital Decós Intranet • Painel Administrador</div>
+      <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">${id ? "Editar Documento" : "Adicionar Documento Oficial"}</h2></div>
+      <form id="form-doc" data-id="${esc(id || "")}" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" data-action="prevent">
+        <div class="lg:col-span-2 space-y-5">
+          <div class="card p-6 space-y-4">
+            ${fld("TÍTULO DO DOCUMENTO *", `<input id="dc-titulo" class="field-input" maxlength="200" placeholder="Ex: POP — Higienização das Mãos">`)}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${fld("CATEGORIA *", `<input id="dc-categoria" class="field-input" maxlength="100" list="dc-cats" placeholder="Ex: POP, Protocolo, Manual"><datalist id="dc-cats">${categorias.map((c) => `<option value="${esc(c)}">`).join("")}</datalist>`)}
+              ${fld("VERSÃO", `<input id="dc-versao" class="field-input" maxlength="30" value="1.0">`, "Texto livre controlado por você (ex.: 1.0, 2.3, 2026-10).")}
+            </div>
+            ${fld("DESCRIÇÃO", `<textarea id="dc-desc" class="field-input" rows="3" maxlength="2000" placeholder="Opcional: resumo do que o documento contém"></textarea>`)}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${fld("QUEM PODE VER", `<select id="dc-setor" class="field-input"><option value="">Geral — todos os colaboradores</option>${setores.map((s) => `<option value="${s.id}">Somente o setor ${esc(s.nome)}</option>`).join("")}</select>`, "Documentos restritos só aparecem para o setor escolhido e para administradores.")}
+              ${fld("STATUS", `<select id="dc-ativo" class="field-input"><option value="true">Ativo (visível)</option><option value="false">Inativo (escondido)</option></select>`)}
             </div>
           </div>
-          <div class="card p-6">${step(2,"Endereço do Arquivo Oficial")}
-            ${fieldLbl("URL do arquivo (https://) *", "dc-url")}
-            <input id="dc-url" type="url" class="field-input" maxlength="2048" placeholder="https://exemplo.com/documentos/pop-higienizacao.pdf" value="${esc(d?.url || "")}" autocomplete="off">
-            <div class="field-hint">O arquivo precisa estar hospedado em um endereço público https://. O envio de arquivos (upload) ainda não está disponível.</div>
+          <div class="card p-6" id="dc-bloco-arquivo">
+            ${id ? `<div class="font-bold text-slate-800 dark:text-slate-100 mb-1">Arquivo atual</div><div class="text-sm text-slate-500 dark:text-slate-400 mb-4" id="dc-atual">Carregando…</div>
+              <div class="font-bold text-slate-800 dark:text-slate-100 mb-2">Substituir arquivo</div>
+              ${fld("NOVO ARQUIVO", `<input id="dc-arquivo" type="file" class="field-input" accept=".pdf,.doc,.docx,.xls,.xlsx">`, "O arquivo anterior só é removido depois que o novo estiver salvo com sucesso.")}
+              <button type="button" data-action="replace-doc" class="btn-outline mt-3 px-5 py-2.5">Substituir arquivo</button>`
+              : fld("ARQUIVO *", `<input id="dc-arquivo" type="file" class="field-input" accept=".pdf,.doc,.docx,.xls,.xlsx">`, "PDF, DOC, DOCX, XLS ou XLSX — até 20 MB. O arquivo é guardado em um armazenamento privado.")}
+            <div id="dc-arquivo-info" class="text-xs text-slate-400 mt-2"></div>
+          </div>
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div id="dc-estado" class="hidden"></div>
+            <div class="flex gap-3 ml-auto">
+              <a href="#/admin/documentos" class="btn-outline px-6 py-2.5">Cancelar</a>
+              <button type="button" id="dc-salvar" data-action="save-documento" class="btn-crimson px-6 py-2.5" ${id ? "disabled" : ""}>${id ? "Salvar alterações" : "Enviar documento"}</button>
+            </div>
           </div>
         </div>
-        <aside class="space-y-5">
-          <div class="card p-6"><h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4"><span class="w-1 h-5 bg-crimson rounded-full"></span>Publicação</h3>
-            <div class="space-y-2 text-sm" id="dc-check"></div>
-            <button type="button" data-action="save-documento" data-status="Publicado" class="btn-crimson w-full mt-5 py-3">${d ? "Salvar alterações" : "Publicar Documento"}</button>
-            <a href="#/admin/documentos" class="block text-center text-sm font-bold text-slate-500 mt-3 hover:underline">Cancelar</a>
-            <p class="text-xs text-slate-400 mt-3">Setor, versão, descrição, permissões, rascunho e revisão ainda não são salvos pelo servidor (recursos futuros). O documento é publicado imediatamente.</p>
-          </div>
-          <div class="card p-6"><h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3"><span class="w-1 h-5 bg-crimson rounded-full"></span>Diretrizes de Qualidade</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Todos os documentos e POPs publicados na Intranet Hospitalar Decós passam por revisão sistemática do Núcleo de Gestão de Qualidade e SCIH para garantir conformidade técnica.</p>
-            <div class="space-y-3">${guide("edit","Linguagem Técnica","Mantenha a terminologia médica padrão e passos numerados.")}
-            ${guide("shield","Checagem de Segurança","Evidencie pontos críticos de biossegurança ou dupla checagem.")}</div>
+        <aside class="space-y-4">
+          <div class="card p-5 ring-1 ring-crimson/20">
+            <div class="font-bold text-crimson mb-1">Como funciona</div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">O arquivo vai para um armazenamento <b>privado</b>. Os colaboradores abrem por um link temporário (60 s) gerado após conferir o login e o setor.</p>
+            <p class="text-xs text-slate-400 mt-3">Validamos o tipo real do arquivo, não só a extensão.</p>
           </div>
         </aside>
       </form>`,
-      init() {
-        const $ = (i) => document.getElementById(i);
-        const check = () => {
-          const itens = [
-            [$("dc-titulo").value.trim().length >= 5, "Título válido inserido"],
-            [urlHttps($("dc-url").value) !== null, "URL https:// válida"],
-          ];
-          $("dc-check").innerHTML = itens.map(([ok, t]) => `<div class="flex items-center gap-2 ${ok ? "text-slate-600 dark:text-slate-300" : "text-slate-400"}">${icon(ok ? "check" : "x", `w-4 h-4 ${ok ? "text-green-500" : "text-slate-300"}`)} ${t}</div>`).join("");
-        };
-        ["dc-titulo", "dc-url"].forEach((i) => $(i).addEventListener("input", check));
-        check();
-      },
+      init() { iniciar(id); },
     };
   }
 
-  // Devolve a URL normalizada se for https:// válida; senão null.
-  function urlHttps(valor) {
+  async function iniciar(id) {
+    const arq = $("dc-arquivo");
+    arq?.addEventListener("change", () => {
+      const f = arq.files?.[0];
+      const erro = f ? validarArquivo(f) : "";
+      $("dc-arquivo-info").textContent = f ? (erro || `${f.name} · ${bytes(f.size)}`) : "";
+      $("dc-arquivo-info").className = `text-xs mt-2 ${erro ? "text-red-600" : "text-slate-400"}`;
+    });
+    if (!id) return;
     try {
-      const u = new URL(String(valor).trim());
-      if (u.protocol !== "https:" || !u.hostname || u.username || u.password) return null;
-      return u.href.length <= 2048 ? u.href : null;
-    } catch (_) { return null; }
-  }
-
-  async function submitDocumento() {
-    const f = document.getElementById("form-doc");
-    if (!f) return;
-    const v = (i) => document.getElementById(i).value.trim();
-    const titulo = v("dc-titulo");
-    if (titulo.length < 5) { App.toast("Informe um título com pelo menos 5 caracteres"); document.getElementById("dc-titulo").focus(); return; }
-    const url = urlHttps(v("dc-url"));
-    if (!url) { App.toast("Informe uma URL https:// válida para o arquivo"); document.getElementById("dc-url").focus(); return; }
-    const tipo = TIPOS_DOC.find((t) => t.value === v("dc-tipo")) || TIPOS_DOC[0];
-    const payload = { titulo, categoria: tipo.value, url_arquivo: url };
-    const antigo = f.dataset.id ? App.findItem("docsAdm", f.dataset.id) : null;
-    const botoes = document.querySelectorAll('[data-action="save-documento"]');
-    botoes.forEach((b) => { b.disabled = true; });
-    try {
-      if (antigo?.apiId) await Services.documentos.update(antigo.apiId, payload);
-      else await Services.documentos.create(payload);
-      await App.loadApiData();
-      App.toast("Documento publicado na central!");
-      setTimeout(() => App.go("#/admin/documentos"), 500);
-    } finally {
-      botoes.forEach((b) => { b.disabled = false; });
+      const d = await Services.documentos.get(id);
+      if (!$("form-doc")) return;
+      $("dc-titulo").value = d.titulo; $("dc-categoria").value = d.categoria; $("dc-versao").value = d.versao;
+      $("dc-desc").value = d.descricao || ""; $("dc-setor").value = d.setor_id ? String(d.setor_id) : ""; $("dc-ativo").value = d.ativo ? "true" : "false";
+      $("dc-atual").innerHTML = `<b>${esc(d.arquivo_nome)}</b> · ${bytes(d.tamanho_bytes)} · enviado por ${esc(d.enviado_por || "—")} <button type="button" class="font-bold text-wine hover:underline ml-2" data-action="open-doc-url" data-id="${d.id}">Abrir</button>`;
+      $("dc-salvar").disabled = false;
+    } catch (err) {
+      App.toast(err.message || "Documento não encontrado."); App.go("#/admin/documentos");
     }
   }
 
-  Object.assign(PagesAdmin, { adminDocumentoNovo, submitDocumento });
+  async function submitDocumento() {
+    const f = $("form-doc");
+    if (!f) return;
+    const id = f.dataset.id;
+    const titulo = $("dc-titulo").value.trim(), categoria = $("dc-categoria").value.trim(), versao = $("dc-versao").value.trim() || "1.0";
+    const desc = $("dc-desc").value.trim(), setor = $("dc-setor").value, ativo = $("dc-ativo").value === "true";
+    if (!titulo) { App.toast("Informe o título do documento"); $("dc-titulo").focus(); return; }
+    if (!categoria) { App.toast("Informe a categoria"); $("dc-categoria").focus(); return; }
+    if (id) {
+      ocupado(true); estado("enviando", "Salvando alterações…");
+      try {
+        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc || null, setor_id: setor ? Number(setor) : null, ativo });
+        estado("sucesso", "Alterações salvas."); App.toast("Documento atualizado");
+        await App.loadApiData(); setTimeout(() => App.go("#/admin/documentos"), 400);
+      } catch (err) { estado("erro", err.message || "Não foi possível salvar."); ocupado(false); }
+      return;
+    }
+    const file = $("dc-arquivo").files?.[0];
+    const erro = validarArquivo(file);
+    if (erro) { estado("erro", erro); App.toast(erro); return; }
+    const data = new FormData();
+    data.append("arquivo", file); data.append("titulo", titulo); data.append("categoria", categoria); data.append("versao", versao);
+    data.append("ativo", String(ativo));
+    if (desc) data.append("descricao", desc);
+    if (setor) data.append("setor_id", setor);
+    ocupado(true); estado("enviando", `Enviando ${file.name} (${bytes(file.size)}) para o armazenamento seguro…`);
+    try {
+      await Services.documentos.create(data);
+      estado("sucesso", "Documento enviado com sucesso."); App.toast("Documento enviado e publicado");
+      await App.loadApiData(); setTimeout(() => App.go("#/admin/documentos"), 500);
+    } catch (err) { estado("erro", err.message || "Falha no envio."); App.toast(err.message || "Falha no envio do documento."); ocupado(false); }
+  }
+
+  async function substituirDocumento() {
+    const f = $("form-doc");
+    const file = $("dc-arquivo")?.files?.[0];
+    const erro = validarArquivo(file);
+    if (erro) { estado("erro", erro); App.toast(erro); return; }
+    const data = new FormData();
+    data.append("arquivo", file);
+    const versao = $("dc-versao").value.trim();
+    if (versao) data.append("versao", versao);
+    ocupado(true); estado("enviando", `Enviando ${file.name} (${bytes(file.size)})… o arquivo atual continua disponível até terminar.`);
+    try {
+      const d = await Services.documentos.substituirArquivo(f.dataset.id, data);
+      $("dc-atual").innerHTML = `<b>${esc(d.arquivo_nome)}</b> · ${bytes(d.tamanho_bytes)} · enviado por ${esc(d.enviado_por || "—")} <button type="button" class="font-bold text-wine hover:underline ml-2" data-action="open-doc-url" data-id="${d.id}">Abrir</button>`;
+      $("dc-versao").value = d.versao; $("dc-arquivo").value = ""; $("dc-arquivo-info").textContent = "";
+      estado("sucesso", "Arquivo substituído."); App.toast("Arquivo substituído com sucesso");
+      await App.loadApiData();
+    } catch (err) { estado("erro", err.message || "Falha ao substituir o arquivo."); App.toast(err.message || "Falha ao substituir o arquivo."); }
+    ocupado(false);
+  }
+
+  Object.assign(PagesAdmin, { adminDocumentoNovo, submitDocumento, substituirDocumento });
 })();
