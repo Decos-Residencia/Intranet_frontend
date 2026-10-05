@@ -5,6 +5,7 @@
 (function () {
   const routes = [
     { re: /^#\/login$/, page: () => Pages.login() },
+    { re: /^#\/redefinir-senha(?:\?(.+))?$/, page: (m) => Pages.redefinirSenha(m[1]) },
     { re: /^#\/trocar-senha$/, page: () => Pages.trocarSenha() },
     { re: /^#\/dashboard$/, page: () => Pages.dashboard() },
     { re: /^#\/avisos$/, page: () => Pages.avisos() },

@@ -42,7 +42,11 @@
                 <p>${icon("lock", "w-4 h-4 inline -mt-0.5")} <b>Acesso criado pelo administrador/RH.</b> No primeiro acesso, entre com a senha temporária que você recebeu e defina a sua.</p>
                 <details>
                   <summary class="cursor-pointer font-bold text-wine hover:underline">Esqueci minha senha</summary>
-                  <p class="mt-2">A redefinição é feita pelo administrador/RH. Procure o RH ou o administrador da intranet para receber uma nova senha temporária.</p>
+                  <form id="form-esqueceu-senha" class="mt-3 space-y-3">
+                    <input name="email" type="email" required placeholder="Digite seu e-mail cadastrado" class="field-input" autocomplete="email">
+                    <button type="submit" class="btn-outline w-full py-2 text-sm">Enviar link de recuperação</button>
+                    <p class="text-xs text-slate-400">Você receberá um link seguro para criar uma nova senha.</p>
+                  </form>
                 </details>
               </div>
             </div>
@@ -90,6 +94,24 @@
         tp && tp.addEventListener("click", () => {
           const inp = tp.previousElementSibling;
           inp.type = inp.type === "password" ? "text" : "password";
+        });
+        const forgot = document.getElementById("form-esqueceu-senha");
+        forgot && forgot.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const button = forgot.querySelector('button[type="submit"]');
+          const email = forgot.elements.email.value.trim() || document.querySelector('[name="email"]')?.value?.trim();
+          button.disabled = true;
+          button.textContent = "Enviando...";
+          try {
+            await Services.auth.forgotPassword(email);
+            App.toast("Se o e-mail estiver cadastrado, enviaremos o link de recuperação.");
+            forgot.reset();
+          } catch (err) {
+            App.toast(err.message || "Não foi possível solicitar a recuperação.");
+          } finally {
+            button.disabled = false;
+            button.textContent = "Enviar link de recuperação";
+          }
         });
       },
     };

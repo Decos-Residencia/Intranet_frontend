@@ -17,6 +17,20 @@
         body: { senha_atual: senhaAtual, nova_senha: novaSenha },
       });
     },
+    forgotPassword(email) {
+      return App.API.request("/auth/forgot-password", {
+        method: "POST",
+        auth: false,
+        body: { email },
+      });
+    },
+    resetPassword(token, novaSenha) {
+      return App.API.request("/auth/reset-password", {
+        method: "POST",
+        auth: false,
+        body: { token, nova_senha: novaSenha },
+      });
+    },
     // Cadastro feito por ADMIN (o backend sempre cria COLABORADOR). A senha
     // só trafega no corpo da requisição; nada é guardado no navegador.
     register(data) {
