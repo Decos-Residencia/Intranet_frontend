@@ -17,6 +17,7 @@
     comunicacao.push({ icon: "gift", label: "Aniversariantes do Mês", route: "#/aniversariantes" });
     comunicacao.push({ icon: "gift", label: "Aniversariante do Dia", route: "#/aniversariantes/hoje" });
     comunicacao.push({ icon: "calendar", label: "Eventos", route: "#/eventos" });
+    if (gere) comunicacao.push({ icon: "edit", label: "Gerenciar Eventos", route: "#/admin/eventos" });
     items.push({ icon: "megaphone", label: "Comunicação", children: comunicacao });
 
     items.push({ icon: "file-text", label: "Documentos & FAQ", children: [

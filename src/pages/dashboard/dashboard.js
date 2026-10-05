@@ -28,12 +28,13 @@
     const souAniversariante = App.souAniversariante();
     const todosAvisos = App.avisosAll();
     const avisos = todosAvisos.map((a) => `<div class="dash-aviso-wrap" data-cat="${a.categoria}">${avisoCard(a)}</div>`).join("");
-    const eventos = DB.eventos.slice(0, 4).map((e) => `
+    const proximos = App.eventosProximos();
+    const eventos = proximos.slice(0, 4).map((e) => `
       <a href="#/eventos/${e.id}" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
         <div class="date-chip"><span class="date-chip-month">${e.mes}</span><span class="date-chip-day">${e.dia}</span></div>
-        <div class="min-w-0"><div class="font-bold text-sm text-slate-800 dark:text-slate-100">${e.titulo.split(" - ")[0]}</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">${e.desc.slice(0, 44)}...</div></div>
-      </a>`).join("");
+        <div class="min-w-0"><div class="font-bold text-sm text-slate-800 dark:text-slate-100">${esc(e.titulo.split(" - ")[0])}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">${esc(e.desc.length > 44 ? e.desc.slice(0, 44) + "..." : e.desc)}</div></div>
+      </a>`).join("") || `<div class="text-sm text-slate-400 p-3">Nenhum evento programado.</div>`;
     const hojeRef = App.hoje();
     const mesNome = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(new Date(2026, hojeRef.mes - 1, 1));
     const mesRotulo = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
@@ -47,7 +48,7 @@
       </div>`).join("") || `<div class="text-sm text-slate-400 py-3">Nenhum aniversariante neste mês.</div>`;
 
     const urgente = todosAvisos.find((a) => a.categoria === "urgente");
-    const proxEvento = DB.eventos[0];
+    const proxEvento = proximos[0];
     // 3 slides: a promoção de sempre, o aviso mais urgente do momento, e um
     // destaque leve (próximo evento) — "outras besteiras" que merecem um
     // segundo de atenção sem competir com o conteúdo principal da página.
@@ -56,8 +57,8 @@
         texto: "Consulte os POPs, manuais e formulários vigentes em um só lugar.", cta: "Acessar central de documentos", href: "#/documentos" },
       ...(urgente ? [{ photo: "news", pos: "50% 28%", shape: "rect", badge: "🔥 URGENTE", titulo: esc(urgente.titulo.split(" - ")[0].slice(0,60)),
         texto: esc(urgente.resumo.slice(0,90) + "…"), cta: "Ver comunicado urgente", href: `#/avisos/${urgente.id}` }] : []),
-      { photo: "doctor", pos: "50% 12%", badge: "PRÓXIMO TREINAMENTO", titulo: proxEvento.titulo,
-        texto: `${proxEvento.dia} de Setembro · ${proxEvento.local}`, cta: "Ver detalhes do evento", href: `#/eventos/${proxEvento.id}` },
+      ...(proxEvento ? [{ photo: "doctor", pos: "50% 12%", badge: "PRÓXIMO EVENTO", titulo: esc(proxEvento.titulo),
+        texto: esc(`${proxEvento.data} · ${proxEvento.local}`), cta: "Ver detalhes do evento", href: `#/eventos/${proxEvento.id}` }] : []),
     ];
     const slidesHtml = slides.map((s) => `
       <div class="carousel-slide">

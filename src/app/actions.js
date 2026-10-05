@@ -153,11 +153,24 @@
           catch (err) { App.toast(err.message || "Não foi possível excluir o aviso."); }
           await App.loadApiData(); App.render();
         }); }
-      else if (a === "toggle-inscricao") { e.preventDefault(); const id = +el.dataset.id, ev = DB.eventos.find((x) => x.id === id);
-        const on = state.inscricoes.includes(id);
-        state.inscricoes = on ? state.inscricoes.filter((x) => x !== id) : [...state.inscricoes, id]; App.save();
-        App.toast(on ? "Inscrição cancelada" : `Inscrição confirmada: ${ev?.titulo || "evento"}`); App.render(); }
-      else if (a === "add-agenda") { e.preventDefault(); App.baixarIcs(DB.eventos.find((x) => x.id === +el.dataset.id)); }
+      else if (a === "inscrever-evento") { e.preventDefault(); el.disabled = true; await App.inscreverEvento(el.dataset.id); App.render(); }
+      else if (a === "cancelar-inscricao") { e.preventDefault(); el.disabled = true; await App.cancelarInscricaoEvento(el.dataset.id); App.render(); }
+      else if (a === "add-agenda") { e.preventDefault(); await App.adicionarAgenda(el.dataset.id); }
+      else if (a === "save-evento") { e.preventDefault(); try { await PagesAdmin.submitEvento(); } catch (err) { App.toast(err.message || "Não foi possível salvar o evento."); } }
+      else if (a === "evento-inscritos") { e.preventDefault(); await PagesAdmin.inscritosEvento(el.dataset.id, el.dataset.titulo); }
+      else if (a === "evento-status") { e.preventDefault();
+        const { id, status } = el.dataset;
+        const msg = { PUBLICADO: "Evento publicado — os colaboradores foram avisados", CANCELADO: "Evento cancelado — os inscritos foram avisados" }[status] || "Evento atualizado";
+        try { await Services.eventos.update(id, { status }); App.toast(msg); }
+        catch (err) { App.toast(err.message || "Não foi possível alterar o evento."); }
+        await App.loadApiData(); App.render(); }
+      else if (a === "evento-excluir") { e.preventDefault();
+        const { id, alvo } = el.dataset;
+        App.openConfirm("Excluir evento?", `Tem certeza que deseja excluir <b>${UI.esc(alvo || "este evento")}</b>?<br>Eventos com inscritos não podem ser excluídos: cancele-os para avisar os inscritos. A ação é registrada na auditoria.`, async () => {
+          try { await Services.eventos.remove(id); App.toast("Evento excluído"); }
+          catch (err) { App.toast(err.message || "Não foi possível excluir o evento."); }
+          await App.loadApiData(); App.render();
+        }, "Sim, excluir"); }
       else if (a === "download-doc") { e.preventDefault(); App.baixarDocumento(el.dataset.id); }
       else if (a === "copy-ramal") { e.preventDefault(); App.copiar(el.dataset.ramal, `Ramal ${el.dataset.ramal} (${el.dataset.nome}) copiado`); }
       else if (a === "export-audit") { e.preventDefault(); PagesAdmin.exportarAuditoria(); }

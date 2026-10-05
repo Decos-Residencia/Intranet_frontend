@@ -26,11 +26,11 @@
     const itemTone = (titulo, sub, label, tone) => `<div class="flex items-start justify-between gap-3 py-3 border-b border-slate-50 dark:border-slate-800 last:border-0">
       <div class="min-w-0"><div class="font-semibold text-sm text-slate-800 dark:text-slate-100">${titulo}</div><div class="text-xs text-slate-500 dark:text-slate-400">${sub}</div></div>
       ${badge(tone, label)}</div>`;
-    const inscricoes = DB.eventos.filter((e) => st.inscricoes.includes(e.id));
+    const inscricoes = App.minhasInscricoes().filter((e) => !e.cancelado && !e.encerrado);
     const atividades = [
       ...st.chamados.map((c) => item(`${esc(c.tipo)} ${esc(c.protocolo)}`, `${esc(c.categoria)} · ${esc(c.descricao)}`, c.status)),
       ...st.api.solicitacoes.map(solicitacao),
-      ...inscricoes.map((e) => `<a href="#/eventos/${e.id}" class="block">${item(`Inscrição: ${e.titulo}`, `${e.dia}/${e.mes} · ${e.horario} · ${e.local}`, "Confirmada")}</a>`),
+      ...inscricoes.map((e) => `<a href="#/eventos/${e.id}" class="block">${item(`Inscrição: ${e.titulo}`, `${e.data} · ${e.horario} · ${e.local}`, "Confirmada")}</a>`),
     ];
     return {
       title: "Meu Perfil",
