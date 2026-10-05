@@ -64,7 +64,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${field("NOME COMPLETO",u.nome)}${field("E-MAIL CORPORATIVO",u.email)}
               ${field("CARGO",u.cargo || "—")}${field("SETOR",setorNome)}
-              ${field("ANDAR / ALA",u.andar || "—")}${field("MATRÍCULA",u.matricula || "—")}${field("RAMAL INTERNO",u.ramal || "—")}
+              ${field("ANDAR / ALA",u.andar || "—")}${field("MATRÍCULA",u.matricula || "—")}${field("RAMAL INTERNO",u.ramal || u.setor?.ramal || "—")}
               ${field("UNIDADE",u.unidade || "—")}${field("DATA DE ADMISSÃO",admissao)}${field("DATA DE NASCIMENTO",nascimento)}
             </div>
           </div>
