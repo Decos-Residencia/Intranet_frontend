@@ -18,18 +18,19 @@
   };
 
   // Única lista do que pode ir para o localStorage.
-  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner", "inscricoes", "parabens", "chamados", "perfilPedidos", "aniversarianteHoje"];
+  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner", "inscricoes", "chamados"];
   // Funcionalidades locais que pertencem a quem estava logado: zeradas quando outro usuário entra.
-  const PER_USER = ["inscricoes", "parabens", "chamados", "perfilPedidos"];
+  const PER_USER = ["inscricoes", "chamados"];
 
-  const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false });
+  const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
+    aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
 
   const state = {
     theme: "light", sidebarCollapsed: false, localOwner: null,
-    inscricoes: [], parabens: [], chamados: [], perfilPedidos: [], aniversarianteHoje: false,
+    inscricoes: [], chamados: [],
     // ---- somente em memória ----
     ready: false, auth: false, user: null, loadError: null,
     api: emptyApi(), noticias: [], docsAdm: [], usuarios: [],
@@ -37,9 +38,8 @@
   };
   PERSISTED.forEach((k) => { if (k in stored) state[k] = stored[k]; });
   if (!THEMES[state.theme]) state.theme = "light";
-  ["inscricoes", "parabens", "chamados", "perfilPedidos"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
+  ["inscricoes", "chamados"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
   state.sidebarCollapsed = !!state.sidebarCollapsed;
-  state.aniversarianteHoje = !!state.aniversarianteHoje;
 
   function save() {
     const out = {};
@@ -223,20 +223,27 @@
 
   function apiUsuarioParaRamal(u) {
     return {
-      id: String(u.id), nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", andar: "—",
-      email: u.email, ramal: u.setor?.ramal || "—", setorId: u.setor_id,
+      id: String(u.id), nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", andar: u.andar || "—",
+      unidade: u.unidade || "", email: u.email, setorId: u.setor_id,
+      // O ramal do usuário vale; o do setor só entra como alternativa.
+      ramal: u.ramal || u.setor?.ramal || "—", ramalProprio: !!u.ramal,
     };
   }
 
   function apiUsuarioParaAdmin(u) {
     return {
       id: String(u.id), apiId: u.id, source: "api", nome: u.nome, email: u.email, setor: u.setor?.nome || "—", setorId: u.setor_id,
-      cargo: u.cargo || "—", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
+      cargo: u.cargo || "—", ramal: u.ramal || "", matricula: u.matricula || "", unidade: u.unidade || "", andar: u.andar || "",
+      admissao: u.data_admissao || "", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
       senhaTemporaria: !!u.must_change_password,
     };
   }
 
-  const ROTULO = { avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores" };
+  const ROTULO = {
+    avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
+    aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
+    solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
+  };
 
   // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
   const trocaPendente = () => !!state.user?.must_change_password;
@@ -260,6 +267,17 @@
     return user;
   }
 
+  // Atualiza só o que o Perfil mostra (cadastro + minhas solicitações). Devolve true se algo mudou.
+  async function refreshPerfil() {
+    if (!state.auth || trocaPendente()) return false;
+    const [me, sol] = await Promise.allSettled([Services.auth.me(), Services.cadastro.list({ page_size: 100 })]);
+    if (!state.auth) return false;
+    const antes = JSON.stringify([state.user, state.api.solicitacoes]);
+    if (me.status === "fulfilled" && me.value.id === state.user.id) state.user = me.value;
+    if (sol.status === "fulfilled") state.api.solicitacoes = sol.value.items;
+    return antes !== JSON.stringify([state.user, state.api.solicitacoes]);
+  }
+
   async function loadApiData() {
     if (!state.auth || !App.API.getToken() || trocaPendente()) return;
     const jobs = {
@@ -269,6 +287,13 @@
       // O ADMIN também recebe os desativados (para reativar); os demais só veem ativos.
       usuarios: () => Services.listAll(Services.usuarios.list, can("manage_users") ? { incluir_inativos: true } : {}),
       setores: () => Services.listAll(Services.setores.list),
+      me: () => Services.auth.me(), // dados cadastrais podem ter mudado (aprovação de solicitação, edição do ADMIN)
+      aniversariantes: () => Services.aniversariantes.list(),
+      aniversariantesHoje: () => Services.aniversariantes.hoje(),
+      proximos: () => Services.aniversariantes.proximos(30),
+      solicitacoes: () => Services.cadastro.list({ page_size: 100 }).then((r) => r.items),
+      // ADMIN: quantas solicitações aguardam análise (selo no menu).
+      ...(can("manage_users") ? { pendentes: () => Services.cadastro.list({ status: "PENDENTE", page_size: 1 }).then((r) => r.total) } : {}),
     };
     const keys = Object.keys(jobs);
     const results = await Promise.allSettled(keys.map((k) => jobs[k]()));
@@ -290,6 +315,12 @@
       state.usuarios = can("manage_users") ? data.usuarios.map(apiUsuarioParaAdmin) : [];
     }
     if (data.setores) state.api.setores = data.setores;
+    if (data.me && state.user && data.me.id === state.user.id) state.user = data.me;
+    if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
+    if (data.aniversariantesHoje) state.api.aniversariantesHoje = data.aniversariantesHoje;
+    if (data.proximos) state.api.aniversariantesProximos = data.proximos;
+    if (data.solicitacoes) state.api.solicitacoes = data.solicitacoes;
+    if (typeof data.pendentes === "number") state.api.solicitacoesPendentes = data.pendentes;
     if (data.avisos) {
       state.api.avisos = data.avisos.map(apiAvisoParaCard);
       state.noticias = data.avisos.map(apiAvisoParaAdmin);
@@ -312,16 +343,26 @@
   function ramaisAll() { return state.api.usuarios; }
   function setoresAll() { return state.api.setores; }
 
-  // Aniversariantes derivados de GET /usuarios (campo `aniversario` {dia, mes}).
-  function aniversariantesAll() {
-    return state.api.usuariosRaw
-      .filter((u) => u.aniversario)
-      .map((u) => ({ id: u.id, nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", dia: u.aniversario.dia, mes: u.aniversario.mes }));
-  }
+  // Aniversariantes reais (GET /aniversariantes*): só usuários ativos, só dia e mês.
+  const apiAniversariante = (a) => ({
+    id: a.id, nome: a.nome, cargo: a.cargo || "—", setor: a.setor || "—", dia: a.dia, mes: a.mes,
+    hoje: a.hoje, diasRestantes: a.dias_restantes, jaParabenizado: a.ja_parabenizado, podeParabenizar: a.pode_parabenizar,
+  });
+  function aniversariantesAll() { return state.api.aniversariantes.map(apiAniversariante); }
+  function aniversariantesHoje() { return state.api.aniversariantesHoje.map(apiAniversariante); }
+  function aniversariantesProximos() { return state.api.aniversariantesProximos.map(apiAniversariante); }
   function hoje() { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; }
-  function souAniversariante() {
-    const n = state.user?.aniversario, h = hoje();
-    return state.aniversarianteHoje || !!(n && n.dia === h.dia && n.mes === h.mes);
+  function souAniversariante() { return !!state.user && state.api.aniversariantesHoje.some((a) => a.id === state.user.id); }
+
+  // Envia parabéns (persistido) e reflete o resultado nas listas em memória.
+  async function parabenizar(id) {
+    await Services.aniversariantes.parabenizar(id);
+    marcarParabenizado(id);
+  }
+  function marcarParabenizado(id) {
+    ["aniversariantes", "aniversariantesHoje", "aniversariantesProximos"].forEach((k) => {
+      state.api[k].forEach((a) => { if (a.id === id) { a.ja_parabenizado = true; a.pode_parabenizar = false; } });
+    });
   }
 
   /* ---------- notificações (reais: GET /notificacoes, geradas pelo backend) ---------- */
@@ -402,9 +443,9 @@
 
   Object.assign(App, {
     ROLE_ORDER, THEMES, state, save, role, can, roleInfo,
-    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange,
+    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange, refreshPerfil,
     removeItem, findItem, deleteRemoteItem,
-    avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, hoje, souAniversariante,
+    avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, aniversariantesHoje, aniversariantesProximos, hoje, souAniversariante, parabenizar, marcarParabenizado,
     notificacoesAll, isLida, marcarLida, marcarTodasLidas, unreadCount, unreadUrgent, loadNotificacoes, atualizarSino, touchNotificacoes,
   });
 })();

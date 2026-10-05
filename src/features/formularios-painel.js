@@ -1,7 +1,7 @@
 /* =========================================================================
    Formulários em painel
-   Locais (sem backend): chamados e pedido de alteração cadastral.
-   Via API (ADMIN): usuário, setor e FAQ.
+   Locais (sem backend): chamados.
+   Via API: usuário, setor, FAQ (ADMIN) e pedido de alteração cadastral (ver solicitacoes.js).
    ========================================================================= */
 (function () {
   const { state } = App;
@@ -29,15 +29,6 @@
       <button type="submit" class="btn-wine w-full py-3">Enviar</button>
     </form>`);
   }
-  function openPedidoPanel() {
-    App.openPanel("Solicitar alteração cadastral", `<form data-form="pedido" class="space-y-4">
-      <p class="text-sm text-slate-500 dark:text-slate-400">Dados cadastrais são atualizados pelo RH. Envie o pedido e acompanhe em Meu Perfil.</p>
-      ${fld("CAMPO", `<select name="campo" class="field-input">${opts(["Andar / Ala", "Ramal interno", "Cargo", "Setor", "Nome completo"])}</select>`)}
-      ${fld("NOVO VALOR", `<input name="valor" class="field-input" required>`)}
-      ${fld("MOTIVO", `<textarea name="motivo" class="field-input" rows="3" placeholder="Opcional"></textarea>`)}
-      <button type="submit" class="btn-wine w-full py-3">Enviar solicitação</button>
-    </form>`);
-  }
   /* ---------- usuário (API: /auth/register e /usuarios/{id}) ---------- */
   function openUsuarioPanel(id) {
     const u = id ? App.findItem("usuarios", id) : null;
@@ -53,6 +44,11 @@
       ${fld("E-MAIL", `<input name="email" type="email" class="field-input" required maxlength="254" value="${UI.esc(u?.email || "")}" placeholder="nome@email.com">`)}
       ${fld("SETOR", `<select name="setor_id" class="field-input">${setorOpts}</select>`)}
       ${fld("CARGO", `<input name="cargo" class="field-input" required maxlength="150" value="${UI.esc(u?.cargo && u.cargo !== "—" ? u.cargo : "")}">`)}
+      ${fld("RAMAL", `<input name="ramal" class="field-input" maxlength="20" value="${UI.esc(u?.ramal || "")}" placeholder="Ex: 2210">`)}
+      ${fld("MATRÍCULA", `<input name="matricula" class="field-input" maxlength="30" value="${UI.esc(u?.matricula || "")}" placeholder="Opcional (única por pessoa)">`)}
+      ${fld("UNIDADE", `<input name="unidade" class="field-input" maxlength="100" value="${UI.esc(u?.unidade || "")}" placeholder="Ex: Unidade Central">`)}
+      ${fld("ANDAR / ALA", `<input name="andar" class="field-input" maxlength="40" value="${UI.esc(u?.andar || "")}" placeholder="Ex: 3º andar">`)}
+      ${fld("DATA DE ADMISSÃO", `<input name="admissao" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.admissao || "")}">`)}
       ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
       ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">A senha é temporária: o novo usuário entra como Colaborador e precisará criar a própria senha no primeiro acesso. Para torná-lo Administrador, edite-o depois.</div>`)}
       ${u ? fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : ""}`) : ""}
@@ -62,13 +58,18 @@
   }
 
   async function submitUsuario(f, v) {
-    const nome = (v.nome || "").trim(), email = (v.email || "").trim(), cargo = (v.cargo || "").trim();
+    const nome = (v.nome || "").trim(), email = (v.email || "").trim(), cargo = (v.cargo || "").trim(), ramal = (v.ramal || "").trim();
     const setor_id = Number(v.setor_id);
+    const extras = {
+      matricula: (v.matricula || "").trim() || null, unidade: (v.unidade || "").trim() || null,
+      andar: (v.andar || "").trim() || null, data_admissao: v.admissao || null,
+    };
     if (!f.dataset.id) {
       const senha = v.senha || "";
       if (senha.length < 8) { App.toast("A senha inicial deve ter pelo menos 8 caracteres."); return false; }
       if (new TextEncoder().encode(senha).length > 72) { App.toast("A senha inicial deve ter no máximo 72 bytes."); return false; }
-      const body = { nome, email, senha, setor_id, cargo };
+      const body = { nome, email, senha, setor_id, cargo, ramal: ramal || null };
+      Object.entries(extras).forEach(([k, val]) => { if (val) body[k] = val; });
       if (v.nascimento) body.data_nascimento = v.nascimento;
       await Services.auth.register(body);
       if (f.elements.senha) f.elements.senha.value = ""; // a senha não fica no DOM nem em lugar nenhum
@@ -76,7 +77,7 @@
     } else {
       const u = App.findItem("usuarios", f.dataset.id);
       if (!u) { App.toast("Usuário não encontrado"); return false; }
-      const payload = { nome, email, setor_id, cargo, data_nascimento: v.nascimento || null };
+      const payload = { nome, email, setor_id, cargo, ramal: ramal || null, ...extras, data_nascimento: v.nascimento || null };
       if (u.apiId !== state.user.id) { // próprio papel/status ficam bloqueados na tela
         payload.perfil = v.role === "admin" ? "ADMIN" : "COLABORADOR";
         payload.ativo = v.status === "Ativo";
@@ -170,14 +171,11 @@
       App.render();
       return;
     }
-    if (kind === "pedido") {
-      state.perfilPedidos.unshift({ campo: v.campo, valor: v.valor, motivo: v.motivo, quando: "Agora mesmo", status: "Em análise" });
-      App.save(); App.closePanel(); App.toast("Solicitação enviada ao RH");
-      App.render();
-      return;
-    }
     // Formulários que gravam na API: bloqueia o botão, mostra o erro e só fecha se der certo.
-    const handlers = { usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq };
+    const handlers = {
+      usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq,
+      pedido: (form, vals) => App.submitPedido(form, vals), rejeitar: (form, vals) => App.submitRejeicao(form, vals),
+    };
     const handler = handlers[kind];
     if (!handler) return;
     const btn = f.querySelector('button[type="submit"]');
@@ -192,5 +190,5 @@
     }
   }
 
-  Object.assign(App, { openChamadoPanel, openPedidoPanel, openUsuarioPanel, openSenhaPanel, openSetorPanel, openFaqPanel, submitPanelForm });
+  Object.assign(App, { openChamadoPanel, openUsuarioPanel, openSenhaPanel, openSetorPanel, openFaqPanel, submitPanelForm });
 })();

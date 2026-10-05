@@ -13,8 +13,8 @@
     const andaresU = [...new Set(ramais.map((r) => r.andar))];
     const ramalCell = (r) => r.ramal && r.ramal !== "—"
       ? `<button data-action="copy-ramal" data-ramal="${esc(r.ramal)}" data-nome="${esc(r.nome)}" class="ramal-btn" title="Copiar ramal">${esc(r.ramal)}</button>`
-      : canManageRamais && r.setorId
-        ? `<button data-action="open-setor" data-id="${esc(r.setorId)}" class="ramal-btn ramal-btn-empty" title="Criar ramal do setor">Criar ramal</button>`
+      : canManageRamais
+        ? `<button data-action="open-usuario" data-id="${esc(r.id)}" class="ramal-btn ramal-btn-empty" title="Criar ramal do usuário">Criar ramal</button>`
         : `<span class="text-slate-400">—</span>`;
     const rows = ramais.map((r) => `
       <tr class="dir-row border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"

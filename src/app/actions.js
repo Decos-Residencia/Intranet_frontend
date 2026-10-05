@@ -53,9 +53,6 @@
           }
         }
       }
-      else if (a === "set-aniversario") { state.aniversarianteHoje = el.dataset.val === "true"; App.save(); App.closePanel();
-        App.toast(state.aniversarianteHoje ? "🎉 Cenário: hoje é seu aniversário" : "Cenário: dia normal"); App.render(); }
-      else if (a === "open-roles") { e.preventDefault(); App.openScenarioPanel(); }
       else if (a === "open-notif") { e.preventDefault(); App.openNotifPanel(); }
       else if (a === "close-panel") { App.closePanel();
         App.marcarLida(el.dataset.nid); }
@@ -131,12 +128,12 @@
       else if (a === "confirm-no") { App.closeModal(); }
       else if (a === "toast") { e.preventDefault(); App.toast(el.dataset.msg || "Feito!");
         if (el.dataset.goto) setTimeout(() => App.go(el.dataset.goto), 650); }
-      else if (a === "celebrate") { e.preventDefault(); App.confettiBurst(el); App.toast(el.dataset.msg || "🎉");
-        // Parabéns a um colega fica registrado: o botão vira "enviado" e não repete.
-        if (el.dataset.nome && !state.parabens.includes(el.dataset.nome)) {
-          state.parabens.push(el.dataset.nome); App.save();
-          el.disabled = true; el.innerHTML = UI.icon("check", "w-4 h-4") + " Parabéns enviado";
-        } }
+      else if (a === "celebrate") { e.preventDefault();
+        // Parabéns a um colega: persistido no servidor (uma vez por pessoa e ano) e notificado a ele.
+        if (el.dataset.id) await App.enviarParabens(el);
+        else { App.confettiBurst(el); App.toast(el.dataset.msg || "🎉"); } }
+      else if (a === "approve-solicitacao") { e.preventDefault(); App.aprovarSolicitacao(el); }
+      else if (a === "reject-solicitacao") { e.preventDefault(); App.openRejeitarPanel(el); }
       else if (a === "prevent") { e.preventDefault(); }
       else if (a === "open-menu") { document.querySelector(".sidebar")?.classList.add("sidebar-open"); document.querySelector(".drawer-backdrop")?.classList.add("show"); }
       else if (a === "close-menu") { App.closeMenu(); }

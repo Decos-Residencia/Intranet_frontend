@@ -32,9 +32,6 @@
           ${icon(themeIcon, "w-5 h-5")}
         </button>
         <button data-action="open-notif" class="icon-btn relative" title="${App.unreadUrgent() ? "Você tem notificação urgente" : "Notificações"}">${UI.sinoConteudo()}</button>
-        <button data-action="open-roles" class="icon-btn ${state.aniversarianteHoje ? "icon-btn-on" : ""}" title="Cenário do dia (simulação)">
-          ${icon("gift", "w-5 h-5")}
-        </button>
         <a href="#/perfil" class="flex items-center gap-2.5 pl-2 md:pl-3 md:border-l border-slate-200 dark:border-slate-700">
           <div class="text-right hidden sm:block leading-tight">
             <div class="text-sm font-bold text-slate-800 dark:text-slate-100">${esc(u.nome)}${roleTag}</div>

@@ -1,7 +1,7 @@
 /* =========================================================================
    Tela: Aniversariantes do Mês
    Rota: #/aniversariantes
-   Fonte: GET /usuarios (campo `aniversario` {dia, mes}) — sem ano de nascimento.
+   Fonte: GET /aniversariantes (só usuários ativos, sem ano de nascimento).
    ========================================================================= */
 (function () {
   const { icon, iniciais, foto, parabensBtn, esc } = UI;
