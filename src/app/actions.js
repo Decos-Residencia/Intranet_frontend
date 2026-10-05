@@ -127,6 +127,19 @@
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
       else if (a === "open-pedido") { e.preventDefault(); App.openPedidoPanel(); }
       else if (a === "preview-noticia") { e.preventDefault(); PagesAdmin.previewNoticia(el.dataset.id); }
+      else if (a === "aviso-status") { e.preventDefault();
+        const { id, status } = el.dataset;
+        const msg = { PUBLICADO: "Aviso publicado", ARQUIVADO: "Aviso arquivado", RASCUNHO: "Agendamento cancelado (voltou a rascunho)" }[status] || "Aviso atualizado";
+        try { await Services.avisos.update(id, { status }); App.toast(msg); }
+        catch (err) { App.toast(err.message || "Não foi possível alterar o aviso."); }
+        await App.loadApiData(); App.render(); }
+      else if (a === "delete-aviso") { e.preventDefault();
+        const { id, alvo } = el.dataset;
+        App.openConfirm("Excluir aviso?", `Tem certeza que deseja excluir <b>${UI.esc(alvo || "este aviso")}</b>?<br>Avisos já lidos por colaboradores não podem ser excluídos: arquive-os para preservar o histórico. A ação é registrada na auditoria.`, async () => {
+          try { await Services.avisos.remove(id); App.toast("Aviso excluído"); }
+          catch (err) { App.toast(err.message || "Não foi possível excluir o aviso."); }
+          await App.loadApiData(); App.render();
+        }); }
       else if (a === "preview-doc") { e.preventDefault(); PagesAdmin.previewDocumento(el.dataset.id); }
       else if (a === "toggle-inscricao") { e.preventDefault(); const id = +el.dataset.id, ev = DB.eventos.find((x) => x.id === id);
         const on = state.inscricoes.includes(id);

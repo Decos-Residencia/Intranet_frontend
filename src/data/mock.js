@@ -55,7 +55,6 @@ window.DB = (function () {
   // id estável: o estado "lida" é salvo por id, então incluir notificações
   // novas não bagunça quais já foram lidas.
   const stats = {
-    noticias: { ativas: 14, semana: 6, views: "4.821", viewsDelta: "12%", alertas: 1 },
     documentos: { total: 124, novos: 18, protocolos: 48, downloads: "1.284", pendencias: 3 },
   };
 

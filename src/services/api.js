@@ -78,7 +78,9 @@
     const detail = payload && typeof payload === "object" ? payload.detail : null;
     if (status === 422 && Array.isArray(detail)) return mensagem422(detail);
     // Exclusão bloqueada por vínculo: o backend responde 422/409 com texto genérico.
-    if ((status === 422 || status === 409) && method === "DELETE") return "Não foi possível excluir: o registro está em uso.";
+    // (Mensagens específicas do backend, como "arquive em vez de excluir", são mantidas.)
+    const generico = typeof detail !== "string" || /conflitam com um registro|referência informada/i.test(detail);
+    if ((status === 422 || status === 409) && method === "DELETE" && generico) return "Não foi possível excluir: o registro está em uso.";
     if (typeof detail === "string" && detail) return detail;
     return ({
       400: "Requisição inválida.",

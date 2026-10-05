@@ -33,7 +33,7 @@
     inscricoes: [], chamados: [],
     // ---- somente em memória ----
     ready: false, auth: false, user: null, loadError: null,
-    api: emptyApi(), noticias: [], docsAdm: [], usuarios: [],
+    api: emptyApi(), docsAdm: [], usuarios: [],
     notificacoes: [], naoLidas: 0,
   };
   PERSISTED.forEach((k) => { if (k in stored) state[k] = stored[k]; });
@@ -58,7 +58,6 @@
   /* ---------- sessão ---------- */
   function resetServerData() {
     state.api = emptyApi();
-    state.noticias = [];
     state.docsAdm = [];
     state.usuarios = [];
     state.notificacoes = [];
@@ -147,8 +146,7 @@
   async function deleteRemoteItem(coll, id) {
     const item = coll && id ? App.findItem(coll, id) : null;
     if (!item?.apiId) return;
-    if (coll === "noticias") await Services.avisos.remove(item.apiId);
-    else if (coll === "docsAdm") await Services.documentos.remove(item.apiId);
+    if (coll === "docsAdm") await Services.documentos.remove(item.apiId);
   }
 
   /* ---------- API → formato das telas ---------- */
@@ -174,20 +172,11 @@
     // O backend só devolve autor_id: resolve pelo diretório; sem isso, texto neutro.
     const autor = nomeDoUsuario(a.autor_id) || "Autor não identificado";
     return {
-      id: String(a.id), apiId: a.id, source: "api", own: true, categoria,
+      id: String(a.id), apiId: a.id, source: "api", own: true, categoria, lido: !!a.lido,
       titulo: a.titulo, resumo: conteudo.length > 180 ? conteudo.slice(0, 180) + "…" : conteudo || "Sem conteúdo.",
       data: fmt(fmtLonga, a.data_publicacao), dataCurta: fmt(fmtCurta, a.data_publicacao),
       autor, autorSigla: nomeDoUsuario(a.autor_id) ? UI.iniciais(autor) : "?", imagem: "",
       cta: "Ler comunicado na íntegra", conteudo: conteudo ? conteudo.split(/\n+/) : ["Sem conteúdo."], tags: [],
-    };
-  }
-
-  function apiAvisoParaAdmin(a) {
-    return {
-      id: String(a.id), apiId: a.id, source: "api", own: true, status: "Publicado", prioridade: a.categoria === "urgente" ? "urgente" : "normal",
-      tipo: TIPO_DE_CATEGORIA[a.categoria] || "Comunicado",
-      titulo: a.titulo, corpo: a.conteudo || "", quando: fmt(fmtHora, a.data_publicacao), autor: nomeDoUsuario(a.autor_id) || "Autor não identificado",
-      leituras: null,
     };
   }
 
@@ -281,7 +270,8 @@
   async function loadApiData() {
     if (!state.auth || !App.API.getToken() || trocaPendente()) return;
     const jobs = {
-      avisos: () => Services.listAll(Services.avisos.list),
+      // O mural/dashboard só recebem avisos EFETIVAMENTE publicados (inclusive para o ADMIN).
+      avisos: () => Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),
       documentos: () => Services.listAll(Services.documentos.list),
       faqs: () => Services.listAll(Services.faq.list),
       // O ADMIN também recebe os desativados (para reativar); os demais só veem ativos.
@@ -321,10 +311,7 @@
     if (data.proximos) state.api.aniversariantesProximos = data.proximos;
     if (data.solicitacoes) state.api.solicitacoes = data.solicitacoes;
     if (typeof data.pendentes === "number") state.api.solicitacoesPendentes = data.pendentes;
-    if (data.avisos) {
-      state.api.avisos = data.avisos.map(apiAvisoParaCard);
-      state.noticias = data.avisos.map(apiAvisoParaAdmin);
-    }
+    if (data.avisos) state.api.avisos = data.avisos.map(apiAvisoParaCard);
     if (data.documentos) {
       state.api.documentos = data.documentos.map(apiDocumentoParaPublico);
       state.docsAdm = data.documentos.map(apiDocumentoParaAdmin);
@@ -335,6 +322,36 @@
     if (falhas.length) App.toast?.("Não foi possível carregar: " + falhas.join(", ") + ".");
     await loadNotificacoes();
     if (!pollTimer) startNotifPolling();
+  }
+
+  /* ---------- avisos: atualização leve, aviso avulso e leitura real ---------- */
+  let ultimoAvisos = Date.now();
+  // Recarrega só o mural (avisos publicados). Devolve true se algo mudou (ex.: um agendado venceu).
+  async function refreshAvisos() {
+    if (!state.auth || trocaPendente()) return false;
+    try {
+      const novos = (await Services.listAll(Services.avisos.list, { status: "PUBLICADO" })).map(apiAvisoParaCard);
+      if (JSON.stringify(novos) === JSON.stringify(state.api.avisos)) return false;
+      state.api.avisos = novos;
+      return true;
+    } catch (_) { return false; }
+  }
+  // Aviso que ainda não está no estado (ex.: link de uma notificação de aviso agendado que acabou de abrir).
+  async function carregarAviso(id) {
+    const a = await Services.avisos.get(id);
+    if (a.status !== "PUBLICADO") throw new Error("Aviso não encontrado.");
+    const card = apiAvisoParaCard(a);
+    state.api.avisos = [card, ...state.api.avisos.filter((x) => x.id !== card.id)];
+    return card;
+  }
+  // Registra a leitura no servidor (uma vez por usuário; reabrir/recarregar não conta de novo).
+  async function registrarLeitura(id) {
+    try {
+      await Services.avisos.leitura(id);
+      const card = state.api.avisos.find((x) => String(x.id) === String(id));
+      if (card) card.lido = true;
+      return true;
+    } catch (_) { return false; }
   }
 
   /* ---------- coleções exibidas pelas telas (somente API) ---------- */
@@ -440,11 +457,19 @@
   }
   function startNotifPolling() { stopNotifPolling(); pollTimer = setInterval(refreshNotificacoes, 60000); }
   function stopNotifPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = 0; }
-  function touchNotificacoes() { if (state.auth && !state.user?.must_change_password && Date.now() - ultimoToque > 15000) refreshNotificacoes(); }
+  function touchNotificacoes() {
+    if (!state.auth || state.user?.must_change_password) return;
+    if (Date.now() - ultimoToque > 15000) refreshNotificacoes();
+    // Um aviso agendado pode ter vencido: atualiza o mural a cada 30 s (sem redesenhar se nada mudou).
+    if (Date.now() - ultimoAvisos > 30000) {
+      ultimoAvisos = Date.now();
+      refreshAvisos().then((mudou) => { if (mudou && ["#/avisos", "#/dashboard"].includes(location.hash)) App.render(); });
+    }
+  }
 
   Object.assign(App, {
     ROLE_ORDER, THEMES, state, save, role, can, roleInfo,
-    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange, refreshPerfil,
+    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange, refreshPerfil, refreshAvisos, carregarAviso, registrarLeitura, nomeDoUsuario,
     removeItem, findItem, deleteRemoteItem,
     avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, aniversariantesHoje, aniversariantesProximos, hoje, souAniversariante, parabenizar, marcarParabenizado,
     notificacoesAll, isLida, marcarLida, marcarTodasLidas, unreadCount, unreadUrgent, loadNotificacoes, atualizarSino, touchNotificacoes,

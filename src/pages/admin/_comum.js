@@ -18,7 +18,7 @@
   }
 
   const statusBadge = (s) => {
-    const map = { "Publicado": "green", "Agendado": "blue", "Rascunho": "gray", "Em Revisão": "amber" };
+    const map = { "Publicado": "green", "Agendado": "blue", "Rascunho": "gray", "Arquivado": "amber", "Em Revisão": "amber" };
     return badge(map[s] || "gray", s);
   };
   const prioBadge = (p) => {

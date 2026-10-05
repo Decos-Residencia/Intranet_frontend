@@ -6,6 +6,12 @@
     get(id) {
       return App.API.request(`/avisos/${encodeURIComponent(id)}`);
     },
+    resumo() {
+      return App.API.request("/avisos/resumo"); // totais reais por estado e leituras (ADMIN)
+    },
+    leitura(id) {
+      return App.API.request(`/avisos/${encodeURIComponent(id)}/leitura`, { method: "POST" });
+    },
     create(data) {
       return App.API.request("/avisos", { method: "POST", body: data });
     },
