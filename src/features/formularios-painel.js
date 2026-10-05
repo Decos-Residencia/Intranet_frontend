@@ -140,22 +140,36 @@
     return true;
   }
 
-  /* ---------- FAQ (API: GET/POST /faqs; sem editar/excluir no backend) ---------- */
-  function openFaqPanel() {
-    const cats = [...new Set(App.faqsAll().map((f) => f.cat))].filter(Boolean);
-    App.openPanel("Nova pergunta frequente", `<form data-form="faq" class="space-y-4" autocomplete="off">
-      ${fld("PERGUNTA", `<input name="pergunta" class="field-input" required maxlength="500">`)}
-      ${fld("RESPOSTA", `<textarea name="resposta" class="field-input" rows="6" required></textarea>`)}
-      ${fld("CATEGORIA", `<input name="categoria" class="field-input" required maxlength="100" list="faq-cats" placeholder="Ex: rh, ti, financeiro"><datalist id="faq-cats">${cats.map((c) => `<option value="${UI.esc(c)}">`).join("")}</datalist>`)}
-      <button type="submit" class="btn-crimson w-full py-3">Publicar pergunta</button>
+  /* ---------- FAQ (API: GET/POST/PUT/DELETE /faqs, só ADMIN) ---------- */
+  async function openFaqPanel(id) {
+    let faq = null;
+    if (id) {
+      try { faq = await Services.faq.get(id); }
+      catch (err) { App.toast(err.message || "Pergunta não encontrada."); return; }
+    }
+    let cats = [...new Set(App.faqsAll().map((f) => f.cat))];
+    try { cats = (await Services.faq.resumo()).categorias.map((c) => c.categoria); } catch (_) { /* usa as categorias já carregadas */ }
+    cats = cats.filter(Boolean);
+    App.openPanel(faq ? "Editar pergunta frequente" : "Nova pergunta frequente", `<form data-form="faq" data-id="${UI.esc(faq?.id || "")}" class="space-y-4" autocomplete="off">
+      ${fld("PERGUNTA", `<input name="pergunta" class="field-input" required maxlength="500" value="${UI.esc(faq?.pergunta || "")}">`)}
+      ${fld("RESPOSTA", `<textarea name="resposta" class="field-input" rows="6" required>${UI.esc(faq?.resposta || "")}</textarea>`)}
+      ${fld("CATEGORIA", `<input name="categoria" class="field-input" required maxlength="100" list="faq-cats" value="${UI.esc(faq?.categoria || "")}" placeholder="Ex: rh, ti, financeiro"><datalist id="faq-cats">${cats.map((c) => `<option value="${UI.esc(c)}">`).join("")}</datalist>`)}
+      ${fld("STATUS", `<select name="status" class="field-input"><option value="ativa" ${faq?.ativo === false ? "" : "selected"}>Ativa (visível aos colaboradores)</option><option value="inativa" ${faq?.ativo === false ? "selected" : ""}>Inativa (escondida)</option></select>`)}
+      <button type="submit" class="btn-crimson w-full py-3">${faq ? "Salvar alterações" : "Publicar pergunta"}</button>
     </form>`);
   }
 
   async function submitFaq(f, v) {
     const pergunta = (v.pergunta || "").trim(), resposta = (v.resposta || "").trim(), categoria = (v.categoria || "").trim();
     if (!pergunta || !resposta || !categoria) { App.toast("Preencha pergunta, resposta e categoria."); return false; }
-    await Services.faq.create({ pergunta, resposta, categoria, ativo: true });
-    App.toast("Pergunta publicada");
+    const ativo = v.status !== "inativa";
+    if (f.dataset.id) {
+      await Services.faq.update(f.dataset.id, { pergunta, resposta, categoria, ativo });
+      App.toast("Pergunta atualizada");
+    } else {
+      await Services.faq.create({ pergunta, resposta, categoria, ativo });
+      App.toast(ativo ? "Pergunta publicada" : "Pergunta salva como inativa");
+    }
     return true;
   }
 

@@ -9,7 +9,7 @@
   function faq() {
     const faqs = App.faqsAll();
     const categorias = [{ key: "todas", label: "Todas" }, ...[...new Set(faqs.map((f) => f.cat))].filter(Boolean).map((cat) => ({ key: cat, label: cat }))];
-    const nova = App.can("manage_faq") ? `<div class="flex justify-end mb-4"><button data-action="open-faq-nova" class="btn-crimson px-5 py-2.5 flex items-center gap-2">${icon("plus","w-4 h-4")} Nova pergunta</button></div>` : "";
+    const nova = App.can("manage_faq") ? `<div class="flex justify-end mb-4"><a href="#/admin/faqs" class="btn-outline px-5 py-2.5 mr-2">Gerenciar FAQ</a><button data-action="open-faq-nova" class="btn-crimson px-5 py-2.5 flex items-center gap-2">${icon("plus","w-4 h-4")} Nova pergunta</button></div>` : "";
     const items = faqs.map((f, i) => `
       <div class="card faq-item" data-cat="${esc(f.cat)}">
         <button class="faq-q" data-action="faq-toggle">

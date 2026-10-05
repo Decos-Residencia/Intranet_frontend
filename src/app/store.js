@@ -329,7 +329,8 @@
       state.api.documentos = data.documentos.map(apiDocumentoParaPublico);
       state.docsAdm = data.documentos.map(apiDocumentoParaAdmin);
     }
-    if (data.faqs) state.api.faqs = data.faqs.map(apiFaqParaView);
+    // O ADMIN recebe também as inativas; a tela de leitura (#/faq) mostra só as ativas.
+    if (data.faqs) state.api.faqs = data.faqs.filter((f) => f.ativo !== false).map(apiFaqParaView);
     state.api.loaded = true;
     if (falhas.length) App.toast?.("Não foi possível carregar: " + falhas.join(", ") + ".");
     await loadNotificacoes();

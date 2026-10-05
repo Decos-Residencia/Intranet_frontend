@@ -30,6 +30,7 @@
     { re: /^#\/admin\/documentos\/([\w-]+)\/restrito$/, page: (m) => PagesAdmin.adminDocumentoRestrito(m[1]), need: "manage_docs" },
     // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
+    { re: /^#\/admin\/faqs$/, page: () => PagesAdmin.adminFaqs(), need: "manage_faq" },
     { re: /^#\/admin\/solicitacoes$/, page: () => PagesAdmin.adminSolicitacoes(), need: "manage_users" },
     { re: /^#\/admin\/auditoria$/, page: () => PagesAdmin.adminAuditoria(), need: "audit_all" },
   ];

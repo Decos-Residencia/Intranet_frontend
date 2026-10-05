@@ -21,6 +21,7 @@
 
     items.push({ icon: "file-text", label: "Documentos & FAQ", children: [
       { icon: "file-text", label: gere ? "Gerenciar Documentos" : "Documentos & POPs", route: gere ? "#/admin/documentos" : "#/documentos" },
+      ...(gere ? [{ icon: "edit", label: "Gerenciar FAQ", route: "#/admin/faqs" }] : []),
       { icon: "help-circle", label: "FAQ", route: "#/faq" },
     ]});
 

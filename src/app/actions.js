@@ -109,6 +109,19 @@
         }); }
       else if (a === "open-setor") { e.preventDefault(); App.openSetorPanel(el.dataset.id); }
       else if (a === "open-faq-nova") { e.preventDefault(); App.openFaqPanel(); }
+      else if (a === "edit-faq") { e.preventDefault(); App.openFaqPanel(el.dataset.id); }
+      else if (a === "toggle-faq") { e.preventDefault();
+        try { await Services.faq.update(el.dataset.id, { ativo: el.dataset.ativo === "true" });
+          App.toast(el.dataset.ativo === "true" ? "Pergunta ativada" : "Pergunta desativada"); }
+        catch (err) { App.toast(err.message || "Não foi possível alterar o status."); }
+        await App.loadApiData(); App.render(); }
+      else if (a === "delete-faq") { e.preventDefault();
+        const { id, pergunta } = el.dataset;
+        App.openConfirm("Excluir pergunta?", `A pergunta <b>${UI.esc(pergunta)}</b> será excluída definitivamente. Para apenas escondê-la dos colaboradores, use <b>Desativar</b>.`, async () => {
+          try { await Services.faq.remove(id); App.toast("Pergunta excluída"); }
+          catch (err) { App.toast(err.message || "Não foi possível excluir a pergunta."); }
+          await App.loadApiData(); App.render();
+        }, "Sim, excluir"); }
       else if (a === "open-doc-url") { e.preventDefault(); App.abrirDocumento(el.dataset.id); }
       else if (a === "open-chamado") { e.preventDefault(); App.toggleFab(false); App.openChamadoPanel(el.dataset.tipo || "geral"); }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
