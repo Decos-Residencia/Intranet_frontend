@@ -29,7 +29,7 @@
               </h2>
               <p class="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">Você está na área exclusiva do colaborador. Informe seus dados de acesso para entrar na intranet do Hospital Decós.</p>
               <form data-action="do-login" class="space-y-4">
-                <input name="email" type="email" required placeholder="E-mail corporativo (@decos.com)" class="login-input" autocomplete="email">
+                <input name="email" type="email" required placeholder="E-mail" class="login-input" autocomplete="email">
                 <div class="relative">
                   <input name="senha" type="password" required placeholder="Senha" class="login-input pr-12" autocomplete="current-password">
                   <button type="button" data-action="toggle-pass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">${icon("eye","w-5 h-5")}</button>

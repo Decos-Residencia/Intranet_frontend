@@ -19,7 +19,7 @@
     const conta = (fn) => lista.filter(fn).length;
     const rows = lista.map((u) => `
       <tr class="user-row border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${u.status === "Inativo" ? "opacity-60" : ""}" data-role="${esc(u.role)}" data-status="${esc(u.status)}" data-busca="${esc((u.nome + " " + u.email + " " + u.setor + " " + u.cargo).toLowerCase())}">
-        <td class="py-3.5 pl-4"><div class="flex items-center gap-3"><div class="avatar-soft w-9 h-9 text-xs">${UI.foto(u.nome)}${esc(UI.iniciais(u.nome))}</div>
+        <td class="py-3.5 pl-4"><div class="flex items-center gap-3"><div class="avatar-soft w-9 h-9 text-xs">${esc(UI.iniciais(u.nome))}</div>
           <div><div class="font-bold text-slate-800 dark:text-slate-100">${esc(u.nome)}</div><div class="text-xs text-slate-400">${esc(u.email)}</div></div></div></td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.setor)}</td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.cargo)}</td>

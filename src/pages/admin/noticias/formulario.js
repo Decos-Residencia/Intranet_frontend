@@ -98,7 +98,6 @@
     try {
       if (antigo?.apiId) await Services.avisos.update(antigo.apiId, payload);
       else await Services.avisos.create(payload);
-      App.logAudit(antigo ? "editou" : "publicou", "Notícia: " + titulo, "noticia");
       await App.loadApiData();
       App.toast("Notícia publicada no mural!");
       setTimeout(() => App.go("#/admin/noticias"), 500);

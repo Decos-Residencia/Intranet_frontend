@@ -35,6 +35,7 @@
     }
     page.init && page.init();
     App.afterRender();
+    App.touchNotificacoes?.();
   }
 
   function shell(inner, title, hash) {

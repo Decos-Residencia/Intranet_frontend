@@ -18,9 +18,9 @@
   };
 
   // Única lista do que pode ir para o localStorage.
-  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner", "auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos", "aniversarianteHoje"];
+  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner", "inscricoes", "parabens", "chamados", "perfilPedidos", "aniversarianteHoje"];
   // Funcionalidades locais que pertencem a quem estava logado: zeradas quando outro usuário entra.
-  const PER_USER = ["auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos"];
+  const PER_USER = ["inscricoes", "parabens", "chamados", "perfilPedidos"];
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false });
 
@@ -29,18 +29,17 @@
 
   const state = {
     theme: "light", sidebarCollapsed: false, localOwner: null,
-    auditLog: [], readNotifs: [], inscricoes: [], parabens: [], chamados: [], perfilPedidos: [], aniversarianteHoje: false,
+    inscricoes: [], parabens: [], chamados: [], perfilPedidos: [], aniversarianteHoje: false,
     // ---- somente em memória ----
     ready: false, auth: false, user: null, loadError: null,
     api: emptyApi(), noticias: [], docsAdm: [], usuarios: [],
+    notificacoes: [], naoLidas: 0,
   };
   PERSISTED.forEach((k) => { if (k in stored) state[k] = stored[k]; });
   if (!THEMES[state.theme]) state.theme = "light";
-  ["auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
+  ["inscricoes", "parabens", "chamados", "perfilPedidos"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
   state.sidebarCollapsed = !!state.sidebarCollapsed;
   state.aniversarianteHoje = !!state.aniversarianteHoje;
-  // readNotifs antigo guardava a posição (0..6); converte para os ids atuais.
-  state.readNotifs = state.readNotifs.map((x) => typeof x === "number" ? "n" + (x + 1) : x);
 
   function save() {
     const out = {};
@@ -62,6 +61,8 @@
     state.noticias = [];
     state.docsAdm = [];
     state.usuarios = [];
+    state.notificacoes = [];
+    state.naoLidas = 0;
   }
 
   function setSession(user) {
@@ -78,6 +79,7 @@
   // (tema, menu) e funcionalidades locais permanecem.
   function clearSession() {
     App.API.clearToken();
+    stopNotifPolling();
     state.auth = false;
     state.user = null;
     state.loadError = null;
@@ -139,11 +141,7 @@
     App.go("#/login");
   }
 
-  /* ---------- auditoria local (sem backend) ---------- */
-  function logAudit(acao, alvo, tipo) {
-    state.auditLog.unshift({ quando: "Agora mesmo", autor: state.user?.nome || "—", autorRole: role(), acao, alvo, tipo });
-    save();
-  }
+  /* ---------- auditoria: gravada pelo backend (GET /auditoria, só ADMIN) ---------- */
   function removeItem(coll, id) { state[coll] = state[coll].filter((x) => x.id !== id); }
   function findItem(coll, id) { return state[coll].find((x) => x.id === id); }
   async function deleteRemoteItem(coll, id) {
@@ -226,7 +224,7 @@
   function apiUsuarioParaRamal(u) {
     return {
       id: String(u.id), nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", andar: "—",
-      email: u.email, ramal: u.setor?.ramal || "—",
+      email: u.email, ramal: u.setor?.ramal || "—", setorId: u.setor_id,
     };
   }
 
@@ -280,6 +278,8 @@
     if (data.faqs) state.api.faqs = data.faqs.map(apiFaqParaView);
     state.api.loaded = true;
     if (falhas.length) App.toast?.("Não foi possível carregar: " + falhas.join(", ") + ".");
+    await loadNotificacoes();
+    if (!pollTimer) startNotifPolling();
   }
 
   /* ---------- coleções exibidas pelas telas (somente API) ---------- */
@@ -301,26 +301,87 @@
     return state.aniversarianteHoje || !!(n && n.dia === h.dia && n.mes === h.mes);
   }
 
-  /* ---------- notificações ---------- */
-  // Aviso urgente publicado vira notificação urgente para todos. As demais
-  // notificações ainda são locais/demonstrativas (sem backend).
-  function notificacoesAll() {
-    const urgentes = state.noticias.filter((n) => n.prioridade === "urgente").map((n) => ({
-      id: "nt-" + n.id, rota: `#/avisos/${n.id}`, tipo: "urgente", urgente: true, icone: "alert-triangle",
-      titulo: n.titulo, texto: (n.corpo || "").slice(0, 160), tempo: n.quando, lida: false,
-    }));
-    return [...urgentes, ...DB.notificacoes];
+  /* ---------- notificações (reais: GET /notificacoes, geradas pelo backend) ---------- */
+  const ICONE_NOTIF = { urgente: "alert-triangle", aviso: "megaphone", evento: "calendar", documento: "file-text", aniversario: "gift", chamado: "help-circle", cadastro: "user-cog" };
+
+  function tempoRelativo(iso) {
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return "";
+    const seg = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (seg < 60) return "agora mesmo";
+    const min = Math.floor(seg / 60);
+    if (min < 60) return `há ${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `há ${h} h`;
+    const dias = Math.floor(h / 24);
+    if (dias < 7) return dias === 1 ? "ontem" : `há ${dias} dias`;
+    return fmt(fmtCurta, iso);
   }
-  const isLida = (n) => n.lida || state.readNotifs.includes(n.id);
-  function marcarLida(id) { if (id && !state.readNotifs.includes(id)) { state.readNotifs.push(id); save(); } }
-  function unreadCount() { return App.notificacoesAll().filter((n) => !App.isLida(n)).length; }
-  function unreadUrgent() { return App.notificacoesAll().filter((n) => n.urgente && !App.isLida(n)).length; }
+
+  // Formato esperado pelos componentes de notificação (painel do sino e central).
+  function notifParaView(n) {
+    return {
+      id: String(n.id), rota: n.rota || "#/notificacoes", tipo: n.tipo, urgente: n.tipo === "urgente",
+      icone: ICONE_NOTIF[n.tipo] || "bell", titulo: n.titulo, texto: n.mensagem, tempo: tempoRelativo(n.criada_em), lida: !!n.lida,
+    };
+  }
+
+  function notificacoesAll() { return state.notificacoes.map(notifParaView); }
+  const isLida = (n) => !!n.lida;
+  function unreadCount() { return state.naoLidas; }
+  function unreadUrgent() { return state.notificacoes.filter((n) => n.tipo === "urgente" && !n.lida).length; }
+
+  async function loadNotificacoes() {
+    if (!state.auth || !App.API.getToken()) return;
+    const [lista, cont] = await Promise.allSettled([Services.notificacoes.list({ page_size: 100 }), Services.notificacoes.contagem()]);
+    if (!state.auth) return;
+    if (lista.status === "fulfilled") state.notificacoes = lista.value.items || [];
+    if (cont.status === "fulfilled") state.naoLidas = cont.value.nao_lidas;
+    atualizarSino();
+  }
+
+  // Atualiza só o ícone do sino (sem redesenhar a tela inteira).
+  function atualizarSino() {
+    document.querySelectorAll('[data-action="open-notif"]').forEach((b) => {
+      b.innerHTML = UI.sinoConteudo();
+      b.title = unreadUrgent() ? "Você tem notificação urgente" : "Notificações";
+    });
+  }
+
+  async function marcarLida(id) {
+    const n = state.notificacoes.find((x) => String(x.id) === String(id));
+    if (!n || n.lida) return;
+    try {
+      const r = await Services.notificacoes.marcarLida(n.id);
+      n.lida = true; n.lida_em = r.lida_em;
+      state.naoLidas = Math.max(0, state.naoLidas - 1);
+      atualizarSino();
+    } catch (_) { /* mantém como não lida; 401 já é tratado pela camada de API */ }
+  }
+
+  async function marcarTodasLidas() {
+    try { await Services.notificacoes.marcarTodas(); } finally { await loadNotificacoes(); }
+  }
+
+  // Atualização periódica do contador (sem WebSocket): a cada 60 s e ao navegar (no máximo a cada 15 s).
+  let pollTimer = 0, ultimoToque = 0;
+  async function refreshNotificacoes() {
+    if (!state.auth || document.visibilityState === "hidden") return;
+    ultimoToque = Date.now();
+    try {
+      const c = await Services.notificacoes.contagem();
+      if (c.nao_lidas !== state.naoLidas) await loadNotificacoes();
+    } catch (_) { /* rede/401 tratados em api.js */ }
+  }
+  function startNotifPolling() { stopNotifPolling(); pollTimer = setInterval(refreshNotificacoes, 60000); }
+  function stopNotifPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = 0; }
+  function touchNotificacoes() { if (state.auth && Date.now() - ultimoToque > 15000) refreshNotificacoes(); }
 
   Object.assign(App, {
     ROLE_ORDER, THEMES, state, save, role, can, roleInfo,
     setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData,
-    logAudit, removeItem, findItem, deleteRemoteItem,
+    removeItem, findItem, deleteRemoteItem,
     avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, hoje, souAniversariante,
-    notificacoesAll, isLida, marcarLida, unreadCount, unreadUrgent,
+    notificacoesAll, isLida, marcarLida, marcarTodasLidas, unreadCount, unreadUrgent, loadNotificacoes, atualizarSino, touchNotificacoes,
   });
 })();

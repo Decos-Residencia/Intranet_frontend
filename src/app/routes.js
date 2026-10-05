@@ -27,9 +27,9 @@
     { re: /^#\/admin\/documentos\/novo$/, page: () => PagesAdmin.adminDocumentoNovo(), need: "manage_docs" },
     { re: /^#\/admin\/documentos\/([\w-]+)\/editar$/, page: (m) => PagesAdmin.adminDocumentoNovo(m[1]), need: "manage_docs" },
     { re: /^#\/admin\/documentos\/([\w-]+)\/restrito$/, page: (m) => PagesAdmin.adminDocumentoRestrito(m[1]), need: "manage_docs" },
-    // gestão administrativa (Admin) e auditoria (RH próprias / Admin todas)
+    // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
-    { re: /^#\/admin\/auditoria$/, page: () => PagesAdmin.adminAuditoria(), need: "audit_own" },
+    { re: /^#\/admin\/auditoria$/, page: () => PagesAdmin.adminAuditoria(), need: "audit_all" },
   ];
 
   Object.assign(App, { routes });

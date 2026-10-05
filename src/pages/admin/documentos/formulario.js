@@ -89,7 +89,6 @@
     try {
       if (antigo?.apiId) await Services.documentos.update(antigo.apiId, payload);
       else await Services.documentos.create(payload);
-      App.logAudit(antigo ? "editou" : "publicou", "Documento: " + titulo, "documento");
       await App.loadApiData();
       App.toast("Documento publicado na central!");
       setTimeout(() => App.go("#/admin/documentos"), 500);

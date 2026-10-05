@@ -74,7 +74,6 @@
         App.openConfirm("Excluir item?", `Tem certeza que deseja excluir <b>${UI.esc(alvo || "este item")}</b>?<br>Esta ação será registrada na auditoria.`, async () => {
           try {
             await App.deleteRemoteItem(coll, id);
-            App.logAudit("excluiu", alvo || "item", tipo || "item");
             if (row) { row.style.transition = ".25s"; row.style.opacity = "0"; row.style.transform = "translateX(20px)"; }
             await App.loadApiData();
             setTimeout(() => App.render(), row ? 250 : 0);
@@ -88,7 +87,6 @@
         App.openConfirm("Desativar usuário?", `<b>${UI.esc(nome || "Este usuário")}</b> não conseguirá mais entrar na intranet. O cadastro não é apagado.`, async () => {
           try {
             await Services.usuarios.remove(id);
-            App.logAudit("desativou", `Usuário: ${nome}`, "usuario");
             await App.loadApiData(); App.render();
             App.toast("Usuário desativado");
           } catch (err) { App.toast(err.message || "Não foi possível desativar o usuário."); }
@@ -99,7 +97,6 @@
         App.openConfirm("Reativar usuário?", `<b>${UI.esc(nome || "Este usuário")}</b> poderá entrar novamente na intranet com a senha atual.`, async () => {
           try {
             await Services.usuarios.update(id, { ativo: true });
-            App.logAudit("reativou", `Usuário: ${nome}`, "usuario");
             await App.loadApiData(); App.render();
             App.toast("Usuário reativado");
           } catch (err) { App.toast(err.message || "Não foi possível reativar o usuário."); }
@@ -109,7 +106,6 @@
         App.openConfirm("Excluir setor?", `Tem certeza que deseja excluir o setor <b>${UI.esc(nome)}</b>?<br>Setores com usuários vinculados não podem ser excluídos.`, async () => {
           try {
             await Services.setores.remove(id);
-            App.logAudit("excluiu", `Setor: ${nome}`, "setor");
             await App.loadApiData(); App.render();
             App.toast("Setor excluído");
           } catch (err) { App.toast(err.message || "Não foi possível excluir o setor."); }
@@ -144,7 +140,9 @@
       else if (a === "prevent") { e.preventDefault(); }
       else if (a === "open-menu") { document.querySelector(".sidebar")?.classList.add("sidebar-open"); document.querySelector(".drawer-backdrop")?.classList.add("show"); }
       else if (a === "close-menu") { App.closeMenu(); }
-      else if (a === "mark-read") { state.readNotifs = App.notificacoesAll().map((n) => n.id); App.save(); App.toast("Todas marcadas como lidas"); App.render(); }
+      else if (a === "mark-read") { e.preventDefault();
+        try { await App.marcarTodasLidas(); App.closePanel(); App.toast("Todas marcadas como lidas"); App.render(); }
+        catch (err) { App.toast(err.message || "Não foi possível marcar como lidas."); } }
     });
     window.addEventListener("hashchange", () => { App.closeMenu(); App.closePanel(); App.closeModal(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") App.toggleFab(false); });

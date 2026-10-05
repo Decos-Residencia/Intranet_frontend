@@ -4,6 +4,12 @@
 (function () {
   const { icon, foto, esc, iniciais } = UI;
 
+  // Conteúdo do botão do sino (ícone + contador REAL de não lidas). Reutilizado ao atualizar o contador.
+  function sinoConteudo() {
+    return `${icon("bell", "w-5 h-5")}
+    ${App.unreadCount() ? `<span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 ${App.unreadUrgent() ? "bg-red-600 bell-urgent" : "bg-wine"} text-white text-[10px] font-bold rounded-full flex items-center justify-center">${App.unreadCount()}</span>` : ""}`;
+  }
+
   function topbar(state, title) {
     const u = state.user || { nome: "—", cargo: "" };
     const rl = App.roleInfo();
@@ -25,10 +31,7 @@
         <button data-action="cycle-theme" class="icon-btn" title="Aparência: ${state.theme === "light" ? "Claro" : state.theme === "dark" ? "Escuro" : "Vinho"} — clique para trocar">
           ${icon(themeIcon, "w-5 h-5")}
         </button>
-        <button data-action="open-notif" class="icon-btn relative" title="${App.unreadUrgent() ? "Você tem notificação urgente" : "Notificações"}">
-          ${icon("bell", "w-5 h-5")}
-          ${App.unreadCount() ? `<span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 ${App.unreadUrgent() ? "bg-red-600 bell-urgent" : "bg-wine"} text-white text-[10px] font-bold rounded-full flex items-center justify-center">${App.unreadCount()}</span>` : ""}
-        </button>
+        <button data-action="open-notif" class="icon-btn relative" title="${App.unreadUrgent() ? "Você tem notificação urgente" : "Notificações"}">${UI.sinoConteudo()}</button>
         <button data-action="open-roles" class="icon-btn ${state.aniversarianteHoje ? "icon-btn-on" : ""}" title="Cenário do dia (simulação)">
           ${icon("gift", "w-5 h-5")}
         </button>
@@ -43,5 +46,5 @@
     </header>`;
   }
 
-  Object.assign(UI, { topbar });
+  Object.assign(UI, { topbar, sinoConteudo });
 })();

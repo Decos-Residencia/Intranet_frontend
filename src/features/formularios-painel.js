@@ -50,7 +50,7 @@
     const papelOpts = ["normal", "admin"].map((r) => `<option value="${r}" ${r === (u?.role || "normal") ? "selected" : ""}>${DB.roles[r].label}</option>`).join("");
     App.openPanel(u ? "Editar usuário" : "Novo usuário", `<form data-form="usuario" data-id="${UI.esc(u?.id || "")}" class="space-y-4" autocomplete="off">
       ${fld("NOME COMPLETO", `<input name="nome" class="field-input" required maxlength="150" value="${UI.esc(u?.nome || "")}">`)}
-      ${fld("E-MAIL CORPORATIVO", `<input name="email" type="email" class="field-input" required maxlength="254" ${u ? "" : 'pattern=".+@decos\\.com" title="Use um e-mail @decos.com"'} value="${UI.esc(u?.email || "")}" placeholder="nome@decos.com">`)}
+      ${fld("E-MAIL", `<input name="email" type="email" class="field-input" required maxlength="254" value="${UI.esc(u?.email || "")}" placeholder="nome@email.com">`)}
       ${fld("SETOR", `<select name="setor_id" class="field-input">${setorOpts}</select>`)}
       ${fld("CARGO", `<input name="cargo" class="field-input" required maxlength="150" value="${UI.esc(u?.cargo && u.cargo !== "—" ? u.cargo : "")}">`)}
       ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
@@ -72,7 +72,6 @@
       if (v.nascimento) body.data_nascimento = v.nascimento;
       await Services.auth.register(body);
       if (f.elements.senha) f.elements.senha.value = ""; // a senha não fica no DOM nem em lugar nenhum
-      App.logAudit("criou", `Usuário: ${nome} (COLABORADOR)`, "usuario");
       App.toast("Usuário cadastrado como Colaborador");
     } else {
       const u = App.findItem("usuarios", f.dataset.id);
@@ -83,7 +82,6 @@
         payload.ativo = v.status === "Ativo";
       }
       await Services.usuarios.update(u.apiId, payload);
-      App.logAudit("editou", `Usuário: ${nome}`, "usuario");
       App.toast("Usuário atualizado");
     }
     return true;
@@ -112,7 +110,6 @@
     if (senha !== v.confirmacao) { App.toast("A confirmação não confere com a nova senha."); return false; }
     await Services.usuarios.update(u.apiId, { senha });
     f.elements.senha.value = ""; f.elements.confirmacao.value = ""; // não fica no DOM
-    App.logAudit("redefiniu a senha de", `Usuário: ${u.nome}`, "usuario");
     App.toast("Senha redefinida. Informe a nova senha ao colaborador.");
     return true;
   }
@@ -123,7 +120,7 @@
     if (id && !s) { App.toast("Setor não encontrado"); return; }
     App.openPanel(s ? "Editar setor" : "Novo setor", `<form data-form="setor" data-id="${UI.esc(s?.id || "")}" class="space-y-4" autocomplete="off">
       ${fld("NOME DO SETOR", `<input name="nome" class="field-input" required maxlength="150" value="${UI.esc(s?.nome || "")}">`)}
-      ${fld("RAMAL", `<input name="ramal" class="field-input" maxlength="20" value="${UI.esc(s?.ramal || "")}" placeholder="Opcional">`)}
+      ${fld("RAMAL", `<input name="ramal" class="field-input" required maxlength="20" value="${UI.esc(s?.ramal || "")}" placeholder="Ex: 2210">`)}
       <button type="submit" class="btn-crimson w-full py-3">${s ? "Salvar alterações" : "Criar setor"}</button>
     </form>`);
   }
@@ -131,13 +128,12 @@
   async function submitSetor(f, v) {
     const nome = (v.nome || "").trim(), ramal = (v.ramal || "").trim();
     if (!nome) { App.toast("Informe o nome do setor."); return false; }
+    if (!ramal) { App.toast("Informe o ramal do setor."); return false; }
     if (f.dataset.id) {
-      await Services.setores.update(f.dataset.id, { nome, ramal: ramal || null });
-      App.logAudit("editou", `Setor: ${nome}`, "setor");
+      await Services.setores.update(f.dataset.id, { nome, ramal });
       App.toast("Setor atualizado");
     } else {
-      await Services.setores.create({ nome, ramal: ramal || null });
-      App.logAudit("criou", `Setor: ${nome}`, "setor");
+      await Services.setores.create({ nome, ramal });
       App.toast("Setor criado");
     }
     return true;
@@ -158,7 +154,6 @@
     const pergunta = (v.pergunta || "").trim(), resposta = (v.resposta || "").trim(), categoria = (v.categoria || "").trim();
     if (!pergunta || !resposta || !categoria) { App.toast("Preencha pergunta, resposta e categoria."); return false; }
     await Services.faq.create({ pergunta, resposta, categoria, ativo: true });
-    App.logAudit("criou", `FAQ: ${pergunta}`, "faq");
     App.toast("Pergunta publicada");
     return true;
   }

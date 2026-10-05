@@ -19,3 +19,4 @@
 .dark .icon-btn-on{ background:rgba(142,27,46,.18); }
 .ramal-btn{ font-weight:800; color:var(--wine); border:1px solid var(--border); border-radius:.5rem; padding:.25rem .7rem; transition:.15s; }
 .ramal-btn:hover{ background:var(--wine); color:#fff; border-color:var(--wine); }
+.ramal-btn-empty{ border-style:dashed; color:var(--muted); background:var(--card); }
