@@ -30,6 +30,7 @@
 
     const adminChildren = [];
     if (role === "admin") adminChildren.push({ icon: "user-cog", label: "Usuários & Setores", route: "#/admin/usuarios" });
+    if (role === "admin") adminChildren.push({ icon: "help-circle", label: "Chamados", route: "#/admin/chamados", count: App.state.api.chamadosPendentes || 0 });
     if (role === "admin") adminChildren.push({ icon: "check-check", label: "Solicitações Cadastrais", route: "#/admin/solicitacoes", count: App.state.api.solicitacoesPendentes || 0 });
     if (gere) adminChildren.push({ icon: "shield", label: "Auditoria", route: "#/admin/auditoria" });
     if (adminChildren.length) items.push({ icon: "shield", label: "Administração", children: adminChildren });

@@ -1,7 +1,6 @@
 /* =========================================================================
    Formulários em painel
-   Locais (sem backend): chamados.
-   Via API: usuário, setor, FAQ (ADMIN) e pedido de alteração cadastral (ver solicitacoes.js).
+   Via API: chamado, usuário, setor, FAQ (ADMIN) e pedido de alteração cadastral (ver solicitacoes.js).
    ========================================================================= */
 (function () {
   const { state } = App;
@@ -25,7 +24,8 @@
       ${fld(tipo === "evento-adverso" ? "LOCAL DA OCORRÊNCIA" : "SETOR / LOCAL", `<input name="local" class="field-input" required placeholder="Ex: UTI Adulto, leito 12" value="">`)}
       ${fld("PRIORIDADE", `<select name="prioridade" class="field-input">${opts(["Baixa", "Média", "Alta"], "Média")}</select>`)}
       ${fld("DESCRIÇÃO", `<textarea name="descricao" class="field-input" rows="5" required minlength="10" placeholder="Conte o que aconteceu com o máximo de detalhes possível..."></textarea>`)}
-      ${c.anonimo ? `<label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" name="anonimo" class="accent-[#8E1B2E]"> Enviar anonimamente</label>` : ""}
+      ${c.anonimo ? `<label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" name="anonimo" class="accent-[#8E1B2E]"> Enviar anonimamente</label>
+      <p class="text-xs text-slate-400 -mt-2">Anônimo: ninguém é ligado ao relato (nem o administrador) e você não poderá acompanhá-lo; guarde o protocolo.</p>` : ""}
       <button type="submit" class="btn-wine w-full py-3">Enviar</button>
     </form>`);
   }
@@ -173,21 +173,26 @@
     return true;
   }
 
+  const TIPO_API = { ti: "TI", "evento-adverso": "EVENTO_ADVERSO", geral: "GERAL" };
+  const PRIO_API = { Baixa: "BAIXA", "Média": "MEDIA", Alta: "ALTA" };
+  async function submitChamado(f, v) {
+    const c = CHAMADOS[f.dataset.tipo] || CHAMADOS.geral;
+    const anonimo = !!v.anonimo;
+    const r = await Services.chamados.create({
+      tipo: TIPO_API[f.dataset.tipo] || "GERAL", categoria: v.categoria, local: v.local.trim(),
+      prioridade: PRIO_API[v.prioridade] || "MEDIA", descricao: v.descricao.trim(), anonimo,
+    });
+    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece no seu perfil)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
+    return true;
+  }
+
   async function submitPanelForm(f) {
     const v = Object.fromEntries(new FormData(f).entries());
     const kind = f.dataset.form;
-    if (kind === "chamado") {
-      const c = CHAMADOS[f.dataset.tipo] || CHAMADOS.geral;
-      const protocolo = "#" + (f.dataset.tipo === "evento-adverso" ? "EA" : "CH") + Math.floor(100000 + Math.random() * 900000);
-      state.chamados.unshift({ protocolo, tipo: c.titulo, categoria: v.categoria, local: v.local, prioridade: v.prioridade,
-        descricao: v.descricao, anonimo: !!v.anonimo, quando: "Agora mesmo", status: "Aberto" });
-      App.save(); App.closePanel(); App.toast(`${c.titulo} registrado — protocolo ${protocolo}`);
-      App.render();
-      return;
-    }
     // Formulários que gravam na API: bloqueia o botão, mostra o erro e só fecha se der certo.
     const handlers = {
-      usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq,
+      usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq, chamado: submitChamado,
+      "chamado-admin": (form, vals) => PagesAdmin.submitChamadoAdmin(form, vals),
       pedido: (form, vals) => App.submitPedido(form, vals), rejeitar: (form, vals) => App.submitRejeicao(form, vals),
     };
     const handler = handlers[kind];

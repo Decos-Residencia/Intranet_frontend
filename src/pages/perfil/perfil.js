@@ -16,6 +16,8 @@
     // Dados cadastrais são mantidos pelo RH: só leitura aqui, alteração via pedido.
     const field = (label, value) => `<div><label class="field-label">${label}</label><input class="field-input opacity-80" value="${esc(value)}" readonly></div>`;
     const statusTone = { "Aberto": "blue", "Em análise": "amber", "Concluído": "green" };
+    const STATUS_CH = { ABERTO: "Aberto", EM_ANALISE: "Em análise", CONCLUIDO: "Concluído" };
+    const TIPO_CH = { TI: "Chamado de TI", EVENTO_ADVERSO: "Evento adverso", GERAL: "Chamado" };
     const solicitacao = (s) => { const st = App.solicitacaoStatus[s.status] || { label: s.status, tone: "gray" };
       const info = App.solicitacaoCampoInfo(s.campo);
       const detalhe = `${esc(App.solicitacaoValor(s.campo, s.valor_atual))} → ${esc(App.solicitacaoValor(s.campo, s.valor_solicitado))}${s.observacao_admin ? ` · ${esc(s.observacao_admin)}` : ""}`;
@@ -28,7 +30,7 @@
       ${badge(tone, label)}</div>`;
     const inscricoes = App.minhasInscricoes().filter((e) => !e.cancelado && !e.encerrado);
     const atividades = [
-      ...st.chamados.map((c) => item(`${esc(c.tipo)} ${esc(c.protocolo)}`, `${esc(c.categoria)} · ${esc(c.descricao)}`, c.status)),
+      ...st.api.chamados.map((c) => item(`${esc(TIPO_CH[c.tipo])} ${esc(c.protocolo)}`, `${esc(c.categoria)} · ${esc(c.resposta_admin ? "Resposta: " + c.resposta_admin : c.descricao)}`, STATUS_CH[c.status])),
       ...st.api.solicitacoes.map(solicitacao),
       ...inscricoes.map((e) => `<a href="#/eventos/${e.id}" class="block">${item(`Inscrição: ${e.titulo}`, `${e.data} · ${e.horario} · ${e.local}`, "Confirmada")}</a>`),
     ];

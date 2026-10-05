@@ -36,10 +36,10 @@ window.DB = (function () {
   // ---- Papéis (roles) e matriz de permissão ----
   // No modo integrado só existem dois papéis, derivados de GET /auth/me (user.perfil):
   //   ADMIN -> "admin" · COLABORADOR -> "normal". Isto é só UX: o backend é quem autoriza.
-  // caps: interact, download, edit_profile, manage_news, manage_docs, manage_users, manage_faq, manage_events, audit_all
+  // caps: interact, download, edit_profile, manage_news, manage_docs, manage_users, manage_faq, manage_events, manage_tickets, audit_all
   const roles = {
     normal:  { label: "Colaborador", curto: "COLABORADOR", icon: "user", desc: "Somente leitura", caps: ["interact", "download", "edit_profile"] },
-    admin:   { label: "Administrador", curto: "ADMIN", icon: "shield", desc: "Acesso total + gestão", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_users", "manage_faq", "manage_events", "audit_all"] },
+    admin:   { label: "Administrador", curto: "ADMIN", icon: "shield", desc: "Acesso total + gestão", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_users", "manage_faq", "manage_events", "manage_tickets", "audit_all"] },
   };
 
   return {

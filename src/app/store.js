@@ -18,20 +18,19 @@
   };
 
   // Única lista do que pode ir para o localStorage.
-  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner", "chamados"];
+  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner"];
   // Funcionalidades locais que pertencem a quem estava logado: zeradas quando outro usuário entra.
-  const PER_USER = ["chamados"];
+  const PER_USER = [];
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
-    eventosProximos: [], minhasInscricoes: [] });
+    eventosProximos: [], minhasInscricoes: [], chamados: [], chamadosPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
 
   const state = {
     theme: "light", sidebarCollapsed: false, localOwner: null,
-    chamados: [],
     // ---- somente em memória ----
     ready: false, auth: false, user: null, loadError: null,
     api: emptyApi(), usuarios: [],
@@ -39,7 +38,6 @@
   };
   PERSISTED.forEach((k) => { if (k in stored) state[k] = stored[k]; });
   if (!THEMES[state.theme]) state.theme = "light";
-  ["chamados"].forEach((k) => { if (!Array.isArray(state[k])) state[k] = []; });
   state.sidebarCollapsed = !!state.sidebarCollapsed;
 
   function save() {
@@ -228,7 +226,7 @@
     avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
     aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
     solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
-    eventosProximos: "eventos", minhasInscricoes: "inscrições em eventos",
+    eventosProximos: "eventos", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes",
   };
 
   // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
@@ -287,6 +285,8 @@
       // Próximos eventos publicados (dashboard) e as inscrições do usuário (perfil).
       eventosProximos: () => Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 20 }).then((r) => r.items),
       minhasInscricoes: () => Services.eventos.minhas(),
+      chamados: () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items),
+      ...(can("manage_tickets") ? { chamadosPendentes: () => Services.chamados.resumo().then((r) => r.abertos + r.em_analise) } : {}),
       me: () => Services.auth.me(), // dados cadastrais podem ter mudado (aprovação de solicitação, edição do ADMIN)
       aniversariantes: () => Services.aniversariantes.list(),
       aniversariantesHoje: () => Services.aniversariantes.hoje(),
@@ -318,6 +318,8 @@
     if (data.me && state.user && data.me.id === state.user.id) state.user = data.me;
     if (data.eventosProximos) state.api.eventosProximos = data.eventosProximos;
     if (data.minhasInscricoes) state.api.minhasInscricoes = data.minhasInscricoes;
+    if (data.chamados) state.api.chamados = data.chamados;
+    if (typeof data.chamadosPendentes === "number") state.api.chamadosPendentes = data.chamadosPendentes;
     if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
     if (data.aniversariantesHoje) state.api.aniversariantesHoje = data.aniversariantesHoje;
     if (data.proximos) state.api.aniversariantesProximos = data.proximos;

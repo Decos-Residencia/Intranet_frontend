@@ -136,6 +136,7 @@
           catch (err) { App.toast(err.message || "Não foi possível excluir o documento."); }
           await App.loadApiData(); App.render();
         }, "Sim, excluir"); }
+      else if (a === "chamado-abrir") { e.preventDefault(); await PagesAdmin.abrirChamado(el.dataset.id); }
       else if (a === "open-chamado") { e.preventDefault(); App.toggleFab(false); App.openChamadoPanel(el.dataset.tipo || "geral"); }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
       else if (a === "open-pedido") { e.preventDefault(); App.openPedidoPanel(); }

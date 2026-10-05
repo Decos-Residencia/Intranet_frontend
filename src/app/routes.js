@@ -29,6 +29,7 @@
     { re: /^#\/admin\/documentos\/([\w-]+)\/editar$/, page: (m) => PagesAdmin.adminDocumentoNovo(m[1]), need: "manage_docs" },
     // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
+    { re: /^#\/admin\/chamados$/, page: () => PagesAdmin.adminChamados(), need: "manage_tickets" },
     { re: /^#\/admin\/eventos$/, page: () => PagesAdmin.adminEventos(), need: "manage_events" },
     { re: /^#\/admin\/eventos\/novo$/, page: () => PagesAdmin.adminEventoForm(), need: "manage_events" },
     { re: /^#\/admin\/eventos\/(\d+)\/editar$/, page: (m) => PagesAdmin.adminEventoForm(m[1]), need: "manage_events" },
