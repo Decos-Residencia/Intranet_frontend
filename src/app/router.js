@@ -16,7 +16,9 @@
     let hash = location.hash || "#/login";
 
     if (!state.auth && hash !== "#/login") { location.hash = "#/login"; return; }
-    if (state.auth && hash === "#/login") { location.hash = "#/dashboard"; return; }
+    if (state.auth && hash === "#/login") { location.hash = state.user?.must_change_password ? "#/trocar-senha" : "#/dashboard"; return; }
+    // Senha temporária: nenhuma outra tela abre até a troca (também após recarregar a página).
+    if (state.auth && state.user?.must_change_password && hash !== "#/trocar-senha") { location.hash = "#/trocar-senha"; return; }
 
     const match = App.routes.find((r) => r.re.test(hash));
     if (!match) { app.innerHTML = App.shell(App.notFound(), "Página não encontrada"); App.afterRender(); return; }

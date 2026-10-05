@@ -134,7 +134,11 @@
     if (!response.ok) {
       // 401 em chamada autenticada = sessão inválida/expirada. O próprio login
       // (auth:false) nunca derruba a sessão, o que evita laço de redirecionamento.
-      if (response.status === 401 && options.auth !== false && token) App.expireSession?.();
+      if (response.status === 401 && options.auth !== false && token) {
+        const detalhe = payload && typeof payload === "object" ? payload.detail : "";
+        App.expireSession?.(typeof detalhe === "string" && /senha/i.test(detalhe) ? detalhe : undefined);
+      }
+      if (response.status === 403 && payload && payload.code === "PASSWORD_CHANGE_REQUIRED") App.requirePasswordChange?.();
       throw new ApiError(errorMessage(response.status, payload, method), response.status, payload);
     }
     return payload;

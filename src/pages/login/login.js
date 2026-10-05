@@ -34,14 +34,17 @@
                   <input name="senha" type="password" required placeholder="Senha" class="login-input pr-12" autocomplete="current-password">
                   <button type="button" data-action="toggle-pass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">${icon("eye","w-5 h-5")}</button>
                 </div>
-                <div class="flex items-center justify-between pt-2">
-                  <div class="space-y-1">
-                    <button type="button" data-action="toast" data-msg="Enviamos um link de redefinição ao seu e-mail corporativo." class="block text-sm font-bold text-wine hover:underline text-left">Esqueci minha senha ›</button>
-                    <button type="button" data-action="toast" data-msg="Cadastro é feito pelo RH. Procure o setor de Recursos Humanos." class="block text-sm font-bold text-wine hover:underline text-left">Primeiro acesso? Cadastre-se ›</button>
-                  </div>
+                <div class="flex items-center justify-end pt-2">
                   <button type="submit" class="btn-wine px-8 py-3">Acessar</button>
                 </div>
               </form>
+              <div class="mt-6 space-y-2 text-sm text-slate-500 dark:text-slate-400" id="login-ajuda">
+                <p>${icon("lock", "w-4 h-4 inline -mt-0.5")} <b>Acesso criado pelo administrador/RH.</b> No primeiro acesso, entre com a senha temporária que você recebeu e defina a sua.</p>
+                <details>
+                  <summary class="cursor-pointer font-bold text-wine hover:underline">Esqueci minha senha</summary>
+                  <p class="mt-2">A redefinição é feita pelo administrador/RH. Procure o RH ou o administrador da intranet para receber uma nova senha temporária.</p>
+                </details>
+              </div>
             </div>
           </div>
         </main>
@@ -66,10 +69,15 @@
               email: form.elements.email.value.trim(),
               senha: form.elements.senha.value,
             });
-            await App.startSession(token.access_token); // GET /auth/me + dados da API
+            const user = await App.startSession(token.access_token); // GET /auth/me + dados da API
             form.reset();                                // a senha não fica no campo
-            App.toast("Bem-vindo à Intranet Decós!");
-            App.go("#/dashboard");
+            if (user.must_change_password) {
+              App.toast("Primeiro acesso: defina sua nova senha para continuar.");
+              App.go("#/trocar-senha");
+            } else {
+              App.toast("Bem-vindo à Intranet Decós!");
+              App.go("#/dashboard");
+            }
           } catch (err) {
             App.toast(err.message || "Não foi possível entrar.");
           } finally {

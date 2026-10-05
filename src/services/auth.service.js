@@ -10,6 +10,13 @@
     me() {
       return App.API.request("/auth/me");
     },
+    // Troca da própria senha. Devolve um token novo (os anteriores deixam de valer).
+    changePassword(senhaAtual, novaSenha) {
+      return App.API.request("/auth/change-password", {
+        method: "POST",
+        body: { senha_atual: senhaAtual, nova_senha: novaSenha },
+      });
+    },
     // Cadastro feito por ADMIN (o backend sempre cria COLABORADOR). A senha
     // só trafega no corpo da requisição; nada é guardado no navegador.
     register(data) {

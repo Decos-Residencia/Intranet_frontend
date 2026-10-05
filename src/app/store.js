@@ -232,13 +232,36 @@
     return {
       id: String(u.id), apiId: u.id, source: "api", nome: u.nome, email: u.email, setor: u.setor?.nome || "—", setorId: u.setor_id,
       cargo: u.cargo || "—", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
+      senhaTemporaria: !!u.must_change_password,
     };
   }
 
   const ROTULO = { avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores" };
 
+  // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
+  const trocaPendente = () => !!state.user?.must_change_password;
+
+  // Chamada quando a API responde 403 PASSWORD_CHANGE_REQUIRED (a barreira real é o backend).
+  function requirePasswordChange() {
+    if (!state.auth || !state.user || trocaPendente()) return;
+    state.user.must_change_password = true;
+    stopNotifPolling();
+    App.closePanel?.(); App.closeModal?.();
+    App.go("#/trocar-senha");
+  }
+
+  // Troca a senha, guarda o token novo e deixa a sessão consistente (dados carregados).
+  async function changePassword(senhaAtual, novaSenha) {
+    const token = await Services.auth.changePassword(senhaAtual, novaSenha);
+    App.API.setToken(token.access_token);
+    const user = await Services.auth.me();
+    App.setSession(user);
+    await loadApiData();
+    return user;
+  }
+
   async function loadApiData() {
-    if (!state.auth || !App.API.getToken()) return;
+    if (!state.auth || !App.API.getToken() || trocaPendente()) return;
     const jobs = {
       avisos: () => Services.listAll(Services.avisos.list),
       documentos: () => Services.listAll(Services.documentos.list),
@@ -332,7 +355,7 @@
   function unreadUrgent() { return state.notificacoes.filter((n) => n.tipo === "urgente" && !n.lida).length; }
 
   async function loadNotificacoes() {
-    if (!state.auth || !App.API.getToken()) return;
+    if (!state.auth || !App.API.getToken() || state.user?.must_change_password) return;
     const [lista, cont] = await Promise.allSettled([Services.notificacoes.list({ page_size: 100 }), Services.notificacoes.contagem()]);
     if (!state.auth) return;
     if (lista.status === "fulfilled") state.notificacoes = lista.value.items || [];
@@ -366,7 +389,7 @@
   // Atualização periódica do contador (sem WebSocket): a cada 60 s e ao navegar (no máximo a cada 15 s).
   let pollTimer = 0, ultimoToque = 0;
   async function refreshNotificacoes() {
-    if (!state.auth || document.visibilityState === "hidden") return;
+    if (!state.auth || state.user?.must_change_password || document.visibilityState === "hidden") return;
     ultimoToque = Date.now();
     try {
       const c = await Services.notificacoes.contagem();
@@ -375,11 +398,11 @@
   }
   function startNotifPolling() { stopNotifPolling(); pollTimer = setInterval(refreshNotificacoes, 60000); }
   function stopNotifPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = 0; }
-  function touchNotificacoes() { if (state.auth && Date.now() - ultimoToque > 15000) refreshNotificacoes(); }
+  function touchNotificacoes() { if (state.auth && !state.user?.must_change_password && Date.now() - ultimoToque > 15000) refreshNotificacoes(); }
 
   Object.assign(App, {
     ROLE_ORDER, THEMES, state, save, role, can, roleInfo,
-    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData,
+    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange,
     removeItem, findItem, deleteRemoteItem,
     avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, hoje, souAniversariante,
     notificacoesAll, isLida, marcarLida, marcarTodasLidas, unreadCount, unreadUrgent, loadNotificacoes, atualizarSino, touchNotificacoes,

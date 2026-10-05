@@ -54,7 +54,7 @@
       ${fld("SETOR", `<select name="setor_id" class="field-input">${setorOpts}</select>`)}
       ${fld("CARGO", `<input name="cargo" class="field-input" required maxlength="150" value="${UI.esc(u?.cargo && u.cargo !== "—" ? u.cargo : "")}">`)}
       ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
-      ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">O novo usuário entra como Colaborador. Para torná-lo Administrador, edite-o depois.</div>`)}
+      ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">A senha é temporária: o novo usuário entra como Colaborador e precisará criar a própria senha no primeiro acesso. Para torná-lo Administrador, edite-o depois.</div>`)}
       ${u ? fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : ""}`) : ""}
       ${u ? fld("STATUS", `<select name="status" class="field-input" ${proprio ? "disabled" : ""}>${opts(["Ativo", "Inativo"], u.status)}</select>${proprio ? `<div class="field-hint">Você não pode desativar a própria conta.</div>` : ""}`) : ""}
       <button type="submit" class="btn-crimson w-full py-3">${u ? "Salvar alterações" : "Cadastrar usuário"}</button>
@@ -94,7 +94,7 @@
     const u = id ? App.findItem("usuarios", id) : null;
     if (!u) { App.toast("Usuário não encontrado"); return; }
     App.openPanel("Redefinir senha", `<form data-form="senha" data-id="${UI.esc(u.id)}" class="space-y-4" autocomplete="off">
-      <p class="text-sm text-slate-500 dark:text-slate-400">Defina uma nova senha para <b>${UI.esc(u.nome)}</b> (${UI.esc(u.email)}). A senha atual não pode ser exibida. Depois de salvar, informe a nova senha ao colaborador.</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Defina uma nova senha para <b>${UI.esc(u.nome)}</b> (${UI.esc(u.email)}). A senha atual não pode ser exibida. A nova senha será <b>temporária</b>: informe-a ao colaborador, que precisará definir a própria senha no próximo acesso. As sessões abertas dele serão encerradas.</p>
       ${fld("NOVA SENHA", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">`)}
       ${fld("CONFIRMAR NOVA SENHA", `<input name="confirmacao" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password">`)}
       <button type="submit" class="btn-crimson w-full py-3">Redefinir senha</button>
@@ -110,7 +110,7 @@
     if (senha !== v.confirmacao) { App.toast("A confirmação não confere com a nova senha."); return false; }
     await Services.usuarios.update(u.apiId, { senha });
     f.elements.senha.value = ""; f.elements.confirmacao.value = ""; // não fica no DOM
-    App.toast("Senha redefinida. Informe a nova senha ao colaborador.");
+    App.toast("Senha temporária definida. O colaborador deverá criar uma nova senha no próximo acesso.");
     return true;
   }
 

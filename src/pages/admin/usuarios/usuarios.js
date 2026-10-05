@@ -24,7 +24,7 @@
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.setor)}</td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.cargo)}</td>
         <td>${roleBadge(u.role)}</td>
-        <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}</td>
+        <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}${u.senhaTemporaria ? `<div class="mt-1">${badge("amber", "Senha temporária")}</div>` : ""}</td>
         <td><div class="flex items-center gap-1.5 justify-end pr-4">
           <button class="act-btn" data-action="open-usuario" data-id="${esc(u.id)}" title="Editar">${icon("edit","w-4 h-4")}</button>
           <button class="act-btn" data-action="open-senha" data-id="${esc(u.id)}" title="Redefinir senha">${icon("key","w-4 h-4")}</button>

@@ -5,6 +5,7 @@
 (function () {
   const routes = [
     { re: /^#\/login$/, page: () => Pages.login() },
+    { re: /^#\/trocar-senha$/, page: () => Pages.trocarSenha() },
     { re: /^#\/dashboard$/, page: () => Pages.dashboard() },
     { re: /^#\/avisos$/, page: () => Pages.avisos() },
     { re: /^#\/avisos\/([\w-]+)$/, page: (m) => Pages.avisoDetalhe(m[1]) },
