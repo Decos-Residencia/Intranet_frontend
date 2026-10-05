@@ -193,6 +193,8 @@
     const handlers = {
       usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq, chamado: submitChamado,
       "chamado-admin": (form, vals) => PagesAdmin.submitChamadoAdmin(form, vals),
+      avaliacao: (form, vals) => PagesAdmin.submitAvaliacao(form, vals),
+      "avaliacao-resposta": (form, vals) => PagesAvaliacoes.submitResposta(form, vals),
       pedido: (form, vals) => App.submitPedido(form, vals), rejeitar: (form, vals) => App.submitRejeicao(form, vals),
     };
     const handler = handlers[kind];

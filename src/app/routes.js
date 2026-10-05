@@ -12,6 +12,8 @@
     { re: /^#\/avisos\/([\w-]+)$/, page: (m) => Pages.avisoDetalhe(m[1]) },
     { re: /^#\/aniversariantes$/, page: () => Pages.aniversariantes() },
     { re: /^#\/aniversariantes\/hoje$/, page: () => Pages.aniversarianteDoDia() },
+    { re: /^#\/avaliacoes$/, page: () => PagesAvaliacoes.avaliacoes() },
+    { re: /^#\/admin\/avaliacoes$/, page: () => PagesAdmin.adminAvaliacoes(), need: "manage_docs" },
     { re: /^#\/eventos$/, page: () => Pages.eventos() },
     { re: /^#\/eventos\/(\d+)$/, page: (m) => Pages.eventoDetalhe(m[1]) },
     { re: /^#\/documentos$/, page: () => Pages.documentos() },

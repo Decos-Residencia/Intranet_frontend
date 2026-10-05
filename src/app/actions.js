@@ -136,6 +136,17 @@
           catch (err) { App.toast(err.message || "Não foi possível excluir o documento."); }
           await App.loadApiData(); App.render();
         }, "Sim, excluir"); }
+      else if (a === "avaliacao-nova") { e.preventDefault(); PagesAdmin.novaAvaliacao(); }
+      else if (a === "avaliacao-editar") { e.preventDefault(); await PagesAdmin.editarAvaliacao(el.dataset.id); }
+      else if (a === "avaliacao-responder") { e.preventDefault(); await PagesAvaliacoes.responder(el.dataset.id); }
+      else if (a === "avaliacao-doc") { e.preventDefault(); await App.abrirDocumento(el.dataset.id, true); }
+      else if (a === "avaliacao-excluir") { e.preventDefault();
+        const { id, alvo } = el.dataset;
+        App.openConfirm("Excluir avaliação?", `Excluir a avaliação de <b>${UI.esc(alvo)}</b>? A ação é registrada na auditoria.`, async () => {
+          try { await Services.avaliacoes.remove(id); App.toast("Avaliação excluída"); }
+          catch (err) { App.toast(err.message || "Não foi possível excluir a avaliação."); }
+          if (PagesAdmin.recarregarAvaliacoes) PagesAdmin.recarregarAvaliacoes();
+        }, "Sim, excluir"); }
       else if (a === "chamado-abrir") { e.preventDefault(); await PagesAdmin.abrirChamado(el.dataset.id); }
       else if (a === "open-chamado") { e.preventDefault(); App.toggleFab(false); App.openChamadoPanel(el.dataset.tipo || "geral"); }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }

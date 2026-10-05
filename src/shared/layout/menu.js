@@ -23,6 +23,8 @@
     items.push({ icon: "file-text", label: "Documentos & FAQ", children: [
       { icon: "file-text", label: gere ? "Gerenciar Documentos" : "Documentos & POPs", route: gere ? "#/admin/documentos" : "#/documentos" },
       ...(gere ? [{ icon: "edit", label: "Gerenciar FAQ", route: "#/admin/faqs" }] : []),
+      { icon: "check-check", label: "Minhas Avaliações", route: "#/avaliacoes", count: App.state.api.avaliacoesPendentes || 0 },
+      ...(gere ? [{ icon: "check-check", label: "Gerenciar Avaliações", route: "#/admin/avaliacoes" }] : []),
       { icon: "help-circle", label: "FAQ", route: "#/faq" },
     ]});
 
