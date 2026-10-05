@@ -3,6 +3,7 @@
 .chip{ font-size:.8rem; font-weight:700; padding:.45rem 1rem; border-radius:999px; color:var(--muted); background:transparent; border:1px solid var(--border); transition:.15s; white-space:nowrap; }
 .chip:hover{ color:var(--wine); }
 .chip-active{ background:var(--wine); color:#fff; border-color:var(--wine); }
+.chip-active:hover{ color:#fff; background:var(--wine-dark); border-color:var(--wine-dark); }
 .chip-outline{ font-size:.8rem; font-weight:700; padding:.5rem 1rem; border-radius:.6rem; color:var(--text); background:var(--card); border:1px solid var(--border); display:inline-flex; align-items:center; gap:.4rem; }
 
 /* ---------- Paginação ---------- */

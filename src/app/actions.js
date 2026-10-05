@@ -8,6 +8,9 @@
   function wireGlobal() {
     document.addEventListener("click", async (e) => {
       if (!e.target.closest("#quick-fab")) App.toggleFab(false);
+      if (document.querySelector(".sidebar-collapsed") && !e.target.closest(".nav-group")) {
+        document.querySelectorAll(".sidebar-collapsed .nav-group-open").forEach((g) => g.classList.remove("nav-group-open"));
+      }
       const el = e.target.closest("[data-action]");
       if (!el) return;
       const a = el.dataset.action;
@@ -17,16 +20,37 @@
       else if (a === "open-theme") { e.preventDefault(); App.openThemePanel(); }
       else if (a === "set-theme") { state.theme = el.dataset.theme; App.save(); App.closePanel();
         App.toast("Aparência: " + THEMES[state.theme].label); App.applyThemeLive(); }
-      else if (a === "toggle-submenu") { el.closest(".nav-group")?.classList.toggle("nav-group-open"); }
+      else if (a === "toggle-submenu") {
+        const group = el.closest(".nav-group");
+        const collapsed = !!document.querySelector(".sidebar-collapsed");
+        if (collapsed) {
+          const willOpen = !group?.classList.contains("nav-group-open");
+          document.querySelectorAll(".sidebar-collapsed .nav-group-open").forEach((g) => g.classList.remove("nav-group-open"));
+          group?.classList.toggle("nav-group-open", willOpen);
+        } else {
+          group?.classList.toggle("nav-group-open");
+        }
+      }
       else if (a === "toggle-sidebar") {
+        const toggle = document.querySelector(".sidebar-toggle");
         if (window.innerWidth <= 860) {
           const open = document.querySelector(".sidebar")?.classList.toggle("sidebar-open");
           document.querySelector(".drawer-backdrop")?.classList.toggle("show", !!open);
+          toggle?.classList.toggle("sidebar-toggle-open", !!open);
+          toggle?.setAttribute("aria-expanded", open ? "true" : "false");
+          if (toggle) {
+            toggle.title = open ? "Fechar menu" : "Abrir menu";
+            toggle.setAttribute("aria-label", toggle.title);
+          }
         } else {
           state.sidebarCollapsed = !state.sidebarCollapsed; App.save();
           document.querySelector(".sidebar")?.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
-          const handle = document.querySelector(".sidebar-handle");
-          if (handle) handle.title = state.sidebarCollapsed ? "Expandir menu" : "Minimizar menu";
+          toggle?.classList.toggle("sidebar-toggle-collapsed", state.sidebarCollapsed);
+          toggle?.setAttribute("aria-expanded", state.sidebarCollapsed ? "false" : "true");
+          if (toggle) {
+            toggle.title = state.sidebarCollapsed ? "Expandir menu" : "Minimizar menu";
+            toggle.setAttribute("aria-label", toggle.title);
+          }
         }
       }
       else if (a === "set-aniversario") { state.aniversarianteHoje = el.dataset.val === "true"; App.save(); App.closePanel();
@@ -69,6 +93,17 @@
             App.toast("Usuário desativado");
           } catch (err) { App.toast(err.message || "Não foi possível desativar o usuário."); }
         }, "Sim, desativar"); }
+      else if (a === "open-senha") { e.preventDefault(); App.openSenhaPanel(el.dataset.id); }
+      else if (a === "reactivate-usuario") { e.preventDefault();
+        const { id, nome } = el.dataset;
+        App.openConfirm("Reativar usuário?", `<b>${UI.esc(nome || "Este usuário")}</b> poderá entrar novamente na intranet com a senha atual.`, async () => {
+          try {
+            await Services.usuarios.update(id, { ativo: true });
+            App.logAudit("reativou", `Usuário: ${nome}`, "usuario");
+            await App.loadApiData(); App.render();
+            App.toast("Usuário reativado");
+          } catch (err) { App.toast(err.message || "Não foi possível reativar o usuário."); }
+        }, "Sim, reativar", "btn-wine"); }
       else if (a === "delete-setor") { e.preventDefault();
         const { id, nome } = el.dataset;
         App.openConfirm("Excluir setor?", `Tem certeza que deseja excluir o setor <b>${UI.esc(nome)}</b>?<br>Setores com usuários vinculados não podem ser excluídos.`, async () => {
@@ -126,6 +161,13 @@
   function closeMenu() {
     document.querySelector(".sidebar")?.classList.remove("sidebar-open");
     document.querySelector(".drawer-backdrop")?.classList.remove("show");
+    const toggle = document.querySelector(".sidebar-toggle");
+    toggle?.classList.remove("sidebar-toggle-open");
+    toggle?.setAttribute("aria-expanded", "false");
+    if (toggle && window.innerWidth <= 860) {
+      toggle.title = "Abrir menu";
+      toggle.setAttribute("aria-label", toggle.title);
+    }
   }
 
   Object.assign(App, { wireGlobal, closeMenu });

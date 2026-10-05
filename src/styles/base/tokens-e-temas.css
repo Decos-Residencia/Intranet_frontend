@@ -39,7 +39,6 @@
 .theme-red .sidebar .logo-img, .dark .sidebar .logo-img{ filter:brightness(0) invert(1); }
 .theme-red .sidebar .nav-link:hover{ background:rgba(255,255,255,.08); color:#fff; }
 .theme-red .sidebar .nav-count{ background:rgba(255,255,255,.18); color:#fff; }
-.theme-red .sidebar-handle{ background:var(--card); }
 .theme-red .sidebar .nav-sublink{ color:rgba(255,255,255,.7); }
 .theme-red .sidebar .nav-sublink:hover{ background:rgba(255,255,255,.08); color:#fff; }
 .theme-red .sidebar .nav-sublink.nav-sublink-active{ color:var(--wine); }

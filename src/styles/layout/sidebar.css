@@ -5,38 +5,79 @@
    para uma trilha só de ícones — dá mais espaço de leitura em telas de tabela
    densas (Diretório, Gerenciar Documentos) sem perder a navegação de vista. */
 @media (min-width:861px){
-  .sidebar{ transition:width .22s cubic-bezier(.2,.8,.2,1); position:relative; }
-  /* Fixo no meio vertical da tela, sobre a borda da barra (largura - 13px):
-     a barra estica com a página, então "meio da barra" sumiria ao rolar. */
-  .sidebar-handle{ display:flex; position:fixed; top:50%; left:251px; transform:translateY(-50%); width:26px; height:26px;
-    border-radius:999px; background:var(--card); border:1px solid var(--border); color:var(--muted);
-    align-items:center; justify-content:center; z-index:30; cursor:pointer;
-    transition:left .22s cubic-bezier(.2,.8,.2,1), color .2s, border-color .2s, transform .2s; }
-  .sidebar-collapsed .sidebar-handle{ left:63px; }
-  .sidebar-handle:hover{ color:var(--wine); border-color:var(--wine); transform:translateY(-50%) scale(1.08); }
-  .sidebar-handle svg{ transition:transform .22s; }
-  .sidebar-collapsed .sidebar-handle svg{ transform:rotate(180deg); }
-  .sidebar-collapsed{ width:76px; }
+  /* sem position:relative aqui: ele anulava o sticky da sidebar (layout.css) e o rodapé rolava junto */
+  .sidebar{ transition:width .22s cubic-bezier(.2,.8,.2,1); }
+  .sidebar-collapsed{ width:76px; overflow:visible; z-index:65; }
   .sidebar-collapsed .sb-label{ display:none; }
   .sidebar-collapsed .px-5{ padding-left:1rem; padding-right:1rem; }
   .sidebar-collapsed .user-chip{ justify-content:center; padding:.5rem; }
-  .sidebar-collapsed .role-badge{ justify-content:center; padding:.5rem; }
-  .sidebar-collapsed .nav-link{ justify-content:center; padding:.65rem; }
+  .sidebar-collapsed .role-badge{ justify-content:center; padding:0; width:48px; height:38px; margin:0 auto; border-radius:.7rem; }
+  .sidebar-collapsed .role-badge svg{ width:20px; height:20px; }
+  .sidebar-collapsed nav{ overflow:visible; padding-left:.75rem; padding-right:.75rem; }
+  .sidebar-collapsed .nav-link{ justify-content:center; width:52px; height:52px; padding:0; margin:0 auto; border-radius:.9rem; }
+  .sidebar-collapsed .nav-link .nav-ic svg{ width:23px; height:23px; }
   .sidebar-collapsed .nav-count{ position:absolute; top:2px; right:2px; transform:scale(.85); }
   .sidebar-collapsed .nav-link{ position:relative; }
+  .sidebar-collapsed .nav-link::after,
+  .sidebar-collapsed .profile-link::after,
+  .sidebar-collapsed .logout-link::after{
+    content:attr(data-label); position:absolute; left:calc(100% + 12px); top:50%; transform:translate(-6px,-50%);
+    z-index:85; white-space:nowrap; background:var(--card); border:1px solid var(--border); color:var(--text);
+    box-shadow:0 16px 35px rgba(15,23,42,.16); border-radius:.65rem; padding:.48rem .65rem;
+    font-size:.78rem; font-weight:800; line-height:1; opacity:0; pointer-events:none; transition:.16s ease;
+  }
+  .sidebar-collapsed .nav-link:hover::after,
+  .sidebar-collapsed .profile-link:hover::after,
+  .sidebar-collapsed .logout-link:hover::after{ opacity:1; transform:translate(0,-50%); }
+  .sidebar-collapsed .nav-group-open > .nav-group-toggle::after{ opacity:0; }
   .sidebar-collapsed a[href="#/perfil"]{ justify-content:center; }
-  .sidebar-collapsed [data-action="logout"]{ justify-content:center; }
+  .sidebar-collapsed .sidebar-footer{ padding-left:.75rem; padding-right:.75rem; padding-bottom:.85rem; overflow:visible; }
+  .sidebar-collapsed .profile-link{ position:relative; justify-content:center; width:52px; height:52px; margin:0 auto .55rem; border-radius:999px; }
+  .sidebar-collapsed .profile-avatar{ width:42px; height:42px; font-size:.78rem; box-shadow:0 0 0 2px rgba(255,255,255,.16); }
+  .sidebar-collapsed .logout-link{ position:relative; justify-content:center; width:52px; height:40px; margin:0 auto; border-radius:.85rem; }
+  .sidebar-collapsed .logout-link svg{ width:21px; height:21px; }
   .sidebar-collapsed .px-4{ padding-left:1rem; padding-right:1rem; }
-  .sidebar-collapsed .nav-group-toggle{ justify-content:center; padding:.65rem; }
-  .sidebar-collapsed .nav-submenu{ display:none; }
+  .sidebar-collapsed .nav-group{ position:relative; }
+  .sidebar-collapsed .nav-group-toggle{ justify-content:center; padding:0; }
+  .sidebar-collapsed .nav-submenu{
+    display:block; position:absolute; left:calc(100% + 14px); top:0; z-index:85; width:230px; max-height:none;
+    overflow:visible; opacity:0; visibility:hidden; pointer-events:none; transform:translateX(-8px) scale(.98);
+    background:var(--card); border:1px solid var(--border); border-radius:.8rem; box-shadow:0 22px 55px rgba(15,23,42,.2);
+    transition:opacity .16s ease, transform .16s ease, visibility .16s ease;
+  }
+  .sidebar-collapsed .nav-group-open .nav-submenu{ opacity:1; visibility:visible; pointer-events:auto; transform:translateX(0) scale(1); }
+  .sidebar-collapsed .nav-submenu::before{
+    content:""; position:absolute; left:-6px; top:20px; width:12px; height:12px; transform:rotate(45deg);
+    background:var(--card); border-left:1px solid var(--border); border-bottom:1px solid var(--border);
+  }
+  .sidebar-collapsed .nav-submenu-inner{ padding:.45rem; gap:.2rem; }
+  .sidebar-collapsed .nav-submenu .sb-label{ display:block; }
+  .sidebar-collapsed .nav-sublink{ gap:.65rem; padding:.62rem .7rem; border-radius:.65rem; color:var(--text); }
+  .sidebar-collapsed .nav-sub-icon{ display:flex; width:28px; height:28px; flex-shrink:0; align-items:center; justify-content:center; border-radius:.55rem; background:var(--wine-50); color:var(--wine); opacity:1; }
+  .sidebar-collapsed .nav-sub-icon svg{ display:block; }
+  .theme-red .sidebar-collapsed .nav-link::after,
+  .theme-red .sidebar-collapsed .profile-link::after,
+  .theme-red .sidebar-collapsed .logout-link::after,
+  .theme-red .sidebar-collapsed .nav-submenu{
+    background:#fff; border-color:#f3d7db; color:#1e2433; box-shadow:0 22px 55px rgba(42,10,16,.28);
+  }
+  .theme-red .sidebar-collapsed .nav-submenu::before{ background:#fff; border-color:#f3d7db; }
+  .theme-red .sidebar-collapsed .nav-sublink{ color:#1e2433; }
+  .theme-red .sidebar-collapsed .nav-sublink:hover{ background:var(--wine-50); color:var(--wine); }
+  .theme-red .sidebar-collapsed .nav-sublink.nav-sublink-active{ background:var(--wine-50); color:var(--wine); }
+  .sidebar-collapsed .sidebar-brand-row{ justify-content:center; }
   /* Minimizado: só o símbolo, sem o nome "Decós Hospital" */
   .sidebar-collapsed .logo-full{ display:none; }
   .sidebar-collapsed .logo-mark{ display:block; }
+  .sidebar-collapsed .brand-logo{ justify-content:center; width:100%; }
+  .sidebar-collapsed .brand-logo .logo-mark{ width:42px; height:42px; }
 }
 
 
 /* ---------- Sidebar ---------- */
 .logo-mark{ display:none; }
+.sidebar .brand-logo .logo-full{ height:36px; }
+.sidebar .brand-logo .logo-mark{ width:36px; height:36px; }
 .text-wine{ color:var(--wine); } .bg-wine{ background:var(--wine); }
 .text-crimson{ color:var(--crimson); }
 .nav-link{ display:flex; align-items:center; gap:.75rem; padding:.6rem .85rem; border-radius:.7rem;
@@ -53,6 +94,9 @@
    tratamento do nível principal, então "selecionado" sempre lê do mesmo jeito
    em qualquer profundidade do menu. */
 .nav-group-toggle{ width:100%; background:transparent; border:0; font-family:inherit; text-align:left; cursor:pointer; }
+.nav-group-toggle.nav-link-active{ background:var(--wine-50); color:var(--wine); }
+.theme-red .sidebar .nav-group-toggle.nav-link-active{ background:var(--wine-50); color:var(--wine); }
+.theme-red .sidebar .nav-group-toggle.nav-link-active:hover{ background:var(--wine-50); color:var(--wine); }
 .nav-caret{ transition:transform .2s; flex-shrink:0; }
 .nav-group-open .nav-caret{ transform:rotate(180deg); }
 .nav-submenu{ overflow:hidden; max-height:0; transition:max-height .25s ease; }
@@ -63,8 +107,13 @@
 .nav-sublink:hover{ background:rgba(142,27,46,.06); color:var(--wine); }
 .nav-sublink-active{ background:var(--wine-50); color:var(--wine); font-weight:800; }
 .dark .nav-sublink-active{ background:rgba(142,27,46,.18); color:#f7b8c2; }
+.nav-sub-icon{ width:5px; height:5px; border-radius:999px; background:currentColor; opacity:.55; flex-shrink:0; }
+.nav-sub-icon svg{ display:none; }
 .nav-sub-dot{ width:5px; height:5px; border-radius:999px; background:currentColor; opacity:.55; flex-shrink:0; }
 .user-chip{ display:flex; align-items:center; gap:.6rem; padding:.6rem; border:1px solid var(--border); border-radius:.8rem; }
+.profile-link, .logout-link{ transition:.15s; }
+.profile-link:hover{ color:var(--wine); }
+.logout-link:hover{ background:rgba(142,27,46,.06); }
 
 /* ---------- Papéis / mais vermelho ---------- */
 /* (a .sidebar já é position:sticky/fixed — não sobrescrever aqui, senão quebra o mobile) */

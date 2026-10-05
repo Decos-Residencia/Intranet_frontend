@@ -94,7 +94,7 @@
 
   /* ---------- requisição ---------- */
   async function request(path, options = {}) {
-    if (!baseUrl()) throw new ApiError("API não configurada para este ambiente.", 0, null);
+    if (!baseUrl()) throw new ApiError(App.config?.notConfiguredMessage || "API não configurada para este ambiente.", 0, null);
 
     const method = (options.method || "GET").toUpperCase();
     const headers = new Headers(options.headers || {});

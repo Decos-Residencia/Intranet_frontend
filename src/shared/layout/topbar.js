@@ -9,8 +9,11 @@
     const rl = App.roleInfo();
     const roleTag = `<span class="ml-2 text-[10px] font-bold text-wine">${rl.curto}</span>`;
     const themeIcon = { light: "sun", dark: "moon", red: "wine" }[state.theme] || "sun";
+    const sidebarTitle = state.sidebarCollapsed ? "Expandir menu" : "Minimizar menu";
     return `<header class="topbar">
-      <button data-action="toggle-sidebar" class="icon-btn" title="Recolher/expandir menu">${icon("menu","w-5 h-5")}</button>
+      <button data-action="toggle-sidebar" class="icon-btn sidebar-toggle ${state.sidebarCollapsed ? "sidebar-toggle-collapsed" : ""}" title="${sidebarTitle}" aria-label="${sidebarTitle}" aria-expanded="${!state.sidebarCollapsed}">
+        ${icon("chevron-left","w-5 h-5")}
+      </button>
       <h1 class="text-lg md:text-xl font-extrabold text-slate-800 dark:text-slate-100 truncate">${title}</h1>
       <form data-action="search" class="flex-1 max-w-md mx-6 hidden md:block">
         <div class="search-box">

@@ -22,7 +22,7 @@
   // Funcionalidades locais que pertencem a quem estava logado: zeradas quando outro usuário entra.
   const PER_USER = ["auditLog", "readNotifs", "inscricoes", "parabens", "chamados", "perfilPedidos"];
 
-  const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], setores: [], loaded: false });
+  const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
@@ -165,8 +165,9 @@
 
   const TIPO_DE_CATEGORIA = { comunicado: "Comunicado", evento: "Evento", promocao: "Promoção", noticia: "Notícia", urgente: "Comunicado" };
 
+  // Resolve o autor de um aviso mesmo que a pessoa tenha sido desativada depois.
   function nomeDoUsuario(id) {
-    return state.api.usuariosRaw.find((u) => u.id === id)?.nome || null;
+    return state.api.usuariosTodos.find((u) => u.id === id)?.nome || null;
   }
 
   function apiAvisoParaCard(a) {
@@ -232,7 +233,7 @@
   function apiUsuarioParaAdmin(u) {
     return {
       id: String(u.id), apiId: u.id, source: "api", nome: u.nome, email: u.email, setor: u.setor?.nome || "—", setorId: u.setor_id,
-      cargo: u.cargo || "—", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
+      cargo: u.cargo || "—", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
     };
   }
 
@@ -244,7 +245,8 @@
       avisos: () => Services.listAll(Services.avisos.list),
       documentos: () => Services.listAll(Services.documentos.list),
       faqs: () => Services.listAll(Services.faq.list),
-      usuarios: () => Services.listAll(Services.usuarios.list),
+      // O ADMIN também recebe os desativados (para reativar); os demais só veem ativos.
+      usuarios: () => Services.listAll(Services.usuarios.list, can("manage_users") ? { incluir_inativos: true } : {}),
       setores: () => Services.listAll(Services.setores.list),
     };
     const keys = Object.keys(jobs);
@@ -259,8 +261,11 @@
 
     // Usuários primeiro: avisos precisam do diretório para resolver o autor.
     if (data.usuarios) {
-      state.api.usuariosRaw = data.usuarios;
-      state.api.usuarios = data.usuarios.map(apiUsuarioParaRamal);
+      // Diretório, ramais, aniversariantes e contagens usam só quem está ativo.
+      const ativos = data.usuarios.filter((u) => u.ativo !== false);
+      state.api.usuariosTodos = data.usuarios;
+      state.api.usuariosRaw = ativos;
+      state.api.usuarios = ativos.map(apiUsuarioParaRamal);
       state.usuarios = can("manage_users") ? data.usuarios.map(apiUsuarioParaAdmin) : [];
     }
     if (data.setores) state.api.setores = data.setores;

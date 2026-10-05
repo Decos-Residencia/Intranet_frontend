@@ -53,6 +53,7 @@
       ${fld("E-MAIL CORPORATIVO", `<input name="email" type="email" class="field-input" required maxlength="254" ${u ? "" : 'pattern=".+@decos\\.com" title="Use um e-mail @decos.com"'} value="${UI.esc(u?.email || "")}" placeholder="nome@decos.com">`)}
       ${fld("SETOR", `<select name="setor_id" class="field-input">${setorOpts}</select>`)}
       ${fld("CARGO", `<input name="cargo" class="field-input" required maxlength="150" value="${UI.esc(u?.cargo && u.cargo !== "—" ? u.cargo : "")}">`)}
+      ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
       ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">O novo usuário entra como Colaborador. Para torná-lo Administrador, edite-o depois.</div>`)}
       ${u ? fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : ""}`) : ""}
       ${u ? fld("STATUS", `<select name="status" class="field-input" ${proprio ? "disabled" : ""}>${opts(["Ativo", "Inativo"], u.status)}</select>${proprio ? `<div class="field-hint">Você não pode desativar a própria conta.</div>` : ""}`) : ""}
@@ -67,14 +68,16 @@
       const senha = v.senha || "";
       if (senha.length < 8) { App.toast("A senha inicial deve ter pelo menos 8 caracteres."); return false; }
       if (new TextEncoder().encode(senha).length > 72) { App.toast("A senha inicial deve ter no máximo 72 bytes."); return false; }
-      await Services.auth.register({ nome, email, senha, setor_id, cargo });
+      const body = { nome, email, senha, setor_id, cargo };
+      if (v.nascimento) body.data_nascimento = v.nascimento;
+      await Services.auth.register(body);
       if (f.elements.senha) f.elements.senha.value = ""; // a senha não fica no DOM nem em lugar nenhum
       App.logAudit("criou", `Usuário: ${nome} (COLABORADOR)`, "usuario");
       App.toast("Usuário cadastrado como Colaborador");
     } else {
       const u = App.findItem("usuarios", f.dataset.id);
       if (!u) { App.toast("Usuário não encontrado"); return false; }
-      const payload = { nome, email, setor_id, cargo };
+      const payload = { nome, email, setor_id, cargo, data_nascimento: v.nascimento || null };
       if (u.apiId !== state.user.id) { // próprio papel/status ficam bloqueados na tela
         payload.perfil = v.role === "admin" ? "ADMIN" : "COLABORADOR";
         payload.ativo = v.status === "Ativo";
@@ -83,6 +86,34 @@
       App.logAudit("editou", `Usuário: ${nome}`, "usuario");
       App.toast("Usuário atualizado");
     }
+    return true;
+  }
+
+  /* ---------- redefinir senha de um usuário (API: PUT /usuarios/{id} com `senha`) ---------- */
+  // A senha atual não existe em texto (só o hash bcrypt), então nada é exibido: o ADMIN define uma
+  // nova e a informa ao colaborador. A senha não é guardada em lugar nenhum nem aparece na resposta.
+  function openSenhaPanel(id) {
+    const u = id ? App.findItem("usuarios", id) : null;
+    if (!u) { App.toast("Usuário não encontrado"); return; }
+    App.openPanel("Redefinir senha", `<form data-form="senha" data-id="${UI.esc(u.id)}" class="space-y-4" autocomplete="off">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Defina uma nova senha para <b>${UI.esc(u.nome)}</b> (${UI.esc(u.email)}). A senha atual não pode ser exibida. Depois de salvar, informe a nova senha ao colaborador.</p>
+      ${fld("NOVA SENHA", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">`)}
+      ${fld("CONFIRMAR NOVA SENHA", `<input name="confirmacao" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password">`)}
+      <button type="submit" class="btn-crimson w-full py-3">Redefinir senha</button>
+    </form>`);
+  }
+
+  async function submitSenha(f, v) {
+    const u = App.findItem("usuarios", f.dataset.id);
+    if (!u) { App.toast("Usuário não encontrado"); return false; }
+    const senha = v.senha || "";
+    if (senha.length < 8) { App.toast("A nova senha deve ter pelo menos 8 caracteres."); return false; }
+    if (new TextEncoder().encode(senha).length > 72) { App.toast("A nova senha deve ter no máximo 72 bytes."); return false; }
+    if (senha !== v.confirmacao) { App.toast("A confirmação não confere com a nova senha."); return false; }
+    await Services.usuarios.update(u.apiId, { senha });
+    f.elements.senha.value = ""; f.elements.confirmacao.value = ""; // não fica no DOM
+    App.logAudit("redefiniu a senha de", `Usuário: ${u.nome}`, "usuario");
+    App.toast("Senha redefinida. Informe a nova senha ao colaborador.");
     return true;
   }
 
@@ -151,7 +182,7 @@
       return;
     }
     // Formulários que gravam na API: bloqueia o botão, mostra o erro e só fecha se der certo.
-    const handlers = { usuario: submitUsuario, setor: submitSetor, faq: submitFaq };
+    const handlers = { usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq };
     const handler = handlers[kind];
     if (!handler) return;
     const btn = f.querySelector('button[type="submit"]');
@@ -166,5 +197,5 @@
     }
   }
 
-  Object.assign(App, { openChamadoPanel, openPedidoPanel, openUsuarioPanel, openSetorPanel, openFaqPanel, submitPanelForm });
+  Object.assign(App, { openChamadoPanel, openPedidoPanel, openUsuarioPanel, openSenhaPanel, openSetorPanel, openFaqPanel, submitPanelForm });
 })();

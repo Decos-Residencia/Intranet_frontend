@@ -18,7 +18,7 @@
     const lista = App.state.usuarios;
     const conta = (fn) => lista.filter(fn).length;
     const rows = lista.map((u) => `
-      <tr class="user-row border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40" data-role="${esc(u.role)}" data-status="${esc(u.status)}" data-busca="${esc((u.nome + " " + u.email + " " + u.setor + " " + u.cargo).toLowerCase())}">
+      <tr class="user-row border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${u.status === "Inativo" ? "opacity-60" : ""}" data-role="${esc(u.role)}" data-status="${esc(u.status)}" data-busca="${esc((u.nome + " " + u.email + " " + u.setor + " " + u.cargo).toLowerCase())}">
         <td class="py-3.5 pl-4"><div class="flex items-center gap-3"><div class="avatar-soft w-9 h-9 text-xs">${UI.foto(u.nome)}${esc(UI.iniciais(u.nome))}</div>
           <div><div class="font-bold text-slate-800 dark:text-slate-100">${esc(u.nome)}</div><div class="text-xs text-slate-400">${esc(u.email)}</div></div></div></td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.setor)}</td>
@@ -27,7 +27,10 @@
         <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}</td>
         <td><div class="flex items-center gap-1.5 justify-end pr-4">
           <button class="act-btn" data-action="open-usuario" data-id="${esc(u.id)}" title="Editar">${icon("edit","w-4 h-4")}</button>
-          ${u.apiId === eu.id ? "" : `<button class="act-btn act-btn-danger" data-action="deactivate-usuario" data-id="${esc(u.apiId)}" data-nome="${esc(u.nome)}" title="Desativar usuário">${icon("trash","w-4 h-4")}</button>`}</div></td>
+          <button class="act-btn" data-action="open-senha" data-id="${esc(u.id)}" title="Redefinir senha">${icon("key","w-4 h-4")}</button>
+          ${u.status === "Inativo"
+            ? `<button class="act-btn" data-action="reactivate-usuario" data-id="${esc(u.apiId)}" data-nome="${esc(u.nome)}" title="Reativar usuário">${icon("rotate-ccw","w-4 h-4")}</button>`
+            : u.apiId === eu.id ? "" : `<button class="act-btn act-btn-danger" data-action="deactivate-usuario" data-id="${esc(u.apiId)}" data-nome="${esc(u.nome)}" title="Desativar usuário">${icon("trash","w-4 h-4")}</button>`}</div></td>
       </tr>`).join("");
     const setoresLista = App.setoresAll();
     const setores = setoresLista.map((s) => {
@@ -51,7 +54,7 @@
         <button data-action="open-usuario" class="btn-crimson px-5 py-2.5 flex items-center gap-2">${icon("plus","w-4 h-4")} Novo Usuário</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-        ${statCard("USUÁRIOS ATIVOS", conta((u) => u.status === "Ativo"), lista.length + " cadastrados", "users")}
+        ${statCard("USUÁRIOS ATIVOS", conta((u) => u.status === "Ativo"), lista.length + " cadastrados (" + conta((u) => u.status === "Inativo") + " inativos)", "users")}
         ${statCard("COLABORADORES", conta((u) => u.role === "normal"), "somente leitura", "user")}
         ${statCard("PERFIS ADMIN", conta((u) => u.role === "admin"), "acesso total", "shield")}
         ${statCard("SETORES", setoresLista.length, "cadastrados", "users")}
@@ -63,6 +66,7 @@
             <div class="flex gap-2 flex-wrap">
               <div class="search-box w-48"><span>${icon("search","w-4 h-4 text-slate-400")}</span><input id="us-busca" placeholder="Buscar..." class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
               <select id="us-role" class="select-field"><option value="">Papel: Todos</option>${["normal","admin"].map((r) => `<option value="${r}">${DB.roles[r].label}</option>`).join("")}</select>
+              <select id="us-status" class="select-field"><option value="">Status: Todos</option><option value="Ativo" selected>Status: Ativos</option><option value="Inativo">Status: Inativos</option></select>
             </div>
           </div>
           <div class="card overflow-x-auto"><table class="w-full text-sm text-left">
@@ -81,9 +85,9 @@
       </div>`,
       init() {
         wireList({ containerId: "us-rows", itemSel: ".user-row", size: 8, pagerId: "us-pager", infoId: "us-info", label: "usuários", crimson: true,
-          controls: ["#us-busca", "#us-role"], onEmpty: "Nenhum usuário encontrado.",
-          filterFn: (el) => { const q = sel("us-busca").trim().toLowerCase(), r = sel("us-role");
-            return (!r || el.dataset.role === r) && (!q || el.dataset.busca.includes(q)); } });
+          controls: ["#us-busca", "#us-role", "#us-status"], onEmpty: "Nenhum usuário encontrado.",
+          filterFn: (el) => { const q = sel("us-busca").trim().toLowerCase(), r = sel("us-role"), st = sel("us-status");
+            return (!r || el.dataset.role === r) && (!st || el.dataset.status === st) && (!q || el.dataset.busca.includes(q)); } });
       },
     };
   }
