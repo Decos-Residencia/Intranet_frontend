@@ -122,7 +122,7 @@ src/
     api.js                  #   fetch, JWT, timeout, erros (401/403/404/409/422/5xx)
     auth/avisos/documentos/usuarios/setores/faq/avaliacoes .service.js
   data/
-    mock.js                 # só o que ainda não tem backend (eventos, notificações demo...)
+    config.js               # configuração de interface (atalhos, categorias, papéis); nenhum dado de negócio
   pages/                    # ── uma pasta por tela
     login/  dashboard/  avisos/  aniversariantes/  eventos/
     documentos/  faq/  diretorio/  perfil/  notificacoes/

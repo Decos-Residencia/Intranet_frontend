@@ -2,7 +2,7 @@
    Tela: Central de Documentos & POPs
    Rota: #/documentos
    Fonte: GET /documentos (o backend já entrega só o que o usuário pode ver: documentos gerais e do
-   seu setor, ativos). Categorias e contagens vêm dos próprios dados; nada é mock.
+   seu setor, ativos). Categorias e contagens vêm dos próprios dados; nada é fictício.
    ========================================================================= */
 (function () {
   const { icon, badge, breadcrumb, esc } = UI;

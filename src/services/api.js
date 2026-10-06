@@ -89,6 +89,7 @@
       404: "Registro não encontrado.",
       409: "Esse registro conflita com um já existente.",
       422: "Verifique os campos informados.",
+      429: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
       500: "Erro interno do servidor.",
       503: "Serviço temporariamente indisponível.",
     })[status] || "Não foi possível concluir a operação.";

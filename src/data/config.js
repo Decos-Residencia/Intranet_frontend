@@ -1,9 +1,7 @@
 /* =========================================================================
-   Intranet Hospital Decós — dados LOCAIS (sem backend)
-   Só restam aqui as partes que ainda não têm API (MANTER LOCAL / BACKEND FUTURO):
-   estatísticas,
-   acessos rápidos, categorias (cores) e a matriz de papéis.
-   Avisos, documentos, FAQ, usuários, setores e aniversariantes vêm da API.
+   Intranet Hospital Decós — configuração de interface (NÃO são dados de negócio)
+   Atalhos de acesso rápido, categorias de aviso (rótulo/cor) e a matriz de papéis (só UX: o
+   backend é quem autoriza). Todos os dados reais vêm da API.
    ========================================================================= */
 window.DB = (function () {
 
@@ -29,10 +27,6 @@ window.DB = (function () {
     { icon: "bell", titulo: "Notificações", route: "#/notificacoes" },
   ];
 
-  // id estável: o estado "lida" é salvo por id, então incluir notificações
-  // novas não bagunça quais já foram lidas.
-  const stats = {}; // estatísticas reais vêm da API (M10 revisa o restante)
-
   // ---- Papéis (roles) e matriz de permissão ----
   // No modo integrado só existem dois papéis, derivados de GET /auth/me (user.perfil):
   //   ADMIN -> "admin" · COLABORADOR -> "normal". Isto é só UX: o backend é quem autoriza.
@@ -43,6 +37,6 @@ window.DB = (function () {
   };
 
   return {
-    categorias, acessosRapidos, stats, roles,
+    categorias, acessosRapidos, roles,
   };
 })();

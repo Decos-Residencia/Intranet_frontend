@@ -1,8 +1,8 @@
 /* =========================================================================
    Store — estado global, sessão, papéis/permissões e dados da API
    Duas famílias de dados, nunca misturadas:
-   • PERSISTIDO (localStorage): preferências visuais e funcionalidades locais
-     que ainda não têm backend (notificações lidas, inscrições, chamados...).
+   • PERSISTIDO (localStorage, decos_intranet_state): só preferências visuais do
+     aparelho (tema e menu recolhido). Nenhum dado de negócio.
    • EM MEMÓRIA: sessão (usuário, papel) e tudo que vem da API. Nada disso é
      gravado no navegador; o JWT fica à parte, em decos_intranet_token (api.js).
    O papel da interface vem exclusivamente de GET /auth/me → user.perfil.
@@ -18,9 +18,7 @@
   };
 
   // Única lista do que pode ir para o localStorage.
-  const PERSISTED = ["theme", "sidebarCollapsed", "localOwner"];
-  // Funcionalidades locais que pertencem a quem estava logado: zeradas quando outro usuário entra.
-  const PER_USER = [];
+  const PERSISTED = ["theme", "sidebarCollapsed"];
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
@@ -30,7 +28,7 @@
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
 
   const state = {
-    theme: "light", sidebarCollapsed: false, localOwner: null,
+    theme: "light", sidebarCollapsed: false,
     // ---- somente em memória ----
     ready: false, auth: false, user: null, loadError: null,
     api: emptyApi(), usuarios: [],
@@ -63,10 +61,6 @@
   }
 
   function setSession(user) {
-    if (state.localOwner !== user.id) {
-      PER_USER.forEach((k) => { state[k] = []; });
-      state.localOwner = user.id;
-    }
     state.auth = true;
     state.user = user;
     save();
@@ -185,7 +179,7 @@
   };
   const extDoArquivo = (nome) => ((String(nome || "").split(".").pop() || "").toLowerCase());
 
-  // Metadados reais do documento (GET /documentos). Nada aqui vem de mock: o arquivo fica no
+  // Metadados reais do documento (GET /documentos). Nada aqui é fictício: o arquivo fica no
   // Storage privado e só é acessado por URL assinada (Services.documentos.download).
   function apiDocumentoParaView(d) {
     const tipo = (d.categoria || "").trim();
