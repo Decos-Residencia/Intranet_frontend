@@ -3,7 +3,8 @@
 
    O {{ .ConfirmationURL }} passa pelo Supabase, que valida e consome o link e redireciona para cá
    com o resultado no FRAGMENTO da URL:
-     #access_token=...&refresh_token=...&type=recovery      (sucesso)
+     #access_token=...&refresh_token=...&type=recovery      (sucesso, template padrão)
+     ?token_hash=...&type=recovery                          (sucesso, template customizado)
      #error=access_denied&error_code=otp_expired&...        (link inválido/expirado)
 
    Este arquivo roda ANTES do roteador: lê o fragmento uma única vez, guarda só o access_token em
@@ -12,20 +13,27 @@
    nunca usado pelo frontend para falar com o Supabase.
    ========================================================================= */
 (function () {
-  let pendente = null; // { accessToken } | { erro } — vive só nesta página
+  let pendente = null; // { accessToken } | { tokenHash } | { erro } — vive só nesta página
 
+  // Lê as duas formas em que o retorno pode chegar, em QUALQUER caminho (a Vercel serve o
+  // index.html para /redefinir-senha, /auth/confirm etc.):
+  //   • fragmento:  #access_token=...&type=recovery   (template padrão do Supabase)
+  //   • query:      ?token_hash=...&type=recovery     (template customizado do Supabase)
+  //   • erro:       #error=...&error_code=otp_expired  (ou na query)
+  // O fragmento de rota da intranet (#/algo) nunca é tocado.
   function ler() {
     const bruto = location.hash.replace(/^#/, "");
-    if (!bruto || bruto.startsWith("/")) return; // rota normal da intranet (#/algo)
-    const params = new URLSearchParams(bruto);
-    if (params.get("type") === "recovery" && params.get("access_token")) {
-      pendente = { accessToken: params.get("access_token") };
-    } else if (params.get("error") || params.get("error_code")) {
-      pendente = { erro: params.get("error_code") || params.get("error") };
-    } else {
-      return;
+    const fontes = [];
+    if (bruto && !bruto.startsWith("/")) fontes.push(new URLSearchParams(bruto));
+    if (location.search) fontes.push(new URLSearchParams(location.search));
+    for (const p of fontes) {
+      if (p.get("type") === "recovery" && p.get("access_token")) { pendente = { accessToken: p.get("access_token") }; break; }
+      if (p.get("type") === "recovery" && p.get("token_hash")) { pendente = { tokenHash: p.get("token_hash") }; break; }
+      if (p.get("error_code") || (p.get("error") && p.get("error_description"))) { pendente = { erro: p.get("error_code") || p.get("error") }; break; }
     }
-    try { history.replaceState(null, "", location.pathname + location.search + "#/redefinir-senha"); }
+    if (!pendente) return;
+    // Limpa de imediato a barra de endereço e o histórico (token/erro, caminho e query).
+    try { history.replaceState(null, "", "/#/redefinir-senha"); }
     catch (_) { location.hash = "#/redefinir-senha"; }
   }
   ler();

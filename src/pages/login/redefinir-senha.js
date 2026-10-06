@@ -24,6 +24,9 @@
       prova = { tipo: "token_hash", valor: hash };
       // O token só precisa estar na URL até aqui: some da barra de endereço e do histórico.
       try { history.replaceState(null, "", location.pathname + location.search + "#/redefinir-senha"); } catch (_) { /* sem history */ }
+    } else if (cb && cb.tokenHash) {
+      prova = { tipo: "token_hash", valor: cb.tokenHash };
+      App.recuperacao.limpar();
     } else if (cb && cb.accessToken) {
       prova = { tipo: "access_token", valor: cb.accessToken };
       App.recuperacao.limpar();
