@@ -18,7 +18,7 @@
   }
 
   const statusBadge = (s) => {
-    const map = { "Publicado": "green", "Agendado": "blue", "Rascunho": "gray", "Em Revisão": "amber" };
+    const map = { "Publicado": "green", "Agendado": "blue", "Rascunho": "gray", "Arquivado": "amber", "Em Revisão": "amber" };
     return badge(map[s] || "gray", s);
   };
   const prioBadge = (p) => {
@@ -47,7 +47,6 @@
     { value: "FORMULÁRIO", label: "Formulário", cor: "green" },
     { value: "NORMA", label: "Norma Institucional", cor: "blue" },
   ];
-  const SETORES_DOC = ["Enfermagem Geral", "SCIH - Controle de Infecção", "Qualidade", "Farmácia", "Pronto Atendimento", "SESMT", "Recursos Humanos", "Tecnologia da Informação"];
   const permBadge = (p) => p === "download"
     ? `<span class="perm-badge perm-download">${icon("download","w-3.5 h-3.5")} Download Disponível</span>`
     : `<span class="perm-badge perm-view">${icon("eye","w-3.5 h-3.5")} Somente Visualização</span>`;
@@ -68,5 +67,5 @@
     zone.addEventListener("drop", (e) => onFile(e.dataTransfer.files[0]));
   }
 
-  Object.assign(AdminUI, { statCard, statusBadge, prioBadge, corDoc, acoes, filtro, sel, opts, TIPOS_NOTICIA, TIPOS_DOC, SETORES_DOC, permBadge, fieldLbl, guide, wireDrop });
+  Object.assign(AdminUI, { statCard, statusBadge, prioBadge, corDoc, acoes, filtro, sel, opts, TIPOS_NOTICIA, TIPOS_DOC, permBadge, fieldLbl, guide, wireDrop });
 })();

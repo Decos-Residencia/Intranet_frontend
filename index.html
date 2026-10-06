@@ -6,6 +6,10 @@
   <title>Intranet Corporativa · Hospital Decós</title>
   <meta name="description" content="Intranet corporativa do Hospital Decós — avisos, eventos, documentos, POPs, ramais e painel administrativo.">
 
+  <!-- Favicon: símbolo do Hospital Decós -->
+  <link rel="icon" type="image/png" href="assets/img/simbolo.png">
+  <link rel="apple-touch-icon" href="assets/img/simbolo.png">
+
   <!-- Tailwind CSS (Play CDN) -->
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>
@@ -66,10 +70,28 @@
   <div id="app"></div>
 
   <!-- Ordem importa: cada camada só usa o que veio antes dela -->
-  <!-- 1. base: namespaces, dados (mock) e estado -->
+  <!-- 1. base: namespaces, configuração de interface e estado -->
   <script src="src/app/namespaces.js"></script>
-  <script src="src/data/mock.js"></script>
+  <script src="src/app/recuperacao-callback.js"></script>
+  <script src="src/app/config.js"></script>
+  <script src="src/data/config.js"></script>
   <script src="src/app/store.js"></script>
+  <script src="src/services/index.js"></script>
+  <script src="src/services/api.js"></script>
+  <script src="src/services/auth.service.js"></script>
+  <script src="src/services/avisos.service.js"></script>
+  <script src="src/services/documentos.service.js"></script>
+  <script src="src/services/usuarios.service.js"></script>
+  <script src="src/services/setores.service.js"></script>
+  <script src="src/services/faq.service.js"></script>
+  <script src="src/services/avaliacoes.service.js"></script>
+  <script src="src/services/notificacoes.service.js"></script>
+  <script src="src/services/cadastro.service.js"></script>
+  <script src="src/services/aniversariantes.service.js"></script>
+  <script src="src/services/eventos.service.js"></script>
+  <script src="src/services/chamados.service.js"></script>
+  <script src="src/services/dashboard.service.js"></script>
+  <script src="src/services/auditoria.service.js"></script>
 
   <!-- 2. shared: peças de interface, layout e utilidades -->
   <script src="src/shared/ui/icones.js"></script>
@@ -93,7 +115,8 @@
 
   <!-- 3. features: ações do usuário (painéis, busca, downloads, tema) -->
   <script src="src/features/aparencia.js"></script>
-  <script src="src/features/trocar-papel.js"></script>
+  <script src="src/features/solicitacoes.js"></script>
+  <script src="src/features/eventos.js"></script>
   <script src="src/features/notificacoes-painel.js"></script>
   <script src="src/features/busca.js"></script>
   <script src="src/features/formularios-painel.js"></script>
@@ -101,6 +124,9 @@
 
   <!-- 4. pages: uma tela por arquivo -->
   <script src="src/pages/login/login.js"></script>
+  <script src="src/pages/login/redefinir-senha.js"></script>
+  <script src="src/pages/trocar-senha/trocar-senha.js"></script>
+  <script src="src/pages/admin/solicitacoes/solicitacoes.js"></script>
   <script src="src/pages/dashboard/dashboard.js"></script>
   <script src="src/pages/avisos/mural.js"></script>
   <script src="src/pages/avisos/detalhe.js"></script>
@@ -108,9 +134,15 @@
   <script src="src/pages/aniversariantes/dia.js"></script>
   <script src="src/pages/eventos/lista.js"></script>
   <script src="src/pages/eventos/detalhe.js"></script>
+  <script src="src/pages/admin/chamados/lista.js"></script>
+  <script src="src/pages/admin/eventos/lista.js"></script>
+  <script src="src/pages/admin/eventos/formulario.js"></script>
   <script src="src/pages/documentos/central.js"></script>
   <script src="src/pages/documentos/visualizar.js"></script>
   <script src="src/pages/faq/faq.js"></script>
+  <script src="src/pages/avaliacoes/minhas.js"></script>
+  <script src="src/pages/admin/avaliacoes/lista.js"></script>
+  <script src="src/pages/admin/faqs/faqs.js"></script>
   <script src="src/pages/diretorio/diretorio.js"></script>
   <script src="src/pages/perfil/perfil.js"></script>
   <script src="src/pages/notificacoes/notificacoes.js"></script>
@@ -119,7 +151,6 @@
   <script src="src/pages/admin/noticias/formulario.js"></script>
   <script src="src/pages/admin/documentos/lista.js"></script>
   <script src="src/pages/admin/documentos/formulario.js"></script>
-  <script src="src/pages/admin/documentos/restrito.js"></script>
   <script src="src/pages/admin/usuarios/usuarios.js"></script>
   <script src="src/pages/admin/auditoria/auditoria.js"></script>
 

@@ -1,36 +1,27 @@
 /* =========================================================================
-   Baixar documento (PDF/DOC) e adicionar evento à agenda (.ics)
+   Abrir/baixar documento (URL assinada). O .ics de eventos fica em features/eventos.js
    ========================================================================= */
 (function () {
-  function baixarDocumento(id) {
-    const d = App.documentosAll().find((x) => String(x.id) === String(id));
-    if (!d) return;
-    if (!d.download || !App.can("download")) { App.toast("Download não permitido para este documento"); return; }
-    const linhas = [
-      "HOSPITAL DECÓS CORPORATIVO - Sistema de Gestão da Qualidade", "",
-      `#Tipo: ${d.tipo}   Versão: ${d.versao}`, `Setor responsável: ${d.setor}   Criado por: ${d.criadoPor}`,
-      `Última atualização: ${d.atualizado}`, "", "#Resumo", d.desc, "",
-      "#Observação", "Cópia gerada pela Intranet Decós. Consulte sempre a versão vigente na Central de Documentos.",
-      `Baixado por ${DB.usuario.nome} (${DB.usuario.matricula}).`,
-    ];
-    if (d.icone === "W") {
-      const html = `<html><head><meta charset="utf-8"></head><body><h1>${UI.esc(d.titulo)}</h1>${linhas.map((l) => `<p>${UI.esc(l.replace(/^#/, ""))}</p>`).join("")}</body></html>`;
-      App.downloadFile(d.arquivo.replace(/\.docx$/i, ".doc"), html, "application/msword");
-    } else {
-      App.downloadFile(d.arquivo.endsWith(".pdf") ? d.arquivo : d.arquivo + ".pdf", App.makePdf(d.titulo, linhas));
+  // O arquivo fica no Supabase Storage PRIVADO. O backend valida login e permissão por setor e devolve
+  // uma URL assinada de 60 s, usada na hora (nunca guardada). inline=true abre no navegador.
+  async function abrirDocumento(id, inline = true) {
+    try {
+      const r = await Services.documentos.download(id, inline);
+      if (!/^https?:\/\//.test(r.url)) throw new Error("Endereço de download inválido.");
+      const a = document.createElement("a");
+      a.href = r.url; a.rel = "noopener noreferrer";
+      if (inline) a.target = "_blank";
+      document.body.appendChild(a); a.click(); a.remove();
+      return r;
+    } catch (err) {
+      App.toast(err.message || "Não foi possível abrir o documento.");
+      return null;
     }
-    App.toast(`Baixando ${d.arquivo}`);
   }
-  function baixarIcs(ev) {
-    if (!ev) return;
-    const [ini, fim] = ev.horario.split("-").map((h) => h.trim().replace(":", "") + "00");
-    const dia = `202609${ev.dia}`;
-    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Hospital Decos//Intranet//PT", "BEGIN:VEVENT",
-      `UID:evento-${ev.id}@decos.com`, `DTSTART:${dia}T${ini}`, `DTEND:${dia}T${fim || ini}`,
-      `SUMMARY:${ev.titulo}`, `LOCATION:${ev.local}`, `DESCRIPTION:${ev.desc}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
-    App.downloadFile(`evento-${ev.id}.ics`, ics, "text/calendar");
-    App.toast("Evento adicionado — abra o arquivo para salvar na agenda");
+  async function baixarDocumento(id) {
+    if (!App.can("download")) { App.toast("Download não permitido para o seu perfil"); return; }
+    const r = await abrirDocumento(id, false);
+    if (r) App.toast(`Baixando ${r.arquivo_nome}`);
   }
-
-  Object.assign(App, { baixarDocumento, baixarIcs });
+  Object.assign(App, { abrirDocumento, baixarDocumento });
 })();

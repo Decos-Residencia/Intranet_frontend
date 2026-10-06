@@ -1,18 +1,18 @@
 /* Estrutura geral: sidebar + área principal */
 /* ---------- Layout ---------- */
 .layout{ display:flex; align-items:stretch; min-height:100vh; }
-/* Sem altura fixa: o flex "stretch" (padrão) estica a sidebar até a altura
-   real da coluna de conteúdo — em páginas mais altas que a tela, o fundo dela
-   acompanha até o final em vez de parar em 100vh e deixar vão embaixo.
-   position:sticky ainda prende a navegação no topo durante a rolagem. */
+/* A sidebar tem a altura da janela e fica grudada no topo (sticky): a navegação rola por
+   dentro (o <nav> tem overflow-y:auto) e o bloco do usuário + "Sair da Conta" fica sempre
+   visível no rodapé, mesmo em páginas longas. Antes ela esticava até a altura da página
+   (align-self:stretch) e o rodapé só aparecia ao rolar até o final. */
 .sidebar{ width:264px; flex-shrink:0; background:var(--sidebar); border-right:1px solid var(--border);
-  display:flex; flex-direction:column; position:sticky; top:0; align-self:stretch; min-height:100vh; }
+  display:flex; flex-direction:column; position:sticky; top:0; align-self:flex-start;
+  height:100vh; height:100dvh; overflow:hidden; z-index:35; }
 .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
 .topbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:.5rem;
   padding:.9rem 1.5rem; background:var(--card); border-bottom:1px solid var(--border); }
 .content{ padding:1.75rem; flex:1; }
 .drawer-backdrop{ display:none; }
-.sidebar-handle{ display:none; } /* só aparece em telas largas, ver @media (min-width:861px) abaixo */
 @media (max-width:860px){
   .content{ padding:1rem; }
   .sidebar{ position:fixed; top:0; left:0; z-index:50; transform:translateX(-100%);

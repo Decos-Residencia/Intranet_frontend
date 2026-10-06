@@ -11,17 +11,8 @@
     return ((p[0]?.[0] || "") + (p[p.length - 1]?.[0] || "")).toUpperCase();
   }
 
-  // Foto fictícia e estável por nome (randomuser.me). Fica sobreposta às
-  // iniciais; se a imagem não carregar (offline), é removida e as iniciais aparecem.
-  function fotoUrl(nome) {
-    let h = 0;
-    for (const c of nome) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const primeiro = nome.trim().split(/\s+/)[0].toLowerCase();
-    const fem = /a$/.test(primeiro);
-    return `https://randomuser.me/api/portraits/${fem ? "women" : "men"}/${h % 90}.jpg`;
-  }
   function foto(nome) {
-    return `<img class="avatar-img" src="${fotoUrl(nome)}" alt="" loading="lazy" onerror="this.remove()">`;
+    return "";
   }
 
   // Escapa texto digitado pelo usuário antes de ir para o innerHTML.

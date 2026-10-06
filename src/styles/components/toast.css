@@ -1,6 +1,11 @@
 /* Toast */
 /* ---------- Toast ---------- */
-.toast{ position:fixed; bottom:24px; left:50%; transform:translate(-50%,120%); z-index:60;
+/* Escondido: sai inteiro da tela (100% da altura + o offset do bottom + folga para a sombra),
+   fica transparente e invisível. Antes era translate(…,120%), que deixava a borda visível. */
+.toast{ position:fixed; bottom:24px; left:50%; transform:translate(-50%, calc(100% + 24px + 40px)); z-index:60;
+  opacity:0; visibility:hidden; pointer-events:none;
   display:flex; align-items:center; gap:.5rem; background:var(--wine); color:#fff; font-weight:600; font-size:.9rem;
-  padding:.8rem 1.3rem; border-radius:999px; box-shadow:0 12px 30px rgba(80,10,25,.35); transition:transform .3s cubic-bezier(.2,.9,.3,1.2); }
-.toast-show{ transform:translate(-50%,0); }
+  padding:.8rem 1.3rem; border-radius:999px; box-shadow:0 12px 30px rgba(80,10,25,.35);
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.2), opacity .2s ease, visibility 0s linear .3s; }
+.toast-show{ transform:translate(-50%,0); opacity:1; visibility:visible; pointer-events:auto;
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.2), opacity .2s ease, visibility 0s; }

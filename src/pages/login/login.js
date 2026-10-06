@@ -29,19 +29,26 @@
               </h2>
               <p class="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">Você está na área exclusiva do colaborador. Informe seus dados de acesso para entrar na intranet do Hospital Decós.</p>
               <form data-action="do-login" class="space-y-4">
-                <input type="email" required placeholder="E-mail corporativo (@decos.com)" class="login-input" value="anapaula.santos@decos.com">
+                <input name="email" type="email" required placeholder="E-mail" class="login-input" autocomplete="email">
                 <div class="relative">
-                  <input type="password" required placeholder="Senha" class="login-input pr-12" value="••••••••">
+                  <input name="senha" type="password" required placeholder="Senha" class="login-input pr-12" autocomplete="current-password">
                   <button type="button" data-action="toggle-pass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">${icon("eye","w-5 h-5")}</button>
                 </div>
-                <div class="flex items-center justify-between pt-2">
-                  <div class="space-y-1">
-                    <button type="button" data-action="toast" data-msg="Enviamos um link de redefinição ao seu e-mail corporativo." class="block text-sm font-bold text-wine hover:underline text-left">Esqueci minha senha ›</button>
-                    <button type="button" data-action="toast" data-msg="Cadastro é feito pelo RH. Procure o setor de Recursos Humanos." class="block text-sm font-bold text-wine hover:underline text-left">Primeiro acesso? Cadastre-se ›</button>
-                  </div>
+                <div class="flex items-center justify-end pt-2">
                   <button type="submit" class="btn-wine px-8 py-3">Acessar</button>
                 </div>
               </form>
+              <div class="mt-6 space-y-2 text-sm text-slate-500 dark:text-slate-400" id="login-ajuda">
+                <p>${icon("lock", "w-4 h-4 inline -mt-0.5")} <b>Acesso criado pelo administrador/RH.</b> No primeiro acesso, entre com a senha temporária que você recebeu e defina a sua.</p>
+                <details>
+                  <summary class="cursor-pointer font-bold text-wine hover:underline">Esqueci minha senha</summary>
+                  <form id="form-esqueceu-senha" class="mt-3 space-y-3">
+                    <input name="email" type="email" required placeholder="Digite seu e-mail cadastrado" class="field-input" autocomplete="email">
+                    <button type="submit" class="btn-outline w-full py-2 text-sm">Enviar link de recuperação</button>
+                    <p class="text-xs text-slate-400">Você receberá um link seguro para criar uma nova senha.</p>
+                  </form>
+                </details>
+              </div>
             </div>
           </div>
         </main>
@@ -54,16 +61,57 @@
         </footer>
       </div>`,
       init() {
-        document.querySelector('[data-action="do-login"]').addEventListener("submit", (e) => {
+        document.querySelector('[data-action="do-login"]').addEventListener("submit", async (e) => {
           e.preventDefault();
-          App.state.auth = true;
-          App.save();
-          App.go("#/dashboard");
+          const form = e.currentTarget;
+          const button = form.querySelector('button[type="submit"]');
+          button.disabled = true;
+          button.textContent = "Entrando...";
+          const lento = setTimeout(() => { button.textContent = "Aguardando o servidor..."; }, 6000);
+          try {
+            const token = await Services.auth.login({
+              email: form.elements.email.value.trim(),
+              senha: form.elements.senha.value,
+            });
+            const user = await App.startSession(token.access_token); // GET /auth/me + dados da API
+            form.reset();                                // a senha não fica no campo
+            if (user.must_change_password) {
+              App.toast("Primeiro acesso: defina sua nova senha para continuar.");
+              App.go("#/trocar-senha");
+            } else {
+              App.toast("Bem-vindo à Intranet Decós!");
+              App.go("#/dashboard");
+            }
+          } catch (err) {
+            App.toast(err.message || "Não foi possível entrar.");
+          } finally {
+            clearTimeout(lento);
+            button.disabled = false;
+            button.textContent = "Acessar";
+          }
         });
         const tp = document.querySelector('[data-action="toggle-pass"]');
         tp && tp.addEventListener("click", () => {
           const inp = tp.previousElementSibling;
           inp.type = inp.type === "password" ? "text" : "password";
+        });
+        const forgot = document.getElementById("form-esqueceu-senha");
+        forgot && forgot.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const button = forgot.querySelector('button[type="submit"]');
+          const email = forgot.elements.email.value.trim() || document.querySelector('[name="email"]')?.value?.trim();
+          button.disabled = true;
+          button.textContent = "Enviando...";
+          try {
+            await Services.auth.forgotPassword(email);
+            App.toast("Se existir uma conta associada a este e-mail, enviaremos as instruções de recuperação.");
+            forgot.reset();
+          } catch (err) {
+            App.toast(err.message || "Não foi possível solicitar a recuperação.");
+          } finally {
+            button.disabled = false;
+            button.textContent = "Enviar link de recuperação";
+          }
         });
       },
     };

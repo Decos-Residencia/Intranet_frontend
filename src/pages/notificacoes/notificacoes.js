@@ -29,7 +29,7 @@
       init() {
         wireList({
           containerId: "notif-list", itemSel: ".notif-item", size: 99, label: "notificações", filterGroup: "notif", initialFilter: "todas",
-          onEmpty: "Nenhuma notificação neste filtro.",
+          onEmpty: todas.length ? "Nenhuma notificação neste filtro." : "Você não tem notificações.",
           filterFn: (el, f) => f === "todas" || (f === "unread" && el.dataset.lida === "false") || el.dataset.tipo === f,
         });
       },

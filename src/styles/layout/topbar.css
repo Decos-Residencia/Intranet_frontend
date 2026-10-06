@@ -5,3 +5,6 @@
 .icon-btn{ width:40px; height:40px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
   color:var(--muted); border:1px solid var(--border); background:var(--card); transition:.15s; }
 .icon-btn:hover{ color:var(--wine); border-color:var(--wine); }
+.sidebar-toggle svg{ transition:transform .22s cubic-bezier(.2,.8,.2,1); }
+.sidebar-toggle-collapsed svg,
+.sidebar-toggle-open svg{ transform:rotate(180deg); }

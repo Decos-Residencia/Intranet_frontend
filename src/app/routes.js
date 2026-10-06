@@ -5,16 +5,19 @@
 (function () {
   const routes = [
     { re: /^#\/login$/, page: () => Pages.login() },
+    { re: /^#\/redefinir-senha(?:\?(.+))?$/, page: (m) => Pages.redefinirSenha(m[1]) },
+    { re: /^#\/trocar-senha$/, page: () => Pages.trocarSenha() },
     { re: /^#\/dashboard$/, page: () => Pages.dashboard() },
     { re: /^#\/avisos$/, page: () => Pages.avisos() },
     { re: /^#\/avisos\/([\w-]+)$/, page: (m) => Pages.avisoDetalhe(m[1]) },
     { re: /^#\/aniversariantes$/, page: () => Pages.aniversariantes() },
     { re: /^#\/aniversariantes\/hoje$/, page: () => Pages.aniversarianteDoDia() },
+    { re: /^#\/avaliacoes$/, page: () => PagesAvaliacoes.avaliacoes() },
+    { re: /^#\/admin\/avaliacoes$/, page: () => PagesAdmin.adminAvaliacoes(), need: "manage_docs" },
     { re: /^#\/eventos$/, page: () => Pages.eventos() },
     { re: /^#\/eventos\/(\d+)$/, page: (m) => Pages.eventoDetalhe(m[1]) },
     { re: /^#\/documentos$/, page: () => Pages.documentos() },
     { re: /^#\/documentos\/([\w-]+)$/, page: (m) => Pages.documentoView(m[1]) },
-    { re: /^#\/documentos\/([\w-]+)\/restrito$/, page: (m) => PagesAdmin.adminDocumentoRestrito(m[1]) },
     { re: /^#\/faq$/, page: () => Pages.faq() },
     { re: /^#\/diretorio$/, page: () => Pages.diretorio() },
     { re: /^#\/perfil$/, page: () => Pages.perfil() },
@@ -26,10 +29,15 @@
     { re: /^#\/admin\/documentos$/, page: () => PagesAdmin.adminDocumentos(), need: "manage_docs" },
     { re: /^#\/admin\/documentos\/novo$/, page: () => PagesAdmin.adminDocumentoNovo(), need: "manage_docs" },
     { re: /^#\/admin\/documentos\/([\w-]+)\/editar$/, page: (m) => PagesAdmin.adminDocumentoNovo(m[1]), need: "manage_docs" },
-    { re: /^#\/admin\/documentos\/([\w-]+)\/restrito$/, page: (m) => PagesAdmin.adminDocumentoRestrito(m[1]), need: "manage_docs" },
-    // gestão administrativa (Admin) e auditoria (RH próprias / Admin todas)
+    // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
-    { re: /^#\/admin\/auditoria$/, page: () => PagesAdmin.adminAuditoria(), need: "audit_own" },
+    { re: /^#\/admin\/chamados$/, page: () => PagesAdmin.adminChamados(), need: "manage_tickets" },
+    { re: /^#\/admin\/eventos$/, page: () => PagesAdmin.adminEventos(), need: "manage_events" },
+    { re: /^#\/admin\/eventos\/novo$/, page: () => PagesAdmin.adminEventoForm(), need: "manage_events" },
+    { re: /^#\/admin\/eventos\/(\d+)\/editar$/, page: (m) => PagesAdmin.adminEventoForm(m[1]), need: "manage_events" },
+    { re: /^#\/admin\/faqs$/, page: () => PagesAdmin.adminFaqs(), need: "manage_faq" },
+    { re: /^#\/admin\/solicitacoes$/, page: () => PagesAdmin.adminSolicitacoes(), need: "manage_users" },
+    { re: /^#\/admin\/auditoria$/, page: () => PagesAdmin.adminAuditoria(), need: "audit_all" },
   ];
 
   Object.assign(App, { routes });
