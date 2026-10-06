@@ -6,7 +6,7 @@
    ========================================================================= */
 (function () {
   // Preencha com a URL pública do backend (Render) no deploy de produção.
-  const PRODUCTION_API_URL = "";
+  const PRODUCTION_API_URL = "https://intranet-backend-dzhs.onrender.com";
 
   const runtime = window.__DECOS_CONFIG__ || {};
   const host = location.hostname;
