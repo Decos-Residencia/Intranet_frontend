@@ -13,5 +13,8 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/((?!src/|assets/|.*\\.[A-Za-z0-9]+$).*)", "destination": "/index.html" }
   ]
 }
