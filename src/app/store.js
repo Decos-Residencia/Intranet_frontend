@@ -121,7 +121,9 @@
     }
     state.ready = true;
     // Se o hash vai mudar, o evento hashchange já renderiza (evita renderizar duas vezes).
-    const alvo = state.loadError ? null : !state.auth ? "#/login" : (!location.hash || location.hash === "#/login") ? "#/dashboard" : null;
+    // O link do e-mail de recuperação abre direto na rota pública (sem sessão): não pode ser desviado.
+    const rotaPublica = location.hash.startsWith("#/redefinir-senha");
+    const alvo = state.loadError ? null : !state.auth ? (rotaPublica ? null : "#/login") : (!location.hash || location.hash === "#/login") ? "#/dashboard" : null;
     if (alvo && location.hash !== alvo) { location.hash = alvo; return; }
     App.render();
   }

@@ -1,6 +1,6 @@
 /* =========================================================================
    Tela: Redefinir senha por e-mail
-   Rota: #/redefinir-senha?token=...
+   Rota: #/redefinir-senha?token_hash=...&type=recovery (link do e-mail do Supabase Auth)
    ========================================================================= */
 (function () {
   const { icon, logo } = UI;
@@ -12,7 +12,10 @@
   ];
 
   function redefinirSenha(query) {
-    const token = new URLSearchParams(query || "").get("token") || "";
+    const params = new URLSearchParams(query || "");
+    const token = params.get("type") === "recovery" ? params.get("token_hash") || "" : "";
+    // O token só precisa estar na URL até aqui: some da barra de endereço e do histórico.
+    if (token) { try { history.replaceState(null, "", location.pathname + location.search + "#/redefinir-senha"); } catch (_) { /* sem history */ } }
     return {
       shell: false,
       html: `
@@ -28,6 +31,7 @@
                 <span class="w-1 h-7 bg-wine rounded-full"></span>Criar <strong class="text-slate-800 dark:text-white font-extrabold">nova senha</strong>
               </h2>
               <p class="text-slate-500 dark:text-slate-400 mb-6">Informe sua nova senha para recuperar o acesso à Intranet Hospital Decós.</p>
+              ${token ? "" : `<p class="text-sm text-red-600 mb-4" id="rs-sem-token">Link inválido ou incompleto. Solicite uma nova recuperação de senha na tela de login.</p>`}
               <form id="form-redefinir-senha" class="space-y-4" data-token="${UI.esc(token)}" novalidate>
                 <div>
                   <label class="field-label" for="rs-nova">NOVA SENHA</label>
@@ -88,6 +92,7 @@
       try {
         await Services.auth.resetPassword(token, v("rs-nova"));
         f.reset();
+        delete f.dataset.token; // o token não fica em lugar nenhum depois do uso
         App.toast("Senha redefinida com sucesso. Entre novamente.");
         App.go("#/login");
       } catch (err) {

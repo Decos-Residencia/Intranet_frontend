@@ -24,11 +24,13 @@
         body: { email },
       });
     },
-    resetPassword(token, novaSenha) {
+    // tokenHash vem do link do e-mail enviado pelo Supabase Auth; o backend o valida lá. O frontend
+    // não recebe chave nem sessão do Supabase.
+    resetPassword(tokenHash, novaSenha) {
       return App.API.request("/auth/reset-password", {
         method: "POST",
         auth: false,
-        body: { token, nova_senha: novaSenha },
+        body: { token_hash: tokenHash, nova_senha: novaSenha },
       });
     },
     // Cadastro feito por ADMIN (o backend sempre cria COLABORADOR). A senha

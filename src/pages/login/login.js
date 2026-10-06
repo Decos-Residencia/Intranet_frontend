@@ -104,7 +104,7 @@
           button.textContent = "Enviando...";
           try {
             await Services.auth.forgotPassword(email);
-            App.toast("Se o e-mail estiver cadastrado, enviaremos o link de recuperação.");
+            App.toast("Se existir uma conta associada a este e-mail, enviaremos as instruções de recuperação.");
             forgot.reset();
           } catch (err) {
             App.toast(err.message || "Não foi possível solicitar a recuperação.");
