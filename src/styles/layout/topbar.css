@@ -2,6 +2,20 @@
 /* ---------- Topbar ---------- */
 .search-box{ display:flex; align-items:center; gap:.5rem; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:.5rem 1rem; }
 .dark .search-box{ background:#0e1420; }
+.topbar-search{ position:relative; }
+.search-preview{ position:absolute; top:calc(100% + .55rem); left:0; right:0; z-index:80; max-height:min(70vh,520px); overflow:auto;
+  background:var(--card); border:1px solid var(--border); border-radius:.9rem; box-shadow:0 20px 45px rgba(80,10,25,.16); padding:.55rem; text-align:left; }
+.search-preview-section + .search-preview-section{ margin-top:.35rem; padding-top:.35rem; border-top:1px solid var(--border); }
+.search-preview-title{ padding:.35rem .45rem; color:var(--muted); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+.search-preview-item{ display:flex; align-items:center; gap:.65rem; padding:.65rem .7rem; border-radius:.65rem; color:var(--text); transition:.15s; }
+.search-preview-item:hover{ background:var(--bg); color:var(--wine); }
+.search-preview-icon{ width:2rem; height:2rem; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  background:rgba(157,25,48,.1); color:var(--wine); }
+.search-preview-item strong{ display:block; font-size:.84rem; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.search-preview-item small{ display:block; margin-top:.12rem; color:var(--muted); font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.search-preview-more{ width:100%; margin-top:.4rem; border-radius:.65rem; padding:.7rem; color:var(--wine); font-size:.8rem; font-weight:800; background:var(--bg); }
+.search-preview-more:hover{ background:rgba(157,25,48,.1); }
+.search-preview-empty{ padding:1.2rem .7rem; color:var(--muted); font-size:.85rem; text-align:center; }
 .icon-btn{ width:40px; height:40px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
   color:var(--muted); border:1px solid var(--border); background:var(--card); transition:.15s; }
 .icon-btn:hover{ color:var(--wine); border-color:var(--wine); }

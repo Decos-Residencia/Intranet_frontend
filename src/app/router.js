@@ -52,11 +52,20 @@
       ${UI.quickFab(App.can("interact"))}
     </div>`;
   }
-  function afterRender() { window.scrollTo(0, 0); document.querySelector(".content")?.scrollTo(0, 0); App.placeFab(); }
+  function afterRender() {
+    window.scrollTo(0, 0);
+    document.querySelector(".content")?.scrollTo(0, 0);
+    App.placeFab();
+    App.wireSearchPreview?.();
+  }
 
   function loadingScreen() {
     return `<div class="min-h-screen flex flex-col items-center justify-center text-slate-500 dark:text-slate-300 text-center p-8" role="status">
-      <div>Carregando…</div>
+      <img src="assets/img/logo.png" alt="Hospital Decós" class="w-[260px] max-w-[72vw] mb-8 select-none" draggable="false">
+      <div class="flex items-center gap-2 font-semibold">
+        <span class="inline-block w-2 h-2 rounded-full bg-wine animate-pulse"></span>
+        Carregando…
+      </div>
       <p id="loading-hint" class="hidden text-sm text-slate-400 mt-2 max-w-sm">Conectando ao servidor… na primeira vez do dia isso pode levar até 1 minuto.</p></div>`;
   }
 

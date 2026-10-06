@@ -210,7 +210,7 @@
       const sf = e.target.closest('[data-action="search"]');
       if (sf) { e.preventDefault(); const q = sf.querySelector("input")?.value?.trim();
         if (q) { App.openSearchPanel(q); } else { App.toast("Digite algo para buscar"); } return; }
-      if (e.target.closest('[data-action="prevent"]')) e.preventDefault();
+      if (e.target.closest('[data-action="prevent"], [data-prevent-submit]')) e.preventDefault();
       const pf = e.target.closest("[data-form]");
       if (pf) { e.preventDefault(); App.submitPanelForm(pf); }
     });

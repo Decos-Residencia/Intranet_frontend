@@ -11,8 +11,6 @@
   .sidebar-collapsed .sb-label{ display:none; }
   .sidebar-collapsed .px-5{ padding-left:1rem; padding-right:1rem; }
   .sidebar-collapsed .user-chip{ justify-content:center; padding:.5rem; }
-  .sidebar-collapsed .role-badge{ justify-content:center; padding:0; width:48px; height:38px; margin:0 auto; border-radius:.7rem; }
-  .sidebar-collapsed .role-badge svg{ width:20px; height:20px; }
   .sidebar-collapsed nav{ overflow:visible; padding-left:.75rem; padding-right:.75rem; }
   .sidebar-collapsed .nav-link{ justify-content:center; width:52px; height:52px; padding:0; margin:0 auto; border-radius:.9rem; }
   .sidebar-collapsed .nav-link .nav-ic svg{ width:23px; height:23px; }
@@ -118,14 +116,6 @@
 /* ---------- Papéis / mais vermelho ---------- */
 /* (a .sidebar já é position:sticky/fixed — não sobrescrever aqui, senão quebra o mobile) */
 .sidebar-accent{ position:absolute; top:0; left:0; width:4px; height:100%; background:linear-gradient(var(--wine),var(--wine-dark)); }
-/* Contornado, não preenchido — é o segundo bloco vinho maciço da sidebar
-   (o primeiro é o avatar logo acima). Par com .user-chip: os dois viram
-   cartões claros com um respiro de branco entre eles, e o vinho volta a ser
-   sinal de "isto é clicável/importante" em vez de parede de cor repetida. */
-.role-badge{ display:flex; align-items:center; gap:.4rem; width:100%; font-size:10px; font-weight:800; letter-spacing:.05em;
-  color:var(--wine); background:var(--wine-50); border:1px solid var(--wine-100); padding:.4rem .7rem; border-radius:.55rem; transition:.15s; }
-.role-badge:hover{ background:var(--wine-100); }
-.dark .role-badge{ background:rgba(142,27,46,.14); border-color:rgba(142,27,46,.35); color:#f2a8b4; }
 .role-opt{ display:flex; align-items:center; gap:.8rem; width:100%; text-align:left; border:1px solid var(--border);
   border-radius:.7rem; padding:.8rem; background:var(--card); transition:.15s; }
 .role-opt:hover{ border-color:var(--wine); }
