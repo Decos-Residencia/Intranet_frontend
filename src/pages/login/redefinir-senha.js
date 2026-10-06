@@ -1,6 +1,8 @@
 /* =========================================================================
    Tela: Redefinir senha por e-mail
-   Rota: #/redefinir-senha?token_hash=...&type=recovery (link do e-mail do Supabase Auth)
+   Rota: #/redefinir-senha, vinda de um destes links do e-mail do Supabase Auth:
+     • template padrão: o Supabase valida e redireciona com #access_token=... (ver recuperacao-callback.js)
+     • template customizado: #/redefinir-senha?token_hash=...&type=recovery
    ========================================================================= */
 (function () {
   const { icon, logo } = UI;
@@ -11,11 +13,25 @@
     ["eq", "Confirmação igual à nova senha"],
   ];
 
+  let prova = null; // { tipo, valor } — sobrevive a um novo render da mesma tela
+  let erroLink = false;
+
   function redefinirSenha(query) {
+    // Prova da recuperação, guardada só em memória (nunca no DOM, na URL ou em storage).
+    const cb = App.recuperacao.obter();
     const params = new URLSearchParams(query || "");
-    const token = params.get("type") === "recovery" ? params.get("token_hash") || "" : "";
-    // O token só precisa estar na URL até aqui: some da barra de endereço e do histórico.
-    if (token) { try { history.replaceState(null, "", location.pathname + location.search + "#/redefinir-senha"); } catch (_) { /* sem history */ } }
+    const hash = params.get("type") === "recovery" ? params.get("token_hash") || "" : "";
+    if (hash) {
+      prova = { tipo: "token_hash", valor: hash };
+      // O token só precisa estar na URL até aqui: some da barra de endereço e do histórico.
+      try { history.replaceState(null, "", location.pathname + location.search + "#/redefinir-senha"); } catch (_) { /* sem history */ }
+    } else if (cb && cb.accessToken) {
+      prova = { tipo: "access_token", valor: cb.accessToken };
+      App.recuperacao.limpar();
+    } else if (cb && cb.erro) {
+      prova = null; erroLink = true; App.recuperacao.limpar();
+    }
+    const token = prova ? "1" : "";
     return {
       shell: false,
       html: `
@@ -31,8 +47,8 @@
                 <span class="w-1 h-7 bg-wine rounded-full"></span>Criar <strong class="text-slate-800 dark:text-white font-extrabold">nova senha</strong>
               </h2>
               <p class="text-slate-500 dark:text-slate-400 mb-6">Informe sua nova senha para recuperar o acesso à Intranet Hospital Decós.</p>
-              ${token ? "" : `<p class="text-sm text-red-600 mb-4" id="rs-sem-token">Link inválido ou incompleto. Solicite uma nova recuperação de senha na tela de login.</p>`}
-              <form id="form-redefinir-senha" class="space-y-4" data-token="${UI.esc(token)}" novalidate>
+              ${token ? "" : `<p class="text-sm text-red-600 mb-4" id="rs-sem-token">${erroLink ? "Este link de recuperação é inválido, expirou ou já foi usado." : "Link inválido ou incompleto."} Solicite uma nova recuperação de senha na tela de login.</p>`}
+              <form id="form-redefinir-senha" class="space-y-4" novalidate>
                 <div>
                   <label class="field-label" for="rs-nova">NOVA SENHA</label>
                   <div class="relative">
@@ -81,8 +97,7 @@
     }));
     f.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const token = f.dataset.token;
-      if (!token) { App.toast("Link inválido. Solicite uma nova recuperação."); return; }
+      if (!prova) { App.toast("Link inválido. Solicite uma nova recuperação."); return; }
       const r = regras();
       if (!r.len) { App.toast("A nova senha deve ter pelo menos 8 caracteres."); return; }
       if (!r.max) { App.toast("A nova senha deve ter no máximo 72 bytes."); return; }
@@ -90,9 +105,9 @@
       const button = f.querySelector('button[type="submit"]');
       button.disabled = true;
       try {
-        await Services.auth.resetPassword(token, v("rs-nova"));
+        await Services.auth.resetPassword(prova, v("rs-nova"));
         f.reset();
-        delete f.dataset.token; // o token não fica em lugar nenhum depois do uso
+        prova = null; // a prova não fica em lugar nenhum depois do uso
         App.toast("Senha redefinida com sucesso. Entre novamente.");
         App.go("#/login");
       } catch (err) {
