@@ -16,8 +16,9 @@
         <div class="fab-menu-head">${icon("zap", "w-4 h-4 text-wine")} Acessos Rápidos</div>
         <div class="fab-menu-list">${DB.acessosRapidos.map(item).join("")}</div>
       </div>
+      <span class="fab-label">Acesso Rápido</span>
       <button data-action="toggle-fab" class="fab-btn" title="Acessos rápidos" aria-label="Acessos rápidos" aria-expanded="false">
-        <span class="fab-ico fab-ico-open">${icon("zap", "w-6 h-6")}</span>
+        <span class="fab-ico fab-ico-open"><img src="assets/img/simbolo.png" alt="" class="fab-logo" draggable="false"></span>
         <span class="fab-ico fab-ico-close">${icon("x", "w-6 h-6")}</span>
       </button>
     </div>`;

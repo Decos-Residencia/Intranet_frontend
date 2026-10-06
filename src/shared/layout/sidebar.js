@@ -8,7 +8,6 @@
     const u = state.user || { nome: "—", cargo: "" };
     const role = App.role();
     const items = menuItems(role);
-    const rl = App.roleInfo();
 
     const isActive = (route) => activeRoute && (activeRoute === route || activeRoute.startsWith(route + "/"));
     const link = (it) => `<a href="${it.route}" class="nav-link ${isActive(it.route) ? "nav-link-active" : ""}" title="${it.label}" data-label="${esc(it.label)}">
@@ -39,12 +38,6 @@
       <div class="sidebar-accent"></div>
       <div class="sidebar-brand-row px-5 pt-5 pb-4 flex items-center justify-between">${logo()}
         <button data-action="close-menu" class="icon-btn w-9 h-9 md:hidden">${icon("x","w-5 h-5")}</button>
-      </div>
-
-      <div class="px-4 mb-4">
-        <div class="role-badge" title="Perfil: ${rl.label}">
-          ${icon(rl.icon, "w-3.5 h-3.5")} <span class="sb-label">PERFIL: ${rl.curto}</span>
-        </div>
       </div>
 
       <div class="sb-label px-5 mb-2 text-[11px] font-extrabold tracking-wide sb-muted">MENU PRINCIPAL</div>

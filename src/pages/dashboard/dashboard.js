@@ -3,8 +3,8 @@
    Rota: #/dashboard
    ========================================================================= */
 (function () {
-  const { icon, badge, iniciais, foto, esc, tone, catLabel, CAT_FILTRO } = UI;
-  const { wireList, wireQuickAccess, wireCarousel } = Lib;
+  const { icon, badge, iniciais, foto, esc, saudacao, tone, catLabel, CAT_FILTRO } = UI;
+  const { wireList, wireCarousel } = Lib;
 
   function avisoCard(a) {
     return `<a href="#/avisos/${a.id}" class="card block p-6 hover:shadow-md transition-shadow group dash-aviso" data-cat="${a.categoria}">
@@ -122,10 +122,6 @@
       </div>`).join("");
     const dotsHtml = slides.map((_, i) => `<button class="carousel-dot ${i===0?"active":""}" data-dot="${i}" aria-label="Slide ${i+1}"></button>`).join("");
 
-    const qaTile = (it) => UI.qaLink(it, "qa-tile",
-      `<span class="qa-icon">${icon(it.icon,"w-4 h-4")}</span><span class="qa-label">${it.titulo}</span>`, App.can("interact"));
-    const acessosRapidos = DB.acessosRapidos.map(qaTile).join("");
-
     const header = souAniversariante ? `
       <div class="birthday-hero mb-6">
         <div class="birthday-hero-emoji" aria-hidden="true">🎉 🎈 🎂 🎊</div>
@@ -139,7 +135,7 @@
       </div>`
       : `<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div><div class="text-sm text-slate-400">Hospital Decós Intranet</div>
-        <h2 class="text-hero font-extrabold text-slate-800 dark:text-slate-100">Bom dia, ${esc(u.nome.split(" ").slice(0,2).join(" "))}</h2></div>
+        <h2 class="text-hero font-extrabold text-slate-800 dark:text-slate-100">${saudacao()}, ${esc(u.nome.split(" ").slice(0,2).join(" "))}</h2></div>
         <a href="#/avisos" class="pill-soft hover:brightness-95 transition">${todosAvisos.length} ${todosAvisos.length === 1 ? "comunicado publicado" : "comunicados publicados"}</a>
       </div>`;
 
@@ -147,17 +143,6 @@
       title: "Dashboard",
       html: `
       ${header}
-
-      <div class="card qa-card mb-6" id="qa">
-        <div class="qa-head">
-          <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">${icon("zap","w-5 h-5 text-wine")} Acessos Rápidos</h3>
-          <div class="flex gap-1.5">
-            <button type="button" class="qa-arrow" data-qa-dir="-1" title="Anteriores" disabled>${icon("chevron-left","w-4 h-4")}</button>
-            <button type="button" class="qa-arrow" data-qa-dir="1" title="Próximos">${icon("chevron-right","w-4 h-4")}</button>
-          </div>
-        </div>
-        <div class="qa-viewport"><div class="qa-strip">${acessosRapidos}</div></div>
-      </div>
 
       <div id="dash-stats" class="mb-6" aria-busy="true"></div>
 
@@ -206,7 +191,6 @@
           filterFn: (el, f) => { const cat = CAT_FILTRO[f] || "all"; return cat === "all" || el.dataset.cat === cat; },
         });
         wireCarousel("dash-carousel", slides.length);
-        wireQuickAccess("qa");
         if (souAniversariante) {
           const btn = document.querySelector('[data-auto-confetti="1"]');
           if (btn) setTimeout(() => btn.click(), 500);

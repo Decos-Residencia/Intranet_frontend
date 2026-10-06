@@ -6,7 +6,7 @@
    os metadados; "Substituir arquivo" usa PUT /documentos/{id}/arquivo (o anterior só some depois do novo).
    ========================================================================= */
 (function () {
-  const { breadcrumb, esc } = UI;
+  const { breadcrumb, esc, icon } = UI;
   const { TIPOS_DOC } = AdminUI;
 
   const MAX_BYTES = 20 * 1024 * 1024;
@@ -14,6 +14,11 @@
   const bytes = (n) => (n < 1048576 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1048576).toFixed(1).replace(".", ",")} MB`);
 
   const fld = (label, html, hint) => `<div><label class="field-label">${label}</label>${html}${hint ? `<div class="field-hint">${hint}</div>` : ""}</div>`;
+  const filePicker = () => `<input id="dc-arquivo" type="file" class="file-input-hidden" accept=".pdf,.doc,.docx,.xls,.xlsx">
+    <div class="file-picker">
+      <button type="button" data-pick-document-file class="file-picker-btn">${icon("upload", "w-4 h-4")} Escolher arquivo</button>
+      <span id="dc-arquivo-label" class="file-picker-name">Nenhum arquivo escolhido</span>
+    </div>`;
   const $ = (i) => document.getElementById(i);
 
   // Mensagem de estado do envio: idle | enviando | sucesso | erro
@@ -44,7 +49,7 @@
       ${breadcrumb([{ label: "Início", route: "#/dashboard" }, { label: "Documentos", route: "#/admin/documentos" }, { label: id ? "Editar" : "Novo documento" }])}
       <div class="mb-6"><div class="text-sm text-slate-400">Hospital Decós Intranet • Painel Administrador</div>
       <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">${id ? "Editar Documento" : "Adicionar Documento Oficial"}</h2></div>
-      <form id="form-doc" data-id="${esc(id || "")}" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" data-action="prevent">
+      <form id="form-doc" data-id="${esc(id || "")}" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" data-prevent-submit>
         <div class="lg:col-span-2 space-y-5">
           <div class="card p-6 space-y-4">
             ${fld("TÍTULO DO DOCUMENTO *", `<input id="dc-titulo" class="field-input" maxlength="200" placeholder="Ex: POP — Higienização das Mãos">`)}
@@ -61,9 +66,9 @@
           <div class="card p-6" id="dc-bloco-arquivo">
             ${id ? `<div class="font-bold text-slate-800 dark:text-slate-100 mb-1">Arquivo atual</div><div class="text-sm text-slate-500 dark:text-slate-400 mb-4" id="dc-atual">Carregando…</div>
               <div class="font-bold text-slate-800 dark:text-slate-100 mb-2">Substituir arquivo</div>
-              ${fld("NOVO ARQUIVO", `<input id="dc-arquivo" type="file" class="field-input" accept=".pdf,.doc,.docx,.xls,.xlsx">`, "O arquivo anterior só é removido depois que o novo estiver salvo com sucesso.")}
+              ${fld("NOVO ARQUIVO", filePicker(), "O arquivo anterior só é removido depois que o novo estiver salvo com sucesso.")}
               <button type="button" data-action="replace-doc" class="btn-outline mt-3 px-5 py-2.5">Substituir arquivo</button>`
-              : fld("ARQUIVO *", `<input id="dc-arquivo" type="file" class="field-input" accept=".pdf,.doc,.docx,.xls,.xlsx">`, "PDF, DOC, DOCX, XLS ou XLSX — até 20 MB. O arquivo é guardado em um armazenamento privado.")}
+              : fld("ARQUIVO *", filePicker(), "PDF, DOC, DOCX, XLS ou XLSX — até 20 MB. O arquivo é guardado em um armazenamento privado.")}
             <div id="dc-arquivo-info" class="text-xs text-slate-400 mt-2"></div>
           </div>
           <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -88,9 +93,16 @@
 
   async function iniciar(id) {
     const arq = $("dc-arquivo");
+    document.querySelector("[data-pick-document-file]")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (arq?.showPicker) arq.showPicker();
+      else arq?.click();
+    });
     arq?.addEventListener("change", () => {
       const f = arq.files?.[0];
       const erro = f ? validarArquivo(f) : "";
+      $("dc-arquivo-label").textContent = f ? `${f.name} · ${bytes(f.size)}` : "Nenhum arquivo escolhido";
       $("dc-arquivo-info").textContent = f ? (erro || `${f.name} · ${bytes(f.size)}`) : "";
       $("dc-arquivo-info").className = `text-xs mt-2 ${erro ? "text-red-600" : "text-slate-400"}`;
     });

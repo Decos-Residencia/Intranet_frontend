@@ -20,6 +20,14 @@
     return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // Saudação dinâmica de acordo com a hora do dia
+  function saudacao(d = new Date()) {
+    const hora = d.getHours();
+    if (hora >= 5 && hora < 12) return "Bom dia";
+    if (hora >= 12 && hora < 18) return "Boa tarde";
+    return "Boa noite";
+  }
+
   // cor e rótulo da categoria de um aviso
   const tone = (cat) => (DB.categorias[cat] ? DB.categorias[cat].tone : "blue");
   const catLabel = (cat) => (DB.categorias[cat] ? DB.categorias[cat].label : cat);
@@ -43,5 +51,5 @@
     </nav>`;
   }
 
-  Object.assign(UI, { iniciais, foto, esc, tone, catLabel, CAT_FILTRO, badge, breadcrumb });
+  Object.assign(UI, { iniciais, foto, esc, saudacao, tone, catLabel, CAT_FILTRO, badge, breadcrumb });
 })();

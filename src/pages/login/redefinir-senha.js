@@ -9,7 +9,6 @@
 
   const REGRAS = [
     ["len", "Pelo menos 8 caracteres"],
-    ["max", "No máximo 72 bytes"],
     ["eq", "Confirmação igual à nova senha"],
   ];
 
