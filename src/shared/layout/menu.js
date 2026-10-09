@@ -7,7 +7,8 @@
      expansível). O agrupamento acompanha os 3 módulos da spec do projeto:
      Comunicação & Engajamento, Documentos & FAQ, Diretório & Ramais. */
   function menuItems(role) {
-    const gere = role === "admin"; // gestão de conteúdo (no backend, só ADMIN escreve)
+    const can = App.can;
+    const gere = can("manage_news"); // gestão de conteúdo: RH e ADMIN (o backend também valida)
     const items = [{ icon: "home", label: "Início", route: "#/dashboard" }];
 
     const comunicacao = [
@@ -23,18 +24,18 @@
     items.push({ icon: "file-text", label: "Documentos & FAQ", children: [
       { icon: "file-text", label: gere ? "Gerenciar Documentos" : "Documentos & POPs", route: gere ? "#/admin/documentos" : "#/documentos" },
       ...(gere ? [{ icon: "edit", label: "Gerenciar FAQ", route: "#/admin/faqs" }] : []),
-      { icon: "check-check", label: "Minhas Avaliações", route: "#/avaliacoes", count: App.state.api.avaliacoesPendentes || 0 },
-      ...(gere ? [{ icon: "check-check", label: "Gerenciar Avaliações", route: "#/admin/avaliacoes" }] : []),
+      ...(can("interact") ? [{ icon: "check-check", label: "Minhas Avaliações", route: "#/avaliacoes", count: App.state.api.avaliacoesPendentes || 0 }] : []),
+      ...(can("manage_reviews") ? [{ icon: "check-check", label: "Gerenciar Avaliações", route: "#/admin/avaliacoes" }] : []),
       { icon: "help-circle", label: "FAQ", route: "#/faq" },
     ]});
 
     items.push({ icon: "users", label: "Diretório & Ramais", route: "#/diretorio" });
 
     const adminChildren = [];
-    if (role === "admin") adminChildren.push({ icon: "user-cog", label: "Usuários & Setores", route: "#/admin/usuarios" });
-    if (role === "admin") adminChildren.push({ icon: "help-circle", label: "Chamados", route: "#/admin/chamados", count: App.state.api.chamadosPendentes || 0 });
-    if (role === "admin") adminChildren.push({ icon: "check-check", label: "Solicitações Cadastrais", route: "#/admin/solicitacoes", count: App.state.api.solicitacoesPendentes || 0 });
-    if (gere) adminChildren.push({ icon: "shield", label: "Auditoria", route: "#/admin/auditoria" });
+    if (can("manage_users")) adminChildren.push({ icon: "user-cog", label: "Usuários & Setores", route: "#/admin/usuarios" });
+    if (can("manage_tickets")) adminChildren.push({ icon: "help-circle", label: "Chamados", route: "#/admin/chamados", count: App.state.api.chamadosPendentes || 0 });
+    if (can("manage_users")) adminChildren.push({ icon: "check-check", label: "Solicitações Cadastrais", route: "#/admin/solicitacoes", count: App.state.api.solicitacoesPendentes || 0 });
+    if (can("audit_all")) adminChildren.push({ icon: "shield", label: "Auditoria", route: "#/admin/auditoria" });
     if (adminChildren.length) items.push({ icon: "shield", label: "Administração", children: adminChildren });
 
     return items;

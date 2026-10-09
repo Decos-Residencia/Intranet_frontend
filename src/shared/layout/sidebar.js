@@ -40,6 +40,14 @@
         <button data-action="close-menu" class="icon-btn w-9 h-9 md:hidden">${icon("x","w-5 h-5")}</button>
       </div>
 
+      <div class="px-4 mb-3">
+        <button type="button" data-action="open-role" class="role-pill" title="Seu papel de acesso: ${esc(App.roleInfo().label)}">
+          ${icon(App.roleInfo().icon, "w-4 h-4 shrink-0")}
+          <span class="sb-label role-pill-txt">PERFIL: ${esc(App.roleInfo().curto)}${App.realRole() !== App.role() ? " · SIMULADO" : ""}</span>
+          <span class="sb-label role-pill-more">${App.realRole() === "admin" ? "trocar" : "ver"} ${icon("chevron-right", "w-3 h-3")}</span>
+        </button>
+      </div>
+
       <div class="sb-label px-5 mb-2 text-[11px] font-extrabold tracking-wide sb-muted">MENU PRINCIPAL</div>
       <nav class="px-3 space-y-1 flex-1 overflow-y-auto">${navLinks}</nav>
 

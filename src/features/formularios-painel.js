@@ -38,7 +38,7 @@
     const proprio = !!u && u.apiId === state.user.id; // não permite rebaixar/desativar a si mesmo
     const setorAtual = u ? u.setorId : setores[0].id;
     const setorOpts = setores.map((s) => `<option value="${s.id}" ${s.id === setorAtual ? "selected" : ""}>${UI.esc(s.nome)}</option>`).join("");
-    const papelOpts = ["normal", "admin"].map((r) => `<option value="${r}" ${r === (u?.role || "normal") ? "selected" : ""}>${DB.roles[r].label}</option>`).join("");
+    const papelOpts = App.ROLE_ORDER.map((r) => `<option value="${r}" ${r === (u?.role || "normal") ? "selected" : ""}>${DB.roles[r].label}</option>`).join("");
     App.openPanel(u ? "Editar usuário" : "Novo usuário", `<form data-form="usuario" data-id="${UI.esc(u?.id || "")}" class="space-y-4" autocomplete="off">
       ${fld("NOME COMPLETO", `<input name="nome" class="field-input" required maxlength="150" value="${UI.esc(u?.nome || "")}">`)}
       ${fld("E-MAIL", `<input name="email" type="email" class="field-input" required maxlength="254" value="${UI.esc(u?.email || "")}" placeholder="nome@email.com">`)}
@@ -50,8 +50,8 @@
       ${fld("ANDAR / ALA", `<input name="andar" class="field-input" maxlength="40" value="${UI.esc(u?.andar || "")}" placeholder="Ex: 3º andar">`)}
       ${fld("DATA DE ADMISSÃO", `<input name="admissao" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.admissao || "")}">`)}
       ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
-      ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">A senha é temporária: o novo usuário entra como Colaborador e precisará criar a própria senha no primeiro acesso. Para torná-lo Administrador, edite-o depois.</div>`)}
-      ${u ? fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : ""}`) : ""}
+      ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">A senha é temporária: o novo usuário precisará criar a própria senha no primeiro acesso.</div>`)}
+      ${fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : `<div class="field-hint">Leitura: somente consulta · Colaborador: padrão · RH: cria e gerencia conteúdo · Administrador: acesso total.</div>`}`)}
       ${u ? fld("STATUS", `<select name="status" class="field-input" ${proprio ? "disabled" : ""}>${opts(["Ativo", "Inativo"], u.status)}</select>${proprio ? `<div class="field-hint">Você não pode desativar a própria conta.</div>` : ""}`) : ""}
       <button type="submit" class="btn-crimson w-full py-3">${u ? "Salvar alterações" : "Cadastrar usuário"}</button>
     </form>`);
@@ -71,7 +71,12 @@
       const body = { nome, email, senha, setor_id, cargo, ramal: ramal || null };
       Object.entries(extras).forEach(([k, val]) => { if (val) body[k] = val; });
       if (v.nascimento) body.data_nascimento = v.nascimento;
-      await Services.auth.register(body);
+      const criado = await Services.auth.register(body);
+      const perfil = App.ROLE_PERFIL[v.role] || "COLABORADOR"; // o cadastro nasce COLABORADOR; o papel escolhido é aplicado em seguida
+      if (perfil !== "COLABORADOR") {
+        try { await Services.usuarios.update(criado.id, { perfil }); }
+        catch (err) { App.toast("Usuário criado como Colaborador, mas o papel não foi aplicado: " + (err.message || "erro")); return true; }
+      }
       if (f.elements.senha) f.elements.senha.value = ""; // a senha não fica no DOM nem em lugar nenhum
       App.toast("Usuário cadastrado como Colaborador");
     } else {
@@ -79,7 +84,7 @@
       if (!u) { App.toast("Usuário não encontrado"); return false; }
       const payload = { nome, email, setor_id, cargo, ramal: ramal || null, ...extras, data_nascimento: v.nascimento || null };
       if (u.apiId !== state.user.id) { // próprio papel/status ficam bloqueados na tela
-        payload.perfil = v.role === "admin" ? "ADMIN" : "COLABORADOR";
+        payload.perfil = App.ROLE_PERFIL[v.role] || "COLABORADOR";
         payload.ativo = v.status === "Ativo";
       }
       await Services.usuarios.update(u.apiId, payload);

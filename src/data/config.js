@@ -28,12 +28,15 @@ window.DB = (function () {
   ];
 
   // ---- Papéis (roles) e matriz de permissão ----
-  // No modo integrado só existem dois papéis, derivados de GET /auth/me (user.perfil):
-  //   ADMIN -> "admin" · COLABORADOR -> "normal". Isto é só UX: o backend é quem autoriza.
-  // caps: interact, download, edit_profile, manage_news, manage_docs, manage_users, manage_faq, manage_events, manage_tickets, audit_all
+  // Os 4 papéis vêm de GET /auth/me (user.perfil): LEITURA -> "leitura" · COLABORADOR -> "normal" ·
+  // RH -> "rh" · ADMIN -> "admin". Isto é só UX: o backend é quem autoriza.
+  // caps: interact, download, edit_profile, manage_news, manage_docs, manage_faq, manage_events,
+  //       manage_users, manage_tickets, manage_reviews, audit_all
   const roles = {
-    normal:  { label: "Colaborador", curto: "COLABORADOR", icon: "user", desc: "Somente leitura", caps: ["interact", "download", "edit_profile"] },
-    admin:   { label: "Administrador", curto: "ADMIN", icon: "shield", desc: "Acesso total + gestão", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_users", "manage_faq", "manage_events", "manage_tickets", "audit_all"] },
+    leitura: { label: "Leitura", curto: "LEITURA", icon: "eye", desc: "Somente consulta", caps: ["download"] },
+    normal:  { label: "Colaborador", curto: "COLABORADOR", icon: "user", desc: "Colaborador padrão", caps: ["interact", "download", "edit_profile"] },
+    rh:      { label: "RH · Editor-Gestor", curto: "RH", icon: "user-cog", desc: "Cria e gerencia conteúdo", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_faq", "manage_events"] },
+    admin:   { label: "Administrador", curto: "ADMIN", icon: "shield", desc: "Acesso total + gestão", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_faq", "manage_events", "manage_users", "manage_tickets", "manage_reviews", "audit_all"] },
   };
 
   return {

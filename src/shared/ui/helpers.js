@@ -11,8 +11,19 @@
     return ((p[0]?.[0] || "") + (p[p.length - 1]?.[0] || "")).toUpperCase();
   }
 
+  // Foto de perfil: retrato de banco de imagens (randomuser.me), sempre o mesmo para o mesmo nome.
+  // Só o índice da imagem vai na URL (nenhum dado da pessoa). Se não carregar, a <img> some e as
+  // iniciais do avatar continuam visíveis por baixo.
+  function fotoUrl(nome) {
+    const txt = String(nome || "").trim();
+    let h = 0;
+    for (const c of txt) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const primeiro = (txt.split(/\s+/)[0] || "").toLowerCase();
+    return `https://randomuser.me/api/portraits/${/a$/.test(primeiro) ? "women" : "men"}/${h % 90}.jpg`;
+  }
   function foto(nome) {
-    return "";
+    if (!String(nome || "").trim()) return "";
+    return `<img class="avatar-img" src="${fotoUrl(nome)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
   }
 
   // Escapa texto digitado pelo usuário antes de ir para o innerHTML.
