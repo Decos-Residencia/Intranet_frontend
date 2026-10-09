@@ -17,6 +17,11 @@
       if (a === "cycle-theme") { const order = Object.keys(THEMES); const i = order.indexOf(state.theme);
         state.theme = order[(i + 1) % order.length]; App.save();
         App.toast("Aparência: " + THEMES[state.theme].label); App.applyThemeLive(); }
+      else if (a === "zoom") { const v = el.closest(".doc-viewer"); if (v) { const z = Math.min(1.6, Math.max(0.6, (parseFloat(v.dataset.zoom) || 1) + Number(el.dataset.dir) * 0.1)); v.dataset.zoom = String(z); v.style.setProperty("--zoom", z); const l = v.querySelector(".zoom-label"); if (l) l.textContent = Math.round(z * 100) + "%"; } }
+      else if (a === "print-doc") { e.preventDefault(); window.print(); }
+      else if (a === "set-role") { App.setPreviewRole(el.dataset.role); App.closePanel(); App.toast("Visão: " + App.roleInfo().label); if (location.hash === "#/dashboard") App.render(); else location.hash = "#/dashboard"; }
+      else if (a === "set-cenario") { App.setPreviewAniversario(el.dataset.cenario === "aniversariante"); App.closePanel(); App.toast(el.dataset.cenario === "aniversariante" ? "Cenário: aniversariante" : "Cenário: normal"); if (location.hash === "#/dashboard") App.render(); else location.hash = "#/dashboard"; }
+      else if (a === "open-role") { e.preventDefault(); App.openRolePanel(); }
       else if (a === "open-theme") { e.preventDefault(); App.openThemePanel(); }
       else if (a === "set-theme") { state.theme = el.dataset.theme; App.save(); App.closePanel();
         App.toast("Aparência: " + THEMES[state.theme].label); App.applyThemeLive(); }

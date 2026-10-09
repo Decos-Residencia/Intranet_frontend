@@ -1,0 +1,28 @@
+/* Tabelas das telas de listagem (usuários, diretório, chamados, avisos, documentos, eventos, avaliações) */
+.content .card > table, .content .card.overflow-x-auto > table{ width:100%; border-collapse:collapse; }
+.content .card.overflow-x-auto{ scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+.content table th{ padding:.85rem .75rem; white-space:nowrap; letter-spacing:.04em; vertical-align:middle; }
+.content table td{ padding:.8rem .75rem; vertical-align:middle; }
+.content table th:first-child, .content table td:first-child{ padding-left:1rem; }
+.content table th:last-child, .content table td:last-child{ padding-right:1rem; }
+/* selos e botões nunca quebram linha dentro da célula */
+.content table td .badge, .content table td .perm-badge, .content table td .pill-soft{ white-space:nowrap; }
+.content table td:last-child{ white-space:nowrap; }
+.content table td .act-btn{ flex-shrink:0; }
+/* colunas de texto: quebram só ENTRE palavras (nunca no meio) e têm largura mínima */
+.content .card > table{ min-width:860px; }
+.content table td{ overflow-wrap:normal; word-break:normal; hyphens:none; }
+.content table th:not(:first-child):not(:last-child), .content table td:not(:first-child):not(:last-child){ min-width:120px; }
+/* 1ª coluna (pessoa/título): nome em destaque; e-mail/subtítulo em UMA linha com reticências */
+.content table td:first-child{ min-width:240px; }
+.content table td:first-child .font-bold{ line-height:1.25; }
+.content table td:first-child .text-xs{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+.content table td:first-child .flex{ min-width:0; }
+.content table td:first-child .avatar-soft, .content table td:first-child .avatar{ flex-shrink:0; }
+/* célula de status com selos empilhados (ex.: Ativo + Senha temporária) */
+.content table td .badge + div, .content table td .badge + .badge{ margin-top:.3rem; }
+.content table tbody tr{ transition:background .12s; }
+.content table tbody tr:last-child{ border-bottom:0; }
+@media (max-width:900px){
+  .content table th, .content table td{ padding-left:.6rem; padding-right:.6rem; }
+}

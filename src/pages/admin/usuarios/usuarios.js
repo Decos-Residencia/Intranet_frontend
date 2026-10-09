@@ -11,7 +11,7 @@
 
   function adminUsuarios() {
     const roleBadge = (r) => {
-      const map = { admin: "red", normal: "blue" };
+      const map = { admin: "red", rh: "amber", normal: "blue", leitura: "gray" };
       return badge(map[r] || "gray", DB.roles[r]?.curto || esc(r));
     };
     const eu = App.state.user;
@@ -19,7 +19,7 @@
     const conta = (fn) => lista.filter(fn).length;
     const rows = lista.map((u) => `
       <tr class="user-row border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${u.status === "Inativo" ? "opacity-60" : ""}" data-role="${esc(u.role)}" data-status="${esc(u.status)}" data-busca="${esc((u.nome + " " + u.email + " " + u.setor + " " + u.cargo).toLowerCase())}">
-        <td class="py-3.5 pl-4"><div class="flex items-center gap-3"><div class="avatar-soft w-9 h-9 text-xs">${esc(UI.iniciais(u.nome))}</div>
+        <td class="py-3.5 pl-4"><div class="flex items-center gap-3"><div class="avatar-soft w-9 h-9 text-xs">${UI.foto(u.nome)}${esc(UI.iniciais(u.nome))}</div>
           <div><div class="font-bold text-slate-800 dark:text-slate-100">${esc(u.nome)}</div><div class="text-xs text-slate-400">${esc(u.email)}</div></div></div></td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.setor)}</td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.cargo)}</td>
@@ -55,7 +55,7 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
         ${statCard("USUÁRIOS ATIVOS", conta((u) => u.status === "Ativo"), lista.length + " cadastrados (" + conta((u) => u.status === "Inativo") + " inativos)", "users")}
-        ${statCard("COLABORADORES", conta((u) => u.role === "normal"), "somente leitura", "user")}
+        ${statCard("COLABORADORES", conta((u) => u.role === "normal"), conta((u) => u.role === "rh") + " RH · " + conta((u) => u.role === "leitura") + " leitura", "user")}
         ${statCard("PERFIS ADMIN", conta((u) => u.role === "admin"), "acesso total", "shield")}
         ${statCard("SETORES", setoresLista.length, "cadastrados", "users")}
       </div>
@@ -65,7 +65,7 @@
             <h3 class="font-bold text-slate-800 dark:text-slate-100">Colaboradores e Papéis de Acesso</h3>
             <div class="flex gap-2 flex-wrap">
               <div class="search-box w-48"><span>${icon("search","w-4 h-4 text-slate-400")}</span><input id="us-busca" placeholder="Buscar..." class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
-              <select id="us-role" class="select-field"><option value="">Papel: Todos</option>${["normal","admin"].map((r) => `<option value="${r}">${DB.roles[r].label}</option>`).join("")}</select>
+              <select id="us-role" class="select-field"><option value="">Papel: Todos</option>${App.ROLE_ORDER.map((r) => `<option value="${r}">${DB.roles[r].label}</option>`).join("")}</select>
               <select id="us-status" class="select-field"><option value="">Status: Todos</option><option value="Ativo" selected>Status: Ativos</option><option value="Inativo">Status: Inativos</option></select>
             </div>
           </div>

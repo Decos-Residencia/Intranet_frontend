@@ -45,5 +45,41 @@
     App.openPanel("Aparência", `<p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Claro e Escuro são os modos padrão. Vinho leva a cor da marca à interface inteira — pense nele como o modo de identidade visual mais forte.</p><div class="space-y-2">${items}</div>`);
   }
 
-  Object.assign(App, { applyTheme, applyThemeLive, openThemePanel });
+  // Os 4 níveis de acesso. O papel real é definido pelo ADMIN no cadastro do usuário. O próprio ADMIN
+  // pode SIMULAR a visão dos outros papéis (só interface: o backend segue autorizando como ADMIN).
+  function openRolePanel() {
+    const atual = App.role(), podeTrocar = App.realRole() === "admin";
+    const items = App.ROLE_ORDER.map((k) => {
+      const r = DB.roles[k], on = k === atual;
+      const inner = `<span class="role-ic">${UI.icon(r.icon, "w-5 h-5")}</span>
+        <span class="text-left flex-1"><span class="block font-bold text-slate-800 dark:text-slate-100">${UI.esc(r.label)}</span>
+          <span class="block text-sm text-slate-500 dark:text-slate-400">${UI.esc(r.desc)}</span></span>
+        ${on ? UI.icon("check", "w-5 h-5 text-wine") : ""}`;
+      return podeTrocar
+        ? `<button type="button" data-action="set-role" data-role="${k}" class="role-opt ${on ? "role-opt-on" : ""}">${inner}</button>`
+        : `<div class="role-opt ${on ? "role-opt-on" : ""}">${inner}</div>`;
+    }).join("");
+    const intro = podeTrocar
+      ? "Simule os 4 níveis de acesso do sistema. Cada papel muda o menu e as telas. É só uma pré-visualização: suas permissões reais continuam as de Administrador."
+      : "O sistema tem 4 níveis de acesso. Cada papel muda o menu, as permissões e a auditoria. O seu papel é definido pelo administrador.";
+    const cenarios = [
+      { k: "normal", icon: "user", titulo: "Normal", desc: "Tela de início padrão" },
+      { k: "aniversariante", icon: "gift", titulo: "Aniversariante", desc: "Tela de início comemorativa" },
+    ];
+    const cenarioAtual = App.state.previewAniversario ? "aniversariante" : "normal";
+    const cenarioHtml = podeTrocar ? `
+      <div class="text-[11px] font-extrabold tracking-wide text-slate-400 mt-6 mb-2">CENÁRIO DO DIA</div>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Simule se hoje é o seu aniversário para ver a tela de início comemorativa.</p>
+      <div class="space-y-2">${cenarios.map((c) => {
+        const on = c.k === cenarioAtual;
+        return `<button type="button" data-action="set-cenario" data-cenario="${c.k}" class="role-opt ${on ? "role-opt-on" : ""}">
+          <span class="role-ic">${UI.icon(c.icon, "w-5 h-5")}</span>
+          <span class="text-left flex-1"><span class="block font-bold text-slate-800 dark:text-slate-100">${c.titulo}</span>
+            <span class="block text-sm text-slate-500 dark:text-slate-400">${c.desc}</span></span>
+          ${on ? UI.icon("check", "w-5 h-5 text-wine") : ""}</button>`;
+      }).join("")}</div>` : "";
+    App.openPanel("Trocar papel de acesso", `<p class="text-sm text-slate-500 dark:text-slate-400 mb-4">${intro}</p><div class="space-y-2">${items}</div>${cenarioHtml}`);
+  }
+
+  Object.assign(App, { applyTheme, applyThemeLive, openThemePanel, openRolePanel });
 })();

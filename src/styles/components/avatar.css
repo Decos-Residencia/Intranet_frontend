@@ -1,6 +1,7 @@
 /* Avatares */
 /* ---------- Avatares ---------- */
 .avatar,.avatar-soft,.avatar-mini,.avatar-birthday,.birthday-hero-avatar{ position:relative; overflow:hidden; }
+.avatar-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
 .avatar{ width:40px; height:40px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.8rem; flex-shrink:0; }
 .avatar-wine{ background:var(--wine); color:#fff; }
 /* Mesmo avatar aparece 2x por tela (sidebar + topbar) — só um precisa ser o

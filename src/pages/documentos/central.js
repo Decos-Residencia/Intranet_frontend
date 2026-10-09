@@ -15,18 +15,25 @@
   function documentos() {
     const docs = App.documentosAll();
     const categorias = [...new Set(docs.map((d) => d.tipo).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
-    const cards = docs.map((d) => `
+    // Documento restrito a um setor = somente visualização (tela restrita, sem baixar); os demais podem ser baixados.
+    const cards = docs.map((d) => {
+      const somenteVer = !!d.setorId;
+      const acao = somenteVer
+        ? `<span class="tag-lock text-xs">${icon("lock", "w-3.5 h-3.5")} Somente visualização</span>`
+        : App.can("download")
+          ? `<button data-action="download-doc" data-id="${esc(d.id)}" class="btn-wine-soft text-xs px-4 py-2 flex items-center gap-1">${icon("download", "w-3.5 h-3.5")} Baixar</button>`
+          : `<span class="tag-lock text-xs">${icon("lock", "w-3.5 h-3.5")} Sem permissão</span>`;
+      return `
       <div class="card p-5 flex flex-col doc-item" data-tipo="${esc(d.tipo)}" data-busca="${esc((d.titulo + " " + d.desc + " " + d.tipo + " " + d.arquivo).toLowerCase())}">
-        <div class="flex items-center justify-between mb-3">${badge(corBadge(d.cor), esc(d.tipo || "Documento"))}<span class="text-xs text-slate-400">v${esc(d.versao)} · ${esc(d.atualizado)}</span></div>
-        <div class="flex gap-3 mb-3">${iconeArquivo(d.ext)}<div><h3 class="font-bold text-slate-800 dark:text-slate-100 leading-snug">${esc(d.titulo)}</h3>
-          <div class="text-xs text-slate-400 mt-0.5">${d.setor ? `Setor: ${esc(d.setor)}` : "Documento geral"}</div></div></div>
+        <div class="flex items-center justify-between mb-3">${badge(corBadge(d.cor), esc(d.tipo || "Documento"))}<span class="text-xs text-slate-400">${esc(d.atualizado)}</span></div>
+        <div class="flex gap-3 mb-3">${iconeArquivo(d.ext)}<div><h3 class="font-bold text-slate-800 dark:text-slate-100 leading-snug">${esc(d.titulo)}</h3></div></div>
         <p class="text-sm text-slate-500 dark:text-slate-400 flex-1 mb-4">${esc(d.desc || "Sem descrição.")}</p>
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <span class="text-xs text-slate-400">${esc(d.ext.toUpperCase())} · ${esc(d.tamanho)}</span>
-          <div class="flex items-center gap-2"><a href="#/documentos/${esc(d.id)}" class="btn-outline text-xs px-4 py-2">Detalhes</a>
-            ${App.can("download") ? `<button data-action="download-doc" data-id="${esc(d.id)}" class="btn-wine-soft text-xs px-4 py-2 flex items-center gap-1">${icon("download", "w-3.5 h-3.5")} Baixar</button>` : ""}</div>
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+          <span class="text-xs text-slate-400">${esc(d.tamanho)}</span>
+          <div class="flex items-center gap-2"><a href="#/documentos/${esc(d.id)}${somenteVer ? "/restrito" : ""}" class="btn-outline text-xs px-4 py-2">Visualizar</a>${acao}</div>
         </div>
-      </div>`).join("");
+      </div>`;
+    }).join("");
     return {
       title: "Central de Documentos & POPs",
       html: `

@@ -4,7 +4,7 @@
    ========================================================================= */
 (function () {
   const { icon, badge, iniciais, foto, esc, saudacao, tone, catLabel, CAT_FILTRO } = UI;
-  const { wireList, wireCarousel } = Lib;
+  const { wireList, wireCarousel, wireQuickAccess } = Lib;
 
   function avisoCard(a) {
     return `<a href="#/avisos/${a.id}" class="card block p-6 hover:shadow-md transition-shadow group dash-aviso" data-cat="${a.categoria}">
@@ -25,12 +25,21 @@
 
   // ---------- números reais (GET /dashboard/resumo): carregando, erro ou valores do banco ----------
   const num = (n) => Number(n).toLocaleString("pt-BR");
+  const ICONE_CARTAO = {
+    "COMUNICADOS PUBLICADOS": "megaphone", "PRÓXIMOS EVENTOS": "calendar", "DOCUMENTOS DISPONÍVEIS": "file-text",
+    "MINHAS AVALIAÇÕES": "check-check", "MEUS CHAMADOS": "help-circle", "NOTIFICAÇÕES": "bell",
+    "USUÁRIOS ATIVOS": "users", "CHAMADOS EM ABERTO": "help-circle", "AVALIAÇÕES PENDENTES": "check-check",
+    "SOLICITAÇÕES CADASTRAIS": "user-cog", "AVISOS": "megaphone", "INSCRIÇÕES EM EVENTOS": "calendar",
+  };
+  // Cartão de número: ícone + rótulo no topo (sempre 2 linhas de altura), valor e legenda alinhados embaixo.
   function cartaoNumero(rot, valor, sub, rota, tom) {
-    const abre = rota === "notif" ? `<button type="button" data-notif-card class="card p-4 hover:shadow-md transition-shadow block text-left w-full" data-stat="${esc(rot)}">` : `<a href="${rota}" class="card p-4 hover:shadow-md transition-shadow block" data-stat="${esc(rot)}">`;
+    const alerta = tom === "alerta" && valor !== null && Number(valor) > 0;
+    const cls = `card stat-card ${alerta ? "stat-card-alerta" : ""}`;
+    const abre = rota === "notif" ? `<button type="button" data-notif-card class="${cls}" data-stat="${esc(rot)}">` : `<a href="${rota}" class="${cls}" data-stat="${esc(rot)}">`;
     return `${abre}
-      <div class="text-xs font-bold text-slate-500 dark:text-slate-400">${esc(rot)}</div>
-      <div class="text-3xl font-extrabold ${tom === "alerta" ? "text-wine" : "text-slate-800 dark:text-slate-100"} mt-1">${valor === null ? `<span class="animate-pulse text-slate-300">…</span>` : esc(num(valor))}</div>
-      <div class="text-xs text-slate-400 mt-0.5">${esc(sub)}</div>${rota === "notif" ? "</button>" : "</a>"}`;
+      <span class="stat-head"><span class="stat-ic">${icon(ICONE_CARTAO[rot] || "bell", "w-4 h-4")}</span><span class="stat-label">${esc(rot)}</span></span>
+      <span class="stat-value">${valor === null ? `<span class="animate-pulse stat-loading">…</span>` : esc(num(valor))}</span>
+      <span class="stat-sub">${esc(sub) || "&nbsp;"}</span>${rota === "notif" ? "</button>" : "</a>"}`;
   }
   function cartoes(r) {
     const p = r ? r.pessoal : null, a = r ? r.admin : null, v = (f) => (r ? f() : null);
@@ -74,6 +83,7 @@
   function dashboard() {
     const u = App.state.user;
     const souAniversariante = App.souAniversariante();
+    const verNumeros = App.can("manage_news"); // cards de números: só ADMIN e RH
     const todosAvisos = App.avisosAll();
     const avisos = todosAvisos.map((a) => `<div class="dash-aviso-wrap" data-cat="${a.categoria}">${avisoCard(a)}</div>`).join("");
     const proximos = App.eventosProximos();
@@ -122,6 +132,10 @@
       </div>`).join("");
     const dotsHtml = slides.map((_, i) => `<button class="carousel-dot ${i===0?"active":""}" data-dot="${i}" aria-label="Slide ${i+1}"></button>`).join("");
 
+    const qaTile = (it) => UI.qaLink(it, "qa-tile",
+      `<span class="qa-icon">${icon(it.icon, "w-4 h-4")}</span><span class="qa-label">${it.titulo}</span>`, App.can("interact"));
+    const acessosRapidos = DB.acessosRapidos.map(qaTile).join("");
+
     const header = souAniversariante ? `
       <div class="birthday-hero mb-6">
         <div class="birthday-hero-emoji" aria-hidden="true">🎉 🎈 🎂 🎊</div>
@@ -144,7 +158,18 @@
       html: `
       ${header}
 
-      <div id="dash-stats" class="mb-6" aria-busy="true"></div>
+      <div class="card qa-card mb-6" id="qa">
+        <div class="qa-head">
+          <h3 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><img src="assets/img/simbolo.png" alt="" class="qa-logo"> Acessos Rápidos</h3>
+          <div class="flex gap-1.5">
+            <button type="button" class="qa-arrow" data-qa-dir="-1" title="Anteriores" disabled>${icon("chevron-left", "w-4 h-4")}</button>
+            <button type="button" class="qa-arrow" data-qa-dir="1" title="Próximos">${icon("chevron-right", "w-4 h-4")}</button>
+          </div>
+        </div>
+        <div class="qa-viewport"><div class="qa-strip">${acessosRapidos}</div></div>
+      </div>
+
+      ${verNumeros ? `<div id="dash-stats" class="mb-6" aria-busy="true"></div>` : ""}
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="lg:col-span-2 space-y-4">
@@ -183,7 +208,8 @@
         </div>
       </div>`,
       init() {
-        carregarNumeros();
+        if (verNumeros) carregarNumeros();
+        wireQuickAccess("qa");
         wireList({
           containerId: "dash-avisos", itemSel: ".dash-aviso-wrap", size: 4,
           pagerId: "dash-pager", infoId: "dash-info", label: "comunicados",

@@ -9,8 +9,9 @@
    ========================================================================= */
 (function () {
   const LS = "decos_intranet_state";
-  const ROLE_ORDER = ["normal", "admin"];
-  const PERFIL_ROLE = { ADMIN: "admin", COLABORADOR: "normal" };
+  const ROLE_ORDER = ["leitura", "normal", "rh", "admin"];
+  const PERFIL_ROLE = { LEITURA: "leitura", COLABORADOR: "normal", RH: "rh", ADMIN: "admin" };
+  const ROLE_PERFIL = Object.fromEntries(Object.entries(PERFIL_ROLE).map(([p, r]) => [r, p]));
   const THEMES = {
     light: { label: "Claro", icon: "sun" },
     dark: { label: "Escuro", icon: "moon" },
@@ -46,7 +47,16 @@
   save(); // regrava só a lista branca: descarta chaves legadas (token, user, role, api, noticias...)
 
   /* ---------- papel e permissões (derivados do usuário real) ---------- */
-  function role() { return PERFIL_ROLE[state.user?.perfil] || null; }
+  // Simulação de visão (só ADMIN, só na memória): muda menu/telas, nunca a autorização do backend.
+  state.previewRole = null;
+  function realRole() { return PERFIL_ROLE[state.user?.perfil] || null; }
+  function role() {
+    if (state.previewRole && realRole() === "admin" && DB.roles[state.previewRole]) return state.previewRole;
+    return realRole();
+  }
+  state.previewAniversario = false; // simulação de "hoje é meu aniversário" (só ADMIN, só na memória)
+  function setPreviewAniversario(on) { state.previewAniversario = !!on; }
+  function setPreviewRole(r) { state.previewRole = r && r !== "admin" && DB.roles[r] ? r : null; }
   // Somente leitura: não existe mais como "preferência" que alguém possa gravar.
   Object.defineProperty(state, "role", { get: role, enumerable: false });
   function can(cap) { const r = role(); return !!r && (DB.roles[r]?.caps || []).includes(cap); }
@@ -73,6 +83,8 @@
     stopNotifPolling();
     state.auth = false;
     state.user = null;
+    state.previewRole = null;
+    state.previewAniversario = false;
     state.loadError = null;
     resetServerData();
     save();
@@ -380,7 +392,9 @@
   function aniversariantesHoje() { return state.api.aniversariantesHoje.map(apiAniversariante); }
   function aniversariantesProximos() { return state.api.aniversariantesProximos.map(apiAniversariante); }
   function hoje() { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; }
-  function souAniversariante() { return !!state.user && state.api.aniversariantesHoje.some((a) => a.id === state.user.id); }
+  function souAniversariante() {
+    if (state.previewAniversario && realRole() === "admin") return true;
+    return !!state.user && state.api.aniversariantesHoje.some((a) => a.id === state.user.id); }
 
   // Envia parabéns (persistido) e reflete o resultado nas listas em memória.
   async function parabenizar(id) {
@@ -478,7 +492,7 @@
   }
 
   Object.assign(App, {
-    ROLE_ORDER, THEMES, state, save, role, can, roleInfo,
+    ROLE_ORDER, realRole, setPreviewRole, setPreviewAniversario, PERFIL_ROLE, ROLE_PERFIL, THEMES, state, save, role, can, roleInfo,
     setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange, refreshPerfil, refreshEventos, refreshAvisos, carregarAviso, registrarLeitura, nomeDoUsuario,
     removeItem, findItem, deleteRemoteItem,
     avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, aniversariantesHoje, aniversariantesProximos, hoje, souAniversariante, parabenizar, marcarParabenizado,
