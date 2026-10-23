@@ -1,0 +1,285 @@
+[
+ {
+  "id": "E01",
+  "name": "Carrossel avança sozinho e oferece botão de pausa (WCAG 2.2.2)",
+  "ok": false,
+  "d": {
+   "avancouSozinho": true,
+   "botaoPausa": 0
+  }
+ },
+ {
+  "id": "E01b",
+  "name": "Carrossel pausa enquanto o foco do teclado está nele",
+  "ok": false,
+  "d": {
+   "antes": "translateX(-100%)",
+   "depois": "translateX(0%)"
+  }
+ },
+ {
+  "id": "E01c",
+  "name": "Botões de slides fora da tela não recebem foco",
+  "ok": false,
+  "d": "Ver detalhes do evento"
+ },
+ {
+  "id": "E02",
+  "name": "Colaborador se inscreve em evento",
+  "ok": true,
+  "d": "INSCRITO · VAGAS PREENCHIDAS · vaga disponível · inscrito"
+ },
+ {
+  "id": "E02b",
+  "name": "Duplo clique em Inscrever envia uma única requisição",
+  "ok": true,
+  "d": "1 POSTs"
+ },
+ {
+  "id": "E02c",
+  "name": "Evento com vagas esgotadas mostra 'lotado' e bloqueia inscrição",
+  "ok": true,
+  "d": {
+   "txt": "0 vagas disponíveis",
+   "btn": []
+  }
+ },
+ {
+  "id": "E02d",
+  "name": "API recusa inscrição além das vagas",
+  "ok": true,
+  "d": "409 {\"detail\":\"Vagas esgotadas.\"}"
+ },
+ {
+  "id": "E02e",
+  "name": "Cancelar inscrição libera a vaga para outra pessoa",
+  "ok": true,
+  "d": "1 botão(ões) habilitado(s)"
+ },
+ {
+  "id": "E03",
+  "name": "API rejeita evento com fim antes do início",
+  "ok": true,
+  "d": 422
+ },
+ {
+  "id": "E03b",
+  "name": "Campos do formulário de evento (inventário)",
+  "ok": null,
+  "d": ":search ev-titulo:text ev-categoria:text ev-org:text ev-inicio:datetime-local ev-fim:datetime-local ev-local:text ev-vagas:number ev-desc:textarea ev-longa:textarea"
+ },
+ {
+  "id": "E04",
+  "name": "Massa XSS criada (evento, FAQ, setor, chamado)",
+  "ok": null,
+  "d": "201,201,201,201"
+ },
+ {
+  "id": "E04b",
+  "name": "Nenhum campo novo executa HTML (10 telas + painel + prévia da busca)",
+  "ok": true,
+  "d": "window.__x=undefined"
+ },
+ {
+  "id": "E05",
+  "name": "Texto longo sem quebra em #/avisos/23 (375px) não estoura",
+  "ok": true,
+  "d": {
+   "ov": 0,
+   "cut": 0
+  }
+ },
+ {
+  "id": "E05",
+  "name": "Texto longo sem quebra em #/avisos (375px) não estoura",
+  "ok": true,
+  "d": {
+   "ov": 0,
+   "cut": 0
+  }
+ },
+ {
+  "id": "E05",
+  "name": "Texto longo sem quebra em #/dashboard (375px) não estoura",
+  "ok": true,
+  "d": {
+   "ov": 0,
+   "cut": 0
+  }
+ },
+ {
+  "id": "E05",
+  "name": "Texto longo sem quebra em #/avisos/23 (1440px) não estoura",
+  "ok": true,
+  "d": {
+   "ov": 0,
+   "cut": 0
+  }
+ },
+ {
+  "id": "E05",
+  "name": "Texto longo sem quebra em #/avisos (1440px) não estoura",
+  "ok": true,
+  "d": {
+   "ov": 0,
+   "cut": 0
+  }
+ },
+ {
+  "id": "E05",
+  "name": "Texto longo sem quebra em #/dashboard (1440px) não estoura",
+  "ok": true,
+  "d": {
+   "ov": 0,
+   "cut": 0
+  }
+ },
+ {
+  "id": "E06",
+  "name": "Duplo clique em Publicar cria um único aviso",
+  "ok": true,
+  "d": "1 POSTs"
+ },
+ {
+  "id": "E07",
+  "name": "Com a API fora, a tela informa o problema e oferece nova tentativa",
+  "ok": true,
+  "d": "📡 Não foi possível conectar à API Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente. Tentar novamente"
+ },
+ {
+  "id": "E07b",
+  "name": "Ao voltar a API, 'Tentar novamente' recupera a tela",
+  "ok": true,
+  "d": ""
+ },
+ {
+  "id": "E08",
+  "name": "Link direto aberto sem sessão volta à tela pedida após o login",
+  "ok": false,
+  "d": "#/login → #/dashboard"
+ },
+ {
+  "id": "E08b",
+  "name": "Botões voltar/avançar do navegador navegam entre telas",
+  "ok": true,
+  "d": "#/avisos"
+ },
+ {
+  "id": "E09",
+  "name": "Usuário desativado no meio da sessão é levado ao login ao navegar",
+  "ok": false,
+  "d": {
+   "desativar": 204,
+   "hash": "#/diretorio",
+   "tk": true,
+   "txt": "Intranet PERFIL: COLABORADOR ver MENU PRINCIPAL Início Comunicação Avisos Aniversariantes do Mês Aniversariante do Dia E"
+  }
+ },
+ {
+  "id": "E09b",
+  "name": "Ao recarregar, o usuário desativado é levado ao login",
+  "ok": true,
+  "d": ""
+ },
+ {
+  "id": "E10",
+  "name": "Busca ignora acentos ('vacinacao' acha 'vacinação')",
+  "ok": false,
+  "d": {
+   "comAcento": true,
+   "semAcento": false
+  }
+ },
+ {
+  "id": "E10b",
+  "name": "Busca por '%' não lista tudo nem quebra",
+  "ok": true,
+  "d": "Resultados para \"%\" 🔍 Nada encontrado para \"%\"."
+ },
+ {
+  "id": "E10c",
+  "name": "Busca por ramal de pessoa encontra o colaborador",
+  "ok": true,
+  "d": "Resultados para \"2110\" RAMAIS Carlos Eduardo Lima Enfermagem 2110"
+ },
+ {
+  "id": "E10d",
+  "name": "Busca cobre FAQ e eventos",
+  "ok": false,
+  "d": {
+   "faq": false,
+   "eventos": false
+  }
+ },
+ {
+  "id": "E10e",
+  "name": "Sem erros JS na busca",
+  "ok": true,
+  "d": ""
+ },
+ {
+  "id": "E11",
+  "name": "Tema Vinho: contraste em #/dashboard",
+  "ok": false,
+  "d": "7 nós · Element has insufficient color contrast of 2.26 (foreground color: #94a3b8, background color: #fbeef0, font size: 10.5pt (14px), font weight"
+ },
+ {
+  "id": "E11",
+  "name": "Tema Vinho: contraste em #/avisos",
+  "ok": false,
+  "d": "6 nós · Element has insufficient color contrast of 1.13 (foreground color: #ffffff, background color: #fdedf0, font size: 8.4pt (11.2px), font weigh"
+ },
+ {
+  "id": "E11",
+  "name": "Tema Vinho: contraste em #/admin/usuarios",
+  "ok": false,
+  "d": "21 nós · Element has insufficient color contrast of 2.26 (foreground color: #94a3b8, background color: #fbeef0, font size: 10.5pt (14px), font weight"
+ },
+ {
+  "id": "E12",
+  "name": "Esqueci minha senha dá retorno claro (sem revelar se o e-mail existe)",
+  "ok": true,
+  "d": "Se existir uma conta associada a este e-mail, enviaremos as instruções de recuperação. | Enviar link de recuperação Você receberá um link seguro para criar uma nova senha."
+ },
+ {
+  "id": "E12b",
+  "name": "Após muitas tentativas, o login explica que é preciso aguardar",
+  "ok": true,
+  "d": "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+ },
+ {
+  "id": "E13",
+  "name": "Paisagem 812×375: painel de novo usuário rola e cabe na tela",
+  "ok": true,
+  "d": {
+   "body": 375,
+   "scrollable": "auto",
+   "content": 1202
+  }
+ },
+ {
+  "id": "E14",
+  "name": "Aviso urgente gera indicação no sino do colaborador",
+  "ok": true,
+  "d": {
+   "title": "Notificações",
+   "badge": "3",
+   "aria": null
+  }
+ },
+ {
+  "id": "E14b",
+  "name": "Leitor de tela anuncia o sino como 'Notificações' (e não só o número)",
+  "ok": false,
+  "d": "- button \"3\":"
+ },
+ {
+  "id": "E15",
+  "name": "Aviso publicado durante a sessão aparece ao navegar ou em até 60 s",
+  "ok": false,
+  "d": {
+   "aoNavegar": false,
+   "apos60s": false
+  }
+ }
+]

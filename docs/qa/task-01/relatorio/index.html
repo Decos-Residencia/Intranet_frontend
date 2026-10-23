@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Auditoria QA Intranet Decós</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7,7 +12,7 @@
 /* Layout: relatório de laudo clínico — cabeçalho de prontuário, índice fixo à esquerda no desktop, seções em coluna única de leitura */
 :root{
   --bg:#f6f4f4; --surface:#ffffff; --ink:#1d1a1c; --ink-2:#4f4549; --line:#e3dcde; --accent:#8a1c31; --accent-soft:#f6e4e8;
-  --crit:#b3122e; --crit-bg:#fde7eb; --high:#c2410c; --high-bg:#ffedd5; --med:#a16207; --med-bg:#fef3c7; --low:#3f6b8a; --low-bg:#e3eef6;
+  --crit:#b3122e; --crit-bg:#fde7eb; --high:#c2410c; --high-bg:#ffedd5; --med:#854d0e; --med-bg:#fef3c7; --low:#3f6b8a; --low-bg:#e3eef6;
   --ok:#15803d; --ok-bg:#dcfce7; --fail:#b3122e; --fail-bg:#fde7eb;
   --f-display:'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --f-body:'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
@@ -147,7 +152,9 @@ dialog p{color:#f1eaec;text-align:center;font-size:14px;margin:8px auto 0}
 dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;background:#fff;color:#1d1a1c;border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-
+<style>body{margin:0} img{max-width:100%} [hidden]{display:none!important}</style>
+</head>
+<body>
 <div class="wrap">
   <div class="grid">
     <nav class="toc" aria-label="Índice do relatório">
@@ -161,9 +168,11 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <li><a href="#heuristicas">Heurísticas de usabilidade</a></li>
         <li><a href="#desempenho">Desempenho</a></li>
         <li><a href="#funcional">Testes funcionais</a></li>
+        <li><a href="#exploratorio">Rodada exploratória</a></li>
         <li><a href="#seguranca">Segurança e backend</a></li>
         <li><a href="#fortes">Pontos fortes</a></li>
         <li><a href="#plano">Plano de correção</a></li>
+        <li><a href="#revisoes">Histórico de revisões</a></li>
         <li><a href="#limites">Limitações</a></li>
       </ol>
     </nav>
@@ -176,7 +185,7 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
           <p>Teste de ponta a ponta do frontend (SPA em HTML, Tailwind e JS) integrado à API FastAPI real, com os quatro perfis de acesso, seis larguras de tela e três temas.</p>
         </div>
         <dl class="chart-meta">
-          <div><dt>Data</dt><dd>23/10/2026</dd></div>
+          <div><dt>Data</dt><dd>23/10/2026 · revisão 2</dd></div>
           <div><dt>Frontend</dt><dd class="mono">Intranet_frontend @ 903b499</dd></div>
           <div><dt>Backend</dt><dd class="mono">Intranet_backend @ 734fc32</dd></div>
           <div><dt>Ambiente</dt><dd>Local · PostgreSQL 16 dedicado</dd></div>
@@ -189,15 +198,15 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <div class="panel">
           <span class="stamp">Aprovado com ressalvas</span>
           <p><strong>A intranet funciona e é segura.</strong> Login, sessão, permissões dos quatro perfis, troca de senha obrigatória, proteção contra XSS e tratamento de erros da API passaram em todos os testes. Nenhum erro de JavaScript ou resposta HTTP de falha apareceu nas 684 cargas de página.</p>
-          <p><strong>O que impede a aprovação plena é acessibilidade e o layout em telas médias e pequenas.</strong> Campos sem rótulo, modais e painéis que o teclado não alcança, contraste baixo e tabelas administrativas que escondem metade das colunas em 1024 px afetam o uso real no hospital, inclusive por quem usa leitor de tela ou trabalha em tablets e notebooks de posto de enfermagem.</p>
+          <p><strong>O que impede a aprovação plena é atualização de conteúdo, acessibilidade e o layout em telas médias e pequenas.</strong> Avisos publicados durante o expediente só aparecem para quem recarrega a página, o que pesa num hospital. Campos sem rótulo, modais e painéis que o teclado não alcança, contraste baixo e tabelas administrativas que escondem metade das colunas em 1024 px afetam quem usa leitor de tela ou trabalha em tablets e notebooks de posto de enfermagem.</p>
           <div class="sevbar" id="sevbar"></div>
         </div>
         <div class="vitals">
           <div><b>684</b><span>cargas de página auditadas</span></div>
           <div><b>30</b><span>rotas × 6 larguras × 3 temas</span></div>
           <div><b>27/34</b><span>casos E2E aprovados</span></div>
-          <div><b>329/330</b><span>testes do backend aprovados</span></div>
-          <div><b>11</b><span>regras WCAG violadas (axe-core)</span></div>
+          <div><b>329/330</b><span>testes do backend aprovados (331 coletados, 1 pulado)</span></div>
+          <div><b>6</b><span>critérios WCAG violados (+5 boas práticas, axe-core)</span></div>
           <div><b>55</b><span>Lighthouse desempenho, login mobile</span></div>
         </div>
       </div>
@@ -216,6 +225,7 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
             <li>Larguras: 320, 375, 768, 1024, 1440 e 1920 px</li>
             <li>Temas: claro e escuro (375 e 1440) e Vinho (amostra)</li>
             <li>30 rotas, incluindo 404, formulários e telas administrativas</li>
+            <li>Rodada exploratória (E01–E15): inscrições, busca, sessão, API fora do ar, conteúdo longo, XSS em 4 campos</li>
             <li>Chromium e Firefox; WebKit indisponível (ver limitações)</li>
           </ul></div>
           <div class="panel"><h3>Ferramentas</h3><ul>
@@ -253,7 +263,7 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <span class="eyebrow">03</span>
         <h2>Responsividade</h2>
         <p class="lead">Rolagem horizontal da página (px a mais que a viewport) medida em todas as rotas, pior caso entre perfis e temas. As marcações “visual” são defeitos confirmados na revisão manual que não geram rolagem da página.</p>
-        <div class="tbl"><table class="matrix" id="matrix"><thead><tr><th>Rota</th><th>320</th><th>375</th><th>768</th><th>1024</th><th>1440</th><th>1920</th></tr></thead><tbody></tbody></table></div>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Matriz de responsividade"><table class="matrix" id="matrix"><thead><tr><th>Rota</th><th>320</th><th>375</th><th>768</th><th>1024</th><th>1440</th><th>1920</th></tr></thead><tbody></tbody></table></div>
         <h3 style="margin:28px 0 10px">Início (perfil Colaborador) em cada largura</h3>
         <div class="thumbs" id="thumbs"></div>
       </section>
@@ -261,13 +271,13 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
       <section id="acessibilidade">
         <span class="eyebrow">04</span>
         <h2>Acessibilidade (WCAG 2.2 AA)</h2>
-        <p class="lead">Varredura axe-core em 1440 e 375 px, temas claro e escuro, todos os perfis (276 análises). Os números somam ocorrências em todas as análises; “telas” é quantas análises tiveram a violação.</p>
-        <div class="tbl"><table>
-          <thead><tr><th>Regra</th><th>Impacto</th><th>Critério</th><th>Ocorrências</th><th>Telas</th><th>Exemplo</th></tr></thead>
+        <p class="lead">Varredura axe-core em 1440 e 375 px, temas claro e escuro, todos os perfis (262 análises). Os números somam ocorrências em todas as análises; “análises” é em quantas das 262 a violação apareceu.</p>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Violações do axe-core"><table>
+          <thead><tr><th>Regra</th><th>Impacto</th><th>Critério</th><th>Ocorrências</th><th>Análises</th><th>Exemplo</th></tr></thead>
           <tbody id="axe"></tbody>
         </table></div>
         <h3 style="margin:28px 0 10px">Contraste medido nos tokens do tema</h3>
-        <div class="tbl"><table>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Contraste dos tokens"><table>
           <thead><tr><th>Par de cores</th><th>Uso</th><th>Razão</th><th>Mínimo</th><th>Resultado</th></tr></thead>
           <tbody>
             <tr><td class="mono">#94a3b8 / #f1f2f4</td><td>Texto <code>text-slate-400</code> sobre o fundo claro</td><td class="num">2,28:1</td><td class="num">4,5:1</td><td><span class="res res-fail">reprova</span></td></tr>
@@ -279,7 +289,7 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
           </tbody>
         </table></div>
         <h3 style="margin:28px 0 10px">Verificações manuais de teclado</h3>
-        <div class="tbl"><table>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Verificações de teclado"><table>
           <thead><tr><th>Verificação</th><th>Resultado</th><th>Observação</th></tr></thead>
           <tbody>
             <tr><td>Foco visível nos 40 primeiros elementos do Início</td><td><span class="res res-ok">aprova</span></td><td>Todos têm contorno; no tema escuro parte deles tem contraste insuficiente (B06).</td></tr>
@@ -297,7 +307,7 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <span class="eyebrow">05</span>
         <h2>Heurísticas de usabilidade (Nielsen)</h2>
         <p class="lead">Avaliação de 1 a 5 com base na navegação pelos quatro perfis.</p>
-        <div class="tbl"><table>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Heurísticas de Nielsen"><table>
           <thead><tr><th>Heurística</th><th>Nota</th><th>Observações</th></tr></thead>
           <tbody id="heur"></tbody>
         </table></div>
@@ -307,15 +317,15 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <span class="eyebrow">06</span>
         <h2>Desempenho (Lighthouse 12.8)</h2>
         <p class="lead">O login foi medido com cache vazio (primeiro acesso). O Início foi medido com sessão ativa e cache aquecido, por isso o desempenho dele sai inflado e não deve ser comparado ao do login.</p>
-        <div class="tbl"><table>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Resultados do Lighthouse"><table>
           <thead><tr><th>Página</th><th>Perfil</th><th>Desempenho</th><th>Acessibilidade</th><th>Boas práticas</th><th>SEO</th><th>FCP</th><th>LCP</th><th>TBT</th><th>Peso</th></tr></thead>
           <tbody id="lh"></tbody>
         </table></div>
         <div class="cols" style="margin-top:14px">
           <div class="panel"><h3>Causas principais</h3><ul>
-            <li><code>assets/img/news.png</code> com 1,4 MB e <code>login.png</code> com 540 KB, em PNG e sem <code>width</code>/<code>height</code></li>
-            <li>84 tags <code>&lt;script&gt;</code> e 30 folhas CSS sem bundle, minificação ou compressão</li>
-            <li>Tailwind Play CDN compila CSS no navegador a cada carga e bloqueia a renderização</li>
+            <li>Celular: o LCP é um parágrafo de texto, atrasado por 84 <code>&lt;script&gt;</code> síncronos (inclusive os das telas de admin, carregados já no login) e pelo Tailwind compilado no navegador (128 KB). Ver B24.</li>
+            <li>Desktop: o LCP é a foto do login, <code>login.png</code> com 530 KB. No celular ela não é baixada (fica oculta abaixo de 820 px).</li>
+            <li><code>news.png</code> (1,4 MB) não pesa no login, mas é usada no Mural e nas fotos de eventos. Ver B20.</li>
           </ul></div>
           <div class="panel"><h3>Bom resultado</h3><ul>
             <li>CLS 0 em todas as medições: a página não “pula”</li>
@@ -328,10 +338,20 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
       <section id="funcional">
         <span class="eyebrow">07</span>
         <h2>Testes funcionais E2E</h2>
-        <p class="lead">34 casos automatizados com Playwright contra a API real. 27 aprovados e 7 reprovados; todas as reprovações são de acessibilidade ou feedback, nenhuma de regra de negócio.</p>
-        <div class="tbl"><table>
+        <p class="lead">29 casos do roteiro E2E (<code>audit.mjs functional</code>) e 5 verificações complementares (X), contra a API real: 27 aprovados e 7 reprovados. Todas as reprovações são de acessibilidade ou feedback; nenhuma de regra de negócio.</p>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Testes funcionais"><table>
           <thead><tr><th>ID</th><th>Caso de teste</th><th>Resultado</th><th>Defeito</th></tr></thead>
           <tbody id="e2e"></tbody>
+        </table></div>
+      </section>
+
+      <section id="exploratorio">
+        <span class="eyebrow">07b</span>
+        <h2>Rodada exploratória</h2>
+        <p class="lead">Fluxos que a varredura não cobria, executados com <code>scripts/explore.mjs</code> (repetível; cria e limpa a própria massa). Cada falha foi reproduzida uma segunda vez antes de virar defeito.</p>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Rodada exploratória"><table>
+          <thead><tr><th>ID</th><th>Verificação</th><th>Resultado</th><th>Defeito</th></tr></thead>
+          <tbody id="expl"></tbody>
         </table></div>
       </section>
 
@@ -339,10 +359,10 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <span class="eyebrow">08</span>
         <h2>Segurança e backend</h2>
         <p class="lead">Fora do foco da task, mas verificado porque a interface depende dessas garantias.</p>
-        <div class="tbl"><table>
+        <div class="tbl" tabindex="0" role="region" aria-label="Tabela: Segurança e backend"><table>
           <thead><tr><th>Verificação</th><th>Resultado</th><th>Evidência</th></tr></thead>
           <tbody>
-            <tr><td>Suíte pytest (330 testes)</td><td><span class="res res-fail">329 aprovados · 1 falha</span></td><td>Falha em <code>test_perfis_rh_leitura.py:74</code>, ver B23</td></tr>
+            <tr><td>Suíte pytest (331 coletados, 330 executados)</td><td><span class="res res-fail">329 aprovados · 1 falha</span></td><td>Falha em <code>test_perfis_rh_leitura.py:74</code>, ver B23</td></tr>
             <tr><td>Lint (ruff)</td><td><span class="res res-ok">aprova</span></td><td>Nenhum apontamento em <code>app/</code> e <code>tests/</code></td></tr>
             <tr><td>Bloqueio por tentativas de login</td><td><span class="res res-ok">aprova</span></td><td>5 respostas 401 e depois 429</td></tr>
             <tr><td>Enumeração de usuários</td><td><span class="res res-ok">aprova</span></td><td>Mesma mensagem para e-mail inexistente e senha errada</td></tr>
@@ -362,7 +382,7 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
         <div class="cols">
           <div class="panel"><h3>Permissões coerentes</h3><p>Menu, rotas e botões respeitam os quatro perfis. Leitura não vê inscrição em eventos, RH não acessa usuários nem auditoria, e o backend confirma com 403.</p></div>
           <div class="panel"><h3>Sessão robusta</h3><p>Token inválido derruba a sessão, logout limpa o armazenamento e o primeiro acesso obriga a troca de senha sem deixar navegar.</p></div>
-          <div class="panel"><h3>Layout estável</h3><p>27 das 30 rotas não rolam horizontalmente em nenhuma largura. CLS zero. Três temas consistentes, com preferência persistida.</p></div>
+          <div class="panel"><h3>Layout estável</h3><p>28 das 30 rotas não rolam horizontalmente em nenhuma largura. CLS zero. Três temas consistentes, com preferência persistida.</p></div>
           <div class="panel"><h3>Mensagens úteis</h3><p>Erros da API chegam ao usuário em linguagem clara, como na exclusão de aviso já lido e na validação da nova senha.</p></div>
         </div>
         <div class="thumbs" style="margin-top:14px" id="okthumbs"></div>
@@ -379,6 +399,8 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
             <li>B06 foco em <code>select</code> e anel claro no tema escuro</li>
             <li>B09 toast com tipo (sucesso/erro) e <code>aria-live</code></li>
             <li>B13 <code>&lt;main&gt;</code> e link de pular</li>
+            <li>B30 nome do sino; B27 pausa do carrossel</li>
+            <li>B25 e B26 revalidar dados ao navegar e ao voltar à aba</li>
           </ul></div>
           <div class="panel phase"><span class="eyebrow">Sprint 2 · layout</span><h3>Telas médias e pequenas</h3><ul>
             <li>B07 e B08 quebras de linha nos filtros e na paginação</li>
@@ -386,18 +408,34 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
             <li>B10 FAB que não cobre conteúdo</li>
             <li>B05 tokens de contraste</li>
             <li>B14, B15 e B16 alvos de toque, cabeçalhos e busca no mobile</li>
+            <li>B28 busca sem acento e com FAQ/eventos</li>
           </ul></div>
           <div class="panel phase"><span class="eyebrow">Sprint 3 · acabamento</span><h3>Desempenho e manutenção</h3><ul>
-            <li>B20 imagens em WebP/AVIF com dimensões</li>
-            <li>B24 build do Tailwind e bundle dos scripts</li>
+            <li>B24 build do Tailwind e bundle dos scripts (maior ganho no celular)</li>
+            <li>B20 imagens em WebP/AVIF</li>
             <li>B12 validação inline nos formulários</li>
-            <li>B17 a B19, B21 a B23 ajustes finos, README e teste quebrado</li>
+            <li>B17 a B19, B21 a B23 e B29 ajustes finos, README e teste quebrado</li>
           </ul></div>
         </div>
       </section>
 
-      <section id="limites">
+      <section id="revisoes">
         <span class="eyebrow">11</span>
+        <h2>Histórico de revisões</h2>
+        <div class="panel"><p style="margin:0 0 8px"><strong>Revisão 2.</strong> O laudo e os scripts foram revisados contra os dados brutos e testados a partir de um clone limpo. Correções:</p><ul style="margin:0;padding-left:18px">
+          <li>Contagens: 262 análises axe (não 276); 258 de 262 sem <code>&lt;main&gt;</code>; 28 de 30 rotas sem rolagem horizontal (não 27); “telas” trocado por “análises” onde era contagem de análises.</li>
+          <li>B20 estava errado: a foto do login não é baixada no celular. A lentidão mobile vem dos scripts e do Tailwind (B24, agora Média).</li>
+          <li>B11 refeito com a largura visível medida por tabela; Diretório incluído; Auditoria removida (não tem tabela).</li>
+          <li>B06: a borda do select não muda no foco (antes dizia que mudava para #edeff2).</li>
+          <li>B05 ampliado: tema Vinho (2,26:1) e link “Ler comunicado” no escuro (2,04:1).</li>
+          <li>Seis defeitos novos da rodada exploratória: B25 a B30.</li>
+          <li>Descartados após reprodução: cancelamento de inscrição (funciona), API fora do ar (tratado), link longo (cabe no card) e texto branco no tema Vinho (era um toast em animação).</li>
+          <li>Scripts: versões fixas com lockfile, credenciais por variável de ambiente, massa idempotente, limpeza dos dados de teste, <code>modal.mjs</code> sem exclusão real.</li>
+        </ul></div>
+      </section>
+
+      <section id="limites">
+        <span class="eyebrow">12</span>
         <h2>Limitações</h2>
         <div class="panel"><ul style="margin:0;padding-left:18px">
           <li>WebKit (Safari) não pôde ser executado: o WSL não tem as bibliotecas de sistema e instalá-las exige sudo. Recomenda-se um teste manual em iPhone/iPad.</li>
@@ -415,9 +453,9 @@ dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;b
 
 <script>
 const BUGS = [
- {id:"B01",sev:"Alta",cat:"Acessibilidade",t:"Campos de formulário e filtros sem rótulo acessível",where:"Login, formulários de aviso/evento/documento, perfil e 78 telas com filtros <code>select</code>",wcag:"1.3.1 · 3.3.2 · 4.1.2",
+ {id:"B01",sev:"Alta",cat:"Acessibilidade",t:"Campos de formulário e filtros sem rótulo acessível",where:"Login, formulários de aviso/evento/documento, perfil e as listagens com filtros <code>select</code>",wcag:"1.3.1 · 3.3.2 · 4.1.2",
   steps:["Abrir <code>#/login</code> com leitor de tela ou inspecionar o campo de e-mail","Abrir qualquer listagem com filtro, como <code>#/aniversariantes</code>"],
-  exp:"Cada campo anuncia seu nome (“E-mail”, “Setor”).",got:"O login usa só <code>placeholder</code>, que some ao digitar. axe-core: 156 campos sem rótulo em 30 telas e 114 selects sem nome em 78 telas (<code>#ani-setor</code>, <code>#ch-prio</code>, <code>#dc-versao</code>, <code>#ev-inicio</code>…).",
+  exp:"Cada campo anuncia seu nome (“E-mail”, “Setor”).",got:"O login usa só <code>placeholder</code>, que some ao digitar. axe-core: 156 campos sem rótulo (em 30 das 262 análises) e 114 selects sem nome (em 78 análises) (<code>#ani-setor</code>, <code>#ch-prio</code>, <code>#dc-versao</code>, <code>#ev-inicio</code>…).",
   cause:"<code>src/pages/login/login.js:32-34</code> e formulários em <code>src/pages/admin/**</code>: <code>&lt;label class=\"field-label\"&gt;</code> não tem <code>for</code> ligado ao <code>id</code> do campo.",
   fix:"Ligar cada <code>&lt;label&gt;</code> ao campo com <code>for</code>/<code>id</code>. Onde o rótulo visual não cabe (filtros, login), usar <code>aria-label</code> ou um rótulo visualmente oculto.",img:[["b13_login_campos","Login: campos só com placeholder e borda quase invisível"]]},
  {id:"B02",sev:"Alta",cat:"Acessibilidade",t:"Modal de confirmação não é operável por teclado",where:"Todas as confirmações de exclusão (avisos, eventos, setores, usuários, FAQ)",wcag:"2.1.1 · 2.4.3 · 4.1.2",
@@ -435,14 +473,14 @@ const BUGS = [
   exp:"Foco no primeiro item do menu; Esc fecha e devolve o foco ao botão.",got:"<code>aria-expanded</code> muda para true, mas o foco continua atrás do backdrop e Esc não fecha. O botão X é anunciado só como “botão” em 133 telas mobile.",
   cause:"<code>src/shared/layout/sidebar.js:40</code> (X sem <code>aria-label</code>); <code>src/app/actions.js:39-42</code> não move foco.",
   fix:"<code>aria-label=\"Fechar menu\"</code>, focar o primeiro link ao abrir, fechar com Esc e devolver foco ao botão.",img:[["b03_menu_mobile","Menu aberto em 375 px: X sobre “Intranet”, FAB e toast por cima do menu"]]},
- {id:"B05",sev:"Alta",cat:"Acessibilidade",t:"Contraste de texto abaixo de 4,5:1 em quase todas as telas",where:"244 de 276 análises; legendas, metadados, rótulos de estatística, placeholders",wcag:"1.4.3",
+ {id:"B05",sev:"Alta",cat:"Acessibilidade",t:"Contraste de texto abaixo de 4,5:1 em quase todas as telas",where:"244 de 262 análises, nos três temas; legendas, datas, links “Ler comunicado”, rótulos de estatística",wcag:"1.4.3",
   steps:["Abrir qualquer tela no tema claro","Medir a cor de legendas como “Exibindo 1–4 de 10” ou datas dos cards"],
-  exp:"Texto normal com pelo menos 4,5:1.",got:"1.180 ocorrências. Pior caso: <code>text-slate-400</code> (#94a3b8) sobre o fundo #f1f2f4 = 2,28:1. O token <code>--muted</code> fica em 4,32:1. Botões salvar desabilitados também falham.",
-  cause:"<code>src/styles/base/tokens-e-temas.css:5-6</code> e uso direto de <code>text-slate-400</code> nas páginas.",
-  fix:"Escurecer <code>--muted</code> para ~#5b6270 e trocar <code>text-slate-400</code> por <code>text-slate-500</code> (claro) / manter slate-400 só no escuro.",img:[]},
+  exp:"Texto normal com pelo menos 4,5:1.",got:"1.180 ocorrências. Pior caso no claro: <code>text-slate-400</code> (#94a3b8) sobre #f1f2f4 = 2,28:1; no Vinho, o mesmo cinza sobre #fbeef0 = 2,26:1. No escuro, o link “Ler comunicado na íntegra” de cada card e o rótulo do FAB usam <code>text-wine</code> (#8E1B2E) sobre #1c1216 = 2,04:1, praticamente invisíveis. O token <code>--muted</code> fica em 4,32:1.",
+  cause:"<code>src/styles/base/tokens-e-temas.css:5-6</code>, uso direto de <code>text-slate-400</code> e <code>text-wine</code> sem variante <code>dark:</code> nas páginas.",
+  fix:"Escurecer <code>--muted</code> para ~#5b6270; trocar <code>text-slate-400</code> por <code>text-slate-500</code> no claro e no Vinho; dar a <code>text-wine</code> uma variante clara no escuro (ex.: <code>dark:text-rose-300</code>).",img:[]},
  {id:"B06",sev:"Alta",cat:"Acessibilidade",t:"Select sem indicador de foco e anel de foco quase invisível no tema escuro",where:"Todos os <code>select</code>; botões da barra superior e “Sair da Conta” no tema escuro",wcag:"2.4.7 · 1.4.11",
   steps:["Em <code>#/admin/noticias</code>, chegar ao filtro de categoria com Tab","Trocar para o tema escuro e focar o botão de notificações"],
-  exp:"Indicador de foco com pelo menos 3:1 contra o fundo.",got:"O select tem <code>outline: none</code> e a borda muda para #edeff2 (1,15:1): não há sinal de foco. No escuro, o anel vinho #8E1B2E sobre #120c0f tem 2,16:1.",
+  exp:"Indicador de foco com pelo menos 3:1 contra o fundo.",got:"O select tem <code>outline: none</code> e a borda continua #edeff2 (1,15:1) ao receber foco: não há nenhum sinal de foco. No escuro, o anel vinho #8E1B2E sobre #120c0f tem 2,16:1.",
   cause:"<code>src/styles/base/acessibilidade.css:6</code> lista <code>a, button, input, textarea</code> mas não <code>select</code>; <code>formularios.css:18</code> zera o outline.",
   fix:"Incluir <code>select:focus-visible</code> e <code>[tabindex]:focus-visible</code>; no tema escuro usar <code>outline-color</code> clara, como #f7b8c2.",img:[["b16_select_foco_light","Select focado (à direita): nenhuma diferença visual"],["b12_foco_escuro","Tema escuro: anel vinho de 2,16:1"]]},
  {id:"B07",sev:"Alta",cat:"Responsividade",t:"Aniversariantes rola na horizontal em 320 e 375 px",where:"<code>#/aniversariantes</code>, todos os perfis",wcag:"1.4.10",
@@ -465,9 +503,9 @@ const BUGS = [
   exp:"O FAB não tapa ações nem textos e fica atrás de menus modais.",got:"O FAB e o rótulo “Acesso Rápido” cobrem os botões Arquivar/Excluir da última linha visível e o título de um evento no Início. Com o menu mobile aberto, o FAB (z-index 45) fica acima do backdrop (40).",
   cause:"<code>src/styles/layout/quick-fab.css:3</code>; <code>layout.css:21</code>.",
   fix:"Reservar <code>padding-bottom</code> no conteúdo igual à altura do FAB, esconder o rótulo após o primeiro uso e baixar o z-index do FAB para abaixo do backdrop quando o menu abre.",img:[["b07_fab_sobre_acoes_1440","FAB sobre as ações da tabela"],["b08_fab_eventos_1440","Rótulo do FAB sobre o texto do evento"]]},
- {id:"B11",sev:"Alta",cat:"Responsividade",t:"Tabelas administrativas escondem metade das colunas até 1440 px",where:"Usuários, Notícias, Eventos, Documentos, Chamados, Avaliações, Auditoria",wcag:"1.4.10 · 2.1.1",
+ {id:"B11",sev:"Alta",cat:"Responsividade",t:"Tabelas escondem colunas abaixo de 1280 px (Usuários até 1440 px)",where:"Usuários, Notícias, Eventos, Documentos, Chamados, Avaliações e Diretório (acessado por todos os perfis)",wcag:"1.4.10 · 2.1.1",
   steps:["Abrir <code>#/admin/usuarios</code> em 1024 px","Abrir a mesma tela em 375 px"],
-  exp:"Todas as colunas, inclusive Ações, visíveis ou reorganizadas.",got:"Em 1024 px só 459 de 905 px da tabela aparecem: Perfil, Status e Ações ficam fora, sem pista de rolagem, e os setores viram “A…”, “Ce…”. Em 375 px vê-se só Usuário e Setor. A área rolável não recebe foco, então quem usa teclado não alcança as ações (axe <code>scrollable-region-focusable</code>).",
+  exp:"Todas as colunas, inclusive Ações, visíveis ou reorganizadas.",got:"Parte visível da tabela por largura (medida): Usuários 84% em 768, 52% em 1024, 71% em 1280 e 83% em 1440; Diretório 71% e 68% em 768 e 1024; Notícias 74–78%; demais 82–85% até 1024 e completas a partir de 1280. Em 1024 px Perfil, Status e Ações de Usuários ficam fora, sem pista de rolagem, e os setores viram “A…”, “Ce…”. Em 375 px vê-se só Usuário e Setor. A área rolável não recebe foco, então quem usa teclado não alcança as ações (axe <code>scrollable-region-focusable</code>).",
   cause:"<code>src/styles/components/tabelas.css:13</code> força <code>min-width:860px</code> e <code>td:first-child{min-width:240px}</code>.",
   fix:"Abaixo de ~1100 px, transformar cada linha em card (rótulo + valor) ou fixar a coluna Ações; adicionar <code>tabindex=\"0\"</code> e <code>aria-label</code> no contêiner rolável e um sombreado na borda indicando mais conteúdo.",img:[["b17_usuarios_1024","1024 px: colunas cortadas e setores ilegíveis"],["b06_tabela_usuarios_375","375 px: só Usuário e Setor visíveis"]]},
  {id:"B12",sev:"Média",cat:"UI/UX",t:"Validação de formulários só por toast, sem marcar o campo",where:"Nova notícia, novo evento, novo documento, usuários",wcag:"3.3.1 · 3.3.3",
@@ -477,7 +515,7 @@ const BUGS = [
   fix:"Validar todos os campos de uma vez, exibir mensagem inline com <code>aria-describedby</code> e <code>aria-invalid</code>, e um resumo no topo para formulários longos.",img:[]},
  {id:"B13",sev:"Média",cat:"Acessibilidade",t:"Sem landmark <main> e sem link “pular para o conteúdo”",where:"Todas as telas autenticadas",wcag:"2.4.1 · 1.3.1",
   steps:["Pressionar Tab ao abrir qualquer tela","Listar landmarks com leitor de tela"],
-  exp:"Primeiro Tab oferece “Pular para o conteúdo”; existe um <code>&lt;main&gt;</code>.",got:"O primeiro Tab vai para o seletor de perfil. 258/258 análises sem <code>main</code>; 3.288 ocorrências de conteúdo fora de landmark; dois <code>&lt;nav&gt;</code> sem nome distinto.",
+  exp:"Primeiro Tab oferece “Pular para o conteúdo”; existe um <code>&lt;main&gt;</code>.",got:"O primeiro Tab vai para o seletor de perfil. 258 de 262 análises sem <code>main</code>; 3.288 ocorrências de conteúdo fora de landmark; dois <code>&lt;nav&gt;</code> sem nome distinto.",
   cause:"<code>src/app/router.js:50</code> renderiza <code>&lt;div class=\"content\"&gt;</code>.",
   fix:"Trocar por <code>&lt;main id=\"conteudo\" tabindex=\"-1\"&gt;</code>, inserir o link de pular como primeiro elemento do <code>body</code> e nomear as navegações com <code>aria-label</code>.",img:[]},
  {id:"B14",sev:"Média",cat:"Acessibilidade",t:"Alvos de toque menores que 24×24 px",where:"Carrossel do Início, mostrar senha, Sair da Conta, botão de recolher menu",wcag:"2.5.8",
@@ -502,7 +540,7 @@ const BUGS = [
   fix:"Aplicar a sombra só em <code>.sidebar-open</code>.",img:[["b05_sombra_sidebar_375","Faixa de sombra na borda esquerda"]]},
  {id:"B18",sev:"Baixa",cat:"Acessibilidade",t:"Hierarquia de títulos inconsistente",where:"Login, detalhe de aviso, detalhe de evento, cards do mural",wcag:"1.3.1 · 2.4.6",
   steps:["Listar os títulos da página com leitor de tela"],
-  exp:"Um <code>h1</code> por tela e níveis sem saltos.",got:"Login sem <code>h1</code>; <code>#/avisos/1</code> e <code>#/eventos/1</code> com dois <code>h1</code> (barra superior e conteúdo); 48 telas pulam de <code>h1</code> para <code>h3</code>.",
+  exp:"Um <code>h1</code> por tela e níveis sem saltos.",got:"Login sem <code>h1</code>; <code>#/avisos/1</code> e <code>#/eventos/1</code> com dois <code>h1</code> (barra superior e conteúdo); 48 análises pulam de <code>h1</code> para <code>h3</code>.",
   cause:"<code>src/shared/layout/topbar.js:21</code> usa <code>h1</code> para o título da barra.",
   fix:"Usar <code>&lt;p&gt;</code> ou <code>h2</code> na barra superior quando a página já tem título, e <code>h2</code> nos cards.",img:[]},
  {id:"B19",sev:"Baixa",cat:"UI/UX",t:"Textos de 9,6 a 11,5 px em rótulos e selos",where:"Rótulos de campos, badges, contadores do menu, avatares",wcag:"1.4.4",
@@ -510,11 +548,11 @@ const BUGS = [
   exp:"Mínimo de 12 px em texto informativo.",got:"<code>.field-label</code> 11,2 px; badges 10,9 px; “MENU PRINCIPAL” 11 px; iniciais do avatar 9,6 px; datas de evento com <code>text-[10px]</code>.",
   cause:"<code>badges-e-pills.css</code>, <code>sidebar.css</code>, <code>formularios.css</code>.",
   fix:"Subir para 12 px; manter o caixa-alta com <code>letter-spacing</code> para preservar o visual.",img:[]},
- {id:"B20",sev:"Média",cat:"Desempenho",t:"Login lento no celular: imagens pesadas em PNG",where:"<code>#/login</code> e banner do Início",wcag:"—",
-  steps:["Rodar Lighthouse mobile em <code>#/login</code> com cache vazio"],
-  exp:"LCP abaixo de 2,5 s.",got:"Desempenho 55, FCP 6,5 s, LCP 7,0 s. <code>news.png</code> tem 1,4 MB e <code>login.png</code> 540 KB, sem dimensões, sem <code>srcset</code> e sem formato moderno. A foto do login nem aparece abaixo de 820 px, mas é baixada.",
-  cause:"<code>assets/img/</code>; <code>src/styles/pages/login.css:9</code> só esconde com <code>display:none</code>.",
-  fix:"Converter para WebP/AVIF (~80–150 KB), declarar <code>width</code>/<code>height</code>, usar <code>&lt;picture&gt;</code> com <code>media</code> para não baixar a foto no mobile, <code>fetchpriority=\"high\"</code> na imagem principal.",img:[]},
+ {id:"B20",sev:"Média",cat:"Desempenho",t:"Imagens PNG pesadas no login (desktop), no Mural e nos eventos",where:"<code>#/login</code> no desktop, <code>#/avisos</code> (destaque urgente) e cards/detalhe de eventos",wcag:"—",
+  steps:["Rodar Lighthouse desktop em <code>#/login</code> com cache vazio","Abrir o Mural ou um evento e ver as imagens baixadas"],
+  exp:"Imagem principal leve, com dimensões e formato moderno.",got:"No desktop a foto do login (<code>login.png</code>, 530 KB) é o LCP e responde por 44% dos 1.197 KB da página. <code>news.png</code>, com 1,4 MB, é o fundo das fotos de eventos e do destaque do Mural, inclusive no celular. No celular a foto do login não é baixada (fica oculta abaixo de 820 px); a lentidão do login mobile vem dos scripts (B24).",
+  cause:"<code>assets/img/</code>; fundos definidos em <code>src/styles/components/fotos.css:3-5</code>.",
+  fix:"Converter para WebP/AVIF (~80–150 KB), gerar versões menores para cards e usar <code>image-set()</code> no CSS.",img:[]},
  {id:"B21",sev:"Baixa",cat:"UI/UX",t:"Inconsistências de texto e informação repetida",where:"Início, Painel de Notícias, Usuários",wcag:"—",
   steps:["Comparar o título da barra com o item do menu","Ver os cards de estatística"],
   exp:"Mesmo nome para a mesma tela; números no mesmo formato.",got:"Barra diz “Dashboard” e o menu diz “Início”. “Alertas críticos 00” enquanto os demais mostram “0”. O Início tem paginação e “Ver todos os avisos” para a mesma lista. No mobile o título do banner é cortado (“Central de documentos e…”) e o da barra vira “Dashbo…”. O card “Colaboradores 3 · 1 RH · 1 leitura” mistura contagens.",
@@ -530,11 +568,41 @@ const BUGS = [
   exp:"Leitura recebe 403 ao parabenizar.",got:"O teste chama <code>POST /aniversariantes/parabens</code>, que não existe (404), e falha. A rota real é <code>POST /parabens</code> (usada pelo frontend). A permissão de fato não está sendo verificada.",
   cause:"Caminho errado no teste.",
   fix:"Trocar para <code>/parabens</code>. Verificado manualmente: <code>POST /parabens</code> com o perfil Leitura já responde 403 “Seu perfil é somente leitura.”, então só o teste está errado.",img:[]},
- {id:"B24",sev:"Baixa",cat:"Desempenho",t:"Tailwind via CDN de desenvolvimento e 84 scripts sem bundle",where:"<code>index.html</code>, <code>vercel.json</code>",wcag:"—",
+ {id:"B24",sev:"Média",cat:"Desempenho",t:"Login lento no celular: 84 scripts síncronos e Tailwind compilado no navegador",where:"<code>index.html</code>, <code>vercel.json</code>",wcag:"—",
   steps:["Abrir o código-fonte de <code>index.html</code>"],
-  exp:"CSS gerado em build e scripts agrupados.",got:"<code>cdn.tailwindcss.com</code> compila CSS no navegador a cada carga (a própria Tailwind não recomenda em produção) e obriga <code>'unsafe-inline'</code> na CSP. São 84 <code>&lt;script&gt;</code> e 30 CSS sem minificação, compressão nem cache longo.",
+  exp:"CSS gerado em build e scripts agrupados.",got:"Lighthouse mobile no login: desempenho 55, FCP 6,5 s, LCP 7,0 s, e o LCP é um parágrafo de texto. Antes dele, o navegador baixa e executa 84 <code>&lt;script&gt;</code> síncronos, inclusive os de telas de admin, e o Tailwind (128 KB) compila o CSS no navegador. Isso também obriga <code>'unsafe-inline'</code> na CSP. Os 30 CSS e os scripts vão sem minificação, compressão nem cache longo.",
   cause:"Projeto sem etapa de build, decisão já registrada no README.",
-  fix:"Adicionar Tailwind CLI e um bundler leve (esbuild) no deploy da Vercel; remover <code>'unsafe-inline'</code> da CSP depois.",img:[]}
+  fix:"Adicionar Tailwind CLI e um bundler leve (esbuild) no deploy da Vercel, carregar os scripts das telas sob demanda e remover <code>'unsafe-inline'</code> da CSP depois.",img:[]},
+ {id:"B25",sev:"Alta",cat:"UI/UX",t:"Conteúdo novo, inclusive aviso urgente, só aparece depois de recarregar a página",where:"Mural, Início, eventos e demais listas, para todos os perfis",wcag:"—",
+  steps:["Entrar como colaborador e abrir <code>#/avisos</code>","Publicar um aviso “Urgente” como admin (outra aba ou outra pessoa)","Navegar pelo Início, Eventos e voltar ao Mural; esperar 60 s"],
+  exp:"O aviso aparece ao navegar ou em poucos minutos, com destaque por ser urgente.",got:"O aviso não aparece nem ao navegar entre telas nem após 60 s parado. A carga inicial faz 18 chamadas à API; navegar por três telas faz uma (<code>GET /eventos</code>). Quem deixa a intranet aberta no posto de enfermagem pode passar o plantão sem ver um aviso urgente. O contador do sino é atualizado, mas a lista não.",
+  cause:"Dados carregados uma vez no login e mantidos em memória (<code>src/app/store.js</code>); as telas renderizam a partir do cache.",
+  fix:"Revalidar a lista ao entrar em cada tela (stale-while-revalidate) e consultar avisos novos periodicamente ou quando a aba volta ao foco (<code>visibilitychange</code>), destacando urgentes.",img:[]},
+ {id:"B26",sev:"Média",cat:"Qualidade",t:"Usuário desativado continua navegando até recarregar a página",where:"Toda a aplicação",wcag:"—",
+  steps:["Entrar como colaborador","Como admin, desativar esse usuário","Na sessão do colaborador, navegar para FAQ e Diretório"],
+  exp:"A próxima ação leva ao login.",got:"O colaborador continua vendo FAQ, Diretório e avisos (dados em memória). Só é expulso ao recarregar ou quando alguma tela chama a API. O backend bloqueia novas chamadas corretamente; o problema é a interface continuar exibindo dados a quem perdeu o acesso.",
+  cause:"Mesma causa de B25: navegação sem consulta à API.",
+  fix:"Resolvido junto com B25; além disso, validar <code>GET /auth/me</code> ao voltar o foco para a aba.",img:[]},
+ {id:"B27",sev:"Média",cat:"Acessibilidade",t:"Carrossel do Início troca de slide sozinho sem botão de pausa",where:"<code>#/dashboard</code>",wcag:"2.2.2 · 2.4.7",
+  steps:["Abrir o Início e esperar 6 s","Focar a seta do carrossel com Tab e esperar 6 s","Continuar com Tab pelos slides"],
+  exp:"Botão de pausa; rotação para com foco do teclado; controles de slides ocultos fora da ordem de Tab.",got:"O slide muda a cada 6 s sem botão de pausa. A rotação para só com o mouse em cima, não com foco de teclado, e o slide muda enquanto a pessoa está nele. O botão “Ver detalhes do evento” de um slide fora da tela recebe foco, invisível.",
+  cause:"<code>src/shared/lib/carrosseis.js:56-62</code> (só <code>mouseenter</code>/<code>mouseleave</code>).",
+  fix:"Adicionar botão pausar/reproduzir, pausar em <code>focusin</code>, e aplicar <code>inert</code> (ou <code>tabindex=-1</code>) aos slides que não estão visíveis.",img:[["b14_banner_dots_375","Carrossel no celular: pontos minúsculos e sem pausa"]]},
+ {id:"B28",sev:"Média",cat:"UI/UX",t:"Busca global diferencia acentos e não procura em FAQ nem em eventos",where:"Campo de busca da barra superior",wcag:"—",
+  steps:["Buscar “vacinacao” (sem acento)","Buscar “holerite” (pergunta do FAQ) e “Corrida” (evento)"],
+  exp:"Encontrar “Campanha de vacinação”, a pergunta do FAQ e o evento.",got:"“vacinacao” retorna “Nada encontrado”, mas “vacinação” e “VACINAÇÃO” acham. FAQ e eventos nunca aparecem: a busca cobre só avisos, documentos e ramais. Pessoas digitam sem acento no celular com frequência.",
+  cause:"<code>src/features/busca.js:6-11</code> usa só <code>toLowerCase()</code> e não inclui FAQ nem eventos.",
+  fix:"Normalizar termo e textos com <code>normalize(\"NFD\").replace(/\\p{Diacritic}/gu, \"\")</code> e incluir FAQ e eventos nos resultados.",img:[]},
+ {id:"B29",sev:"Baixa",cat:"UI/UX",t:"Link direto aberto sem sessão perde o destino após o login",where:"Qualquer rota interna compartilhada por link",wcag:"—",
+  steps:["Sem sessão, abrir <code>#/eventos/1</code>","Fazer login"],
+  exp:"Voltar para o evento que a pessoa abriu.",got:"Após o login a pessoa cai no Início e precisa achar o evento de novo. Comum quando um link de aviso ou evento é enviado por WhatsApp ou e-mail.",
+  cause:"O redirecionamento para <code>#/login</code> não guarda a rota pedida.",
+  fix:"Guardar o hash pedido em <code>sessionStorage</code> antes de redirecionar e usá-lo após o login.",img:[]},
+ {id:"B30",sev:"Média",cat:"Acessibilidade",t:"Sino de notificações é anunciado só como o número",where:"Barra superior, todas as telas",wcag:"4.1.2 · 2.5.3",
+  steps:["Com notificações não lidas, inspecionar a árvore de acessibilidade do sino"],
+  exp:"“Notificações, 2 não lidas”.",got:"O nome acessível é “2”: o texto do contador vence o <code>title=\"Notificações\"</code>. Comando de voz como “clicar em Notificações” também não funciona.",
+  cause:"<code>src/shared/layout/topbar.js:33</code>: botão sem <code>aria-label</code>.",
+  fix:"<code>aria-label=\"Notificações, N não lidas\"</code> e marcar o contador com <code>aria-hidden=\"true\"</code>.",img:[]}
 ];
 const SEVORDER={"Crítica":0,"Alta":1,"Média":2,"Baixa":3};
 const IMG="img/";
@@ -575,9 +643,10 @@ document.querySelectorAll(".filters button").forEach((btn)=>btn.addEventListener
 
 // Matriz de responsividade
 const MATRIX={"#/admin/auditoria":[0,0,0,0,0,0],"#/admin/avaliacoes":[0,0,0,0,0,0],"#/admin/chamados":[0,0,0,0,0,0],"#/admin/documentos":[0,0,0,0,0,0],"#/admin/documentos/novo":[0,0,0,0,0,0],"#/admin/eventos":[0,0,0,0,0,0],"#/admin/eventos/1/editar":[0,0,0,0,0,0],"#/admin/eventos/novo":[0,0,0,0,0,0],"#/admin/faqs":[0,0,0,0,0,0],"#/admin/noticias":[0,0,0,0,0,0],"#/admin/noticias/1/editar":[0,0,0,0,0,0],"#/admin/noticias/nova":[0,0,0,0,0,0],"#/admin/solicitacoes":[0,0,0,0,0,0],"#/admin/usuarios":[0,0,0,0,0,0],"#/aniversariantes":[81,26,0,0,0,0],"#/aniversariantes/hoje":[0,0,0,0,0,0],"#/avaliacoes":[0,0,0,0,0,0],"#/avisos":[30,0,0,0,0,0],"#/avisos/1":[0,0,0,0,0,0],"#/dashboard":[0,0,0,0,0,0],"#/diretorio":[0,0,0,0,0,0],"#/documentos":[0,0,0,0,0,0],"#/eventos":[0,0,0,0,0,0],"#/eventos/1":[0,0,0,0,0,0],"#/faq":[0,0,0,0,0,0],"#/login":[0,0,0,0,0,0],"#/notificacoes":[0,0,0,0,0,0],"#/perfil":[0,0,0,0,0,0],"#/rota-inexistente":[0,0,0,0,0,0],"#/trocar-senha":[0,0,0,0,0,0]};
-const TABELAS=["#/admin/auditoria","#/admin/avaliacoes","#/admin/chamados","#/admin/documentos","#/admin/eventos","#/admin/noticias","#/admin/usuarios"];
+// Larguras em que a tabela fica cortada, medidas (B11): índices 0..5 = 320,375,768,1024,1440,1920
+const TABELAS={"#/admin/avaliacoes":4,"#/admin/chamados":4,"#/admin/documentos":4,"#/admin/eventos":4,"#/admin/noticias":4,"#/diretorio":4,"#/admin/usuarios":5};
 const VISUAL={"#/login":{0:"B15",1:"B15"},"#/dashboard":{0:"B14",1:"B14",4:"B10",5:"B10"}};
-TABELAS.forEach((r)=>{VISUAL[r]={0:"B11",1:"B11",2:"B11",3:"B11",4:"B11"}});
+Object.entries(TABELAS).forEach(([r,n])=>{VISUAL[r]={}; for(let i=0;i<n;i++) VISUAL[r][i]="B11";});
 document.querySelector("#matrix tbody").innerHTML=Object.entries(MATRIX).map(([r,v])=>`<tr><td><code>${r}</code></td>${v.map((x,i)=>{
   if(x>0) return `<td class="cell-bad">+${x} px</td>`;
   const vis=VISUAL[r]&&VISUAL[r][i];
@@ -626,6 +695,9 @@ document.getElementById("e2e").innerHTML=E2E.map(([id,n,ok,b])=>`<tr><td class="
 
 renderBugs();
 
+const EXPL=[["E01","Carrossel tem pausa e para com foco do teclado",0,"B27"],["E02","Inscrição em evento, vagas e estado “0 vagas disponíveis”",1],["E02b","Duplo clique em Inscrever envia uma só requisição",1],["E02d","API recusa inscrição além das vagas (409 “Vagas esgotadas.”)",1],["E02e","Cancelar inscrição libera a vaga",1],["E03","API rejeita evento com fim antes do início (422)",1],["E04b","HTML em evento, FAQ, setor e chamado não executa em 10 telas, painel e busca",1],["E05","Texto e link longos não estouram em 375 e 1440 px",1],["E06","Duplo clique em Publicar cria um só aviso",1],["E07","API fora do ar ao recarregar: mensagem e “Tentar novamente” funcionam",1],["E08","Link direto sem sessão volta ao destino após o login",0,"B29"],["E08b","Voltar/avançar do navegador",1],["E09","Usuário desativado é expulso ao navegar",0,"B26"],["E09b","Usuário desativado é expulso ao recarregar",1],["E10","Busca sem acento encontra conteúdo acentuado",0,"B28"],["E10c","Busca por ramal encontra a pessoa",1],["E10d","Busca cobre FAQ e eventos",0,"B28"],["E11","Contraste no tema Vinho",0,"B05"],["E12","“Esqueci minha senha” responde sem revelar se o e-mail existe",1],["E12b","Bloqueio por tentativas explica que é preciso aguardar",1],["E13","Celular deitado (812×375): painel rola e cabe",1],["E14","Aviso urgente acende o sino do colaborador",1],["E14b","Leitor de tela anuncia o sino como “Notificações”",0,"B30"],["E15","Aviso publicado durante a sessão aparece sem recarregar",0,"B25"]];
+document.getElementById("expl").innerHTML=EXPL.map(([id,n,ok,b])=>`<tr><td class="mono">${id}</td><td>${n}</td><td><span class="res ${ok?"res-ok":"res-fail"}">${ok?"aprovado":"reprovado"}</span></td><td>${b?`<a href="#${b}" data-open="${b}">${b}</a>`:"—"}</td></tr>`).join("");
+
 // Abrir defeito a partir de links
 document.addEventListener("click",(e)=>{
   const a=e.target.closest("[data-open]"); if(a){const d=document.getElementById(a.dataset.open); if(d){filt.sev="*";filt.cat="*";document.querySelectorAll('.filters button').forEach((b)=>b.setAttribute("aria-pressed",String(b.dataset.v==="*")));applyFilter();d.open=true;}}
@@ -635,3 +707,5 @@ document.getElementById("zoomclose").addEventListener("click",()=>document.getEl
 document.getElementById("zoom").addEventListener("click",(e)=>{if(e.target.id==="zoom")e.target.close();});
 if(location.hash&&/^#B\d+$/.test(location.hash)){const d=document.querySelector(location.hash); if(d)d.open=true;}
 </script>
+</body>
+</html>

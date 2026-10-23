@@ -1,14 +1,15 @@
 // Capturas de evidência focadas por bug (JPEG, viewport, elemento destacado).
 import { chromium } from "playwright";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 const BASE = "http://localhost:5500/";
-const DIR = new URL("./report/img/", import.meta.url).pathname;
+const DIR = fileURLToPath(new URL("./out/evidencias/", import.meta.url));
 fs.mkdirSync(DIR, { recursive: true });
 const b = await chromium.launch(process.env.CHR ? { executablePath: process.env.CHR } : {});
 const toks = {};
 async function tok(email) {
   if (toks[email]) return toks[email];
-  const r = await fetch("http://127.0.0.1:8000/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, senha: "SenhaQA123!" }) });
+  const r = await fetch("http://127.0.0.1:8000/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, senha: process.env.QA_SENHA || "SenhaQA123!" }) });
   return (toks[email] = (await r.json()).access_token);
 }
 async function page(vp, { email = "admin.qa@example.com", theme = "light", anon = false, mobile } = {}) {

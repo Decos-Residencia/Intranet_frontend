@@ -1,20 +1,22 @@
 // Auditoria UI/UX + responsividade + acessibilidade da Intranet Decós.
-// Uso: node audit.mjs  → gera out/results.json e out/shots/*.png
+// Uso: node audit.mjs functional | pages  → gera out/results_<modo>.json e out/shots/*.png
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const BASE = "http://localhost:5500/";
-const OUT = new URL("./out/", import.meta.url).pathname;
+const OUT = fileURLToPath(new URL("./out/", import.meta.url));
 fs.mkdirSync(OUT + "shots", { recursive: true });
 
+// Credenciais da massa de teste (ver seed_users.py). Nunca aponte para produção.
 const USERS = {
-  admin: "admin.qa@example.com",
+  admin: process.env.QA_ADMIN_EMAIL || "admin.qa@example.com",
   rh: "rh.qa@example.com",
   colaborador: "colab.qa@example.com",
   leitura: "leitura.qa@example.com",
 };
-const PASS = "SenhaQA123!";
+const PASS = process.env.QA_SENHA || "SenhaQA123!";
 
 const VIEWPORTS = [
   { name: "320", width: 320, height: 640, mobile: true },
@@ -238,7 +240,12 @@ async function functional(browser) {
   await page.goto(BASE + "#/dashboard"); await page.waitForTimeout(1200);
   const xss = await page.evaluate(() => window.__xss);
   log("F13", "Conteúdo HTML em aviso é escapado (sem XSS)", !xss, "window.__xss=" + xss);
-  await page.evaluate(async ([tk, id]) => fetch("http://localhost:8000/avisos/" + id, { method: "DELETE", headers: { Authorization: "Bearer " + tk } }), [tk, created.id]);
+  // Limpeza: aviso já lido não pode ser excluído (409), então é arquivado.
+  await page.evaluate(async ([tk, id]) => {
+    const h = { Authorization: "Bearer " + tk, "content-type": "application/json" };
+    const d = await fetch("http://localhost:8000/avisos/" + id, { method: "DELETE", headers: h });
+    if (!d.ok) await fetch("http://localhost:8000/avisos/" + id, { method: "PUT", headers: h, body: JSON.stringify({ status: "ARQUIVADO" }) });
+  }, [tk, created.id]);
 
   // Logout
   const logout = page.locator('[data-action="logout"]').first();
@@ -273,7 +280,7 @@ async function functional(browser) {
       const txt = await p.evaluate(() => document.body.innerText);
       log("F24", "Troca de senha rejeita senha fraca/divergente com mensagem", p.url().includes("trocar-senha") && /senha|caracter|coincid|igua/i.test(txt), (txt.match(/.*(caracter|coincid|fraca|m[ií]nimo).*/i) || [""])[0].slice(0, 120));
       await p.screenshot({ path: `${OUT}shots/fluxo_troca_senha_erro.png`, fullPage: true });
-    }
+    } else log("F24", "Troca de senha rejeita senha fraca (não executado: jp.qa não está com troca obrigatória)", false, "veja o README");
     await c.close();
   }
 

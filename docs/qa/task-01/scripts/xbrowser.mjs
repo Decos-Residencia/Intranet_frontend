@@ -6,7 +6,7 @@ for (const [name, bt, opts] of [["firefox", firefox, {}], ["webkit", webkit, {}]
   for (const vp of [{ width: 375, height: 812 }, { width: 1440, height: 900 }]) {
     const ctx = await b.newContext({ viewport: vp }); const p = await ctx.newPage(); const errs = [];
     p.on("pageerror", (e) => errs.push(e.message)); p.on("console", (m) => m.type() === "error" && errs.push(m.text()));
-    await p.goto(BASE + "#/login"); await p.fill('input[name="email"]', "admin.qa@example.com"); await p.fill('input[name="senha"]', "SenhaQA123!");
+    await p.goto(BASE + "#/login"); await p.fill('input[name="email"]', "admin.qa@example.com"); await p.fill('input[name="senha"]', process.env.QA_SENHA || "SenhaQA123!");
     await p.locator('input[name="senha"]').press("Enter");
     const ok = await p.waitForFunction(() => location.hash.startsWith("#/dashboard"), null, { timeout: 15000 }).then(() => true).catch(() => false);
     const res = { name, vp: vp.width, login: ok, pages: [] };

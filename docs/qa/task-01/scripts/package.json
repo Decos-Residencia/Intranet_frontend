@@ -1,17 +1,18 @@
 {
-  "name": "qa",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "intranet-decos-qa-task-01",
+  "private": true,
+  "description": "Scripts da auditoria de QA da TASK 01 (Playwright + axe-core). Versões fixas para reproduzir o laudo.",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "e2e": "node audit.mjs functional",
+    "varredura": "node audit.mjs pages",
+    "resumo": "python3 analyze.py",
+    "exploratorio": "node explore.mjs",
+    "evidencias": "node evidence.mjs",
+    "navegadores": "node xbrowser.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
-    "@axe-core/playwright": "^4.11.0",
-    "playwright": "^1.56.1"
+    "@axe-core/playwright": "4.11.0",
+    "playwright": "1.56.1"
   }
 }

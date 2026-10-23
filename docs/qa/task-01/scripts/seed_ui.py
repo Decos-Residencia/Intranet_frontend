@@ -1,30 +1,76 @@
-import datetime as dt, httpx
-B="http://127.0.0.1:8000"; c=httpx.Client(base_url=B, timeout=30)
-t=c.post("/auth/login",json={"email":"admin.qa@example.com","senha":"SenhaQA123!"}).json()["access_token"]
-H={"Authorization":f"Bearer {t}"}
-def p(path, body):
-    r=c.post(path,json=body,headers=H); print(path, r.status_code, r.text[:120] if r.status_code>=300 else ""); return r
-setores={s["nome"]:s["id"] for s in c.get("/setores",headers=H).json()["items"]}
-for n,r in [("Enfermagem","2101"),("Recursos Humanos","2200"),("Farmácia Hospitalar","2310"),("Centro Cirúrgico","2405")]:
-    if n not in setores: setores[n]=p("/setores",{"nome":n,"ramal":r}).json()["id"]
-today=dt.date.today()
-users=[("Mariana Albuquerque Ferreira dos Santos","rh.qa@example.com","RH","Recursos Humanos","Analista de RH Sênior"),
-("Carlos Eduardo Lima","colab.qa@example.com","COLABORADOR","Enfermagem","Enfermeiro Assistente"),
-("Beatriz Nogueira","leitura.qa@example.com","LEITURA","Farmácia Hospitalar","Farmacêutica"),
-("João Pedro Costa","jp.qa@example.com","COLABORADOR","Centro Cirúrgico","Técnico de Enfermagem"),
-("Ana Clara Ribeiro","ana.qa@example.com","COLABORADOR","Enfermagem","Coordenadora de Enfermagem")]
-for i,(n,e,pf,s,cg) in enumerate(users):
-    p("/usuarios",{"nome":n,"email":e,"senha":"SenhaQA123!","setor_id":setores[s],"cargo":cg,"ramal":f"21{i}0","perfil":pf,
-      "data_nascimento":str(today.replace(year=1990)) if i<2 else str(dt.date(1988,today.month,min(28,today.day+3))),"data_admissao":"2020-03-01"})
-for i,(tt,cat) in enumerate([("Campanha de vacinação contra a gripe 2026","Saúde"),("Novo protocolo de higienização das mãos nas UTIs","Protocolos"),
-  ("Manutenção programada no sistema de prontuário eletrônico neste sábado das 22h às 04h","TI"),("Confraternização de fim de ano","Eventos"),
-  ("Atualização da política de férias","RH"),("Inauguração da nova ala pediátrica","Institucional"),("Treinamento obrigatório de LGPD","Treinamento")]):
-    p("/avisos",{"titulo":tt,"categoria":cat,"conteudo":("Prezados colaboradores, informamos que "+tt.lower()+". "*1)+"Lorem ipsum dolor sit amet, consectetur adipiscing elit. "*12})
-p("/avisos",{"titulo":"Rascunho: reorganização dos plantões","categoria":"RH","conteudo":"Rascunho interno.","status":"RASCUNHO"})
-now=dt.datetime.now(dt.timezone.utc)
-for i,(tt,cat) in enumerate([("Semana de Enfermagem","Institucional"),("Workshop de Segurança do Paciente","Treinamento"),("Corrida Decós 5K","Bem-estar"),("Palestra: Saúde Mental no Trabalho","Bem-estar")]):
-    st=now+dt.timedelta(days=3+i*5)
-    p("/eventos",{"titulo":tt,"descricao":f"{tt} — participe!","descricao_longa":"Programação completa. "*20,"categoria":cat,"inicio":st.isoformat(),"fim":(st+dt.timedelta(hours=3)).isoformat(),
-      "local":"Auditório Principal","organizador":"Recursos Humanos","vagas":[30,None,2,50][i],"status":"PUBLICADO"})
-for q,cat in [("Como solicito acesso ao prontuário eletrônico?","TI"),("Onde consulto meu holerite?","RH"),("Como abrir um chamado de manutenção?","Geral"),("Qual o horário do refeitório?","Geral")]:
-    p("/faqs",{"pergunta":q,"resposta":"Acesse o portal e siga as instruções. "*5,"categoria":cat})
+"""Massa de dados da auditoria: setores, avisos, eventos e FAQs criados pela API.
+
+Idempotente: o que já existe (mesmo nome/título) não é criado de novo.
+Use SOMENTE contra um banco de teste. Credenciais do admin via QA_ADMIN_EMAIL e QA_SENHA.
+"""
+import datetime as dt
+import os
+
+import httpx
+
+API = os.getenv("QA_API", "http://127.0.0.1:8000")
+EMAIL = os.getenv("QA_ADMIN_EMAIL", "admin.qa@example.com")
+SENHA = os.getenv("QA_SENHA", "SenhaQA123!")
+
+c = httpx.Client(base_url=API, timeout=30)
+r = c.post("/auth/login", json={"email": EMAIL, "senha": SENHA})
+r.raise_for_status()
+H = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+
+def listar(path):
+    d = c.get(path, headers=H, params={"page_size": 100}).json()
+    return d["items"] if isinstance(d, dict) else d
+
+
+def criar(path, body):
+    r = c.post(path, json=body, headers=H)
+    print(path, r.status_code, r.text[:120] if r.status_code >= 300 else body.get("titulo") or body.get("nome") or body.get("pergunta"))
+    return r
+
+
+setores = {s["nome"] for s in listar("/setores")}
+for nome, ramal in [("Enfermagem", "2101"), ("Recursos Humanos", "2200"), ("Farmácia Hospitalar", "2310"), ("Centro Cirúrgico", "2405")]:
+    if nome not in setores:
+        criar("/setores", {"nome": nome, "ramal": ramal})
+
+avisos = {a["titulo"] for a in listar("/avisos")}
+corpo = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 12
+for titulo, cat in [
+    ("Campanha de vacinação contra a gripe 2026", "Saúde"),
+    ("Novo protocolo de higienização das mãos nas UTIs", "Protocolos"),
+    ("Manutenção programada no sistema de prontuário eletrônico neste sábado das 22h às 04h", "TI"),
+    ("Confraternização de fim de ano", "Eventos"),
+    ("Atualização da política de férias", "RH"),
+    ("Inauguração da nova ala pediátrica", "Institucional"),
+    ("Treinamento obrigatório de LGPD", "Treinamento"),
+]:
+    if titulo not in avisos:
+        criar("/avisos", {"titulo": titulo, "categoria": cat, "conteudo": f"Prezados colaboradores, informamos que {titulo.lower()}. {corpo}"})
+if "Rascunho: reorganização dos plantões" not in avisos:
+    criar("/avisos", {"titulo": "Rascunho: reorganização dos plantões", "categoria": "RH", "conteudo": "Rascunho interno.", "status": "RASCUNHO"})
+
+eventos = {e["titulo"] for e in listar("/eventos")}
+agora = dt.datetime.now(dt.timezone.utc)
+for i, (titulo, cat, vagas) in enumerate([
+    ("Semana de Enfermagem", "Institucional", 30),
+    ("Workshop de Segurança do Paciente", "Treinamento", None),
+    ("Corrida Decós 5K", "Bem-estar", 2),  # 2 vagas: usado no teste de evento lotado
+    ("Palestra: Saúde Mental no Trabalho", "Bem-estar", 50),
+]):
+    if titulo in eventos:
+        continue
+    inicio = agora + dt.timedelta(days=3 + i * 5)
+    criar("/eventos", {"titulo": titulo, "descricao": f"{titulo} — participe!", "descricao_longa": "Programação completa. " * 20,
+                       "categoria": cat, "inicio": inicio.isoformat(), "fim": (inicio + dt.timedelta(hours=3)).isoformat(),
+                       "local": "Auditório Principal", "organizador": "Recursos Humanos", "vagas": vagas, "status": "PUBLICADO"})
+
+faqs = {f["pergunta"] for f in listar("/faqs")}
+for pergunta, cat in [
+    ("Como solicito acesso ao prontuário eletrônico?", "TI"),
+    ("Onde consulto meu holerite?", "RH"),
+    ("Como abrir um chamado de manutenção?", "Geral"),
+    ("Qual o horário do refeitório?", "Geral"),
+]:
+    if pergunta not in faqs:
+        criar("/faqs", {"pergunta": pergunta, "resposta": "Acesse o portal e siga as instruções. " * 5, "categoria": cat})

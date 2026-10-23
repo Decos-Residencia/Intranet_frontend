@@ -1,2 +1,3 @@
-# Documentação interna de QA: não publicar no site
-docs/
+# Documentação interna de QA: não publicar no site.
+# A barra inicial restringe à pasta docs/ da raiz (não afeta pastas "docs" dentro de src/ ou assets/).
+/docs/
