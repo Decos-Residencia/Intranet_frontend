@@ -1,0 +1,182 @@
+[
+ {
+  "name": "firefox",
+  "vp": 375,
+  "login": true,
+  "pages": [
+   {
+    "r": "#/dashboard",
+    "h": "#/dashboard",
+    "ov": 0,
+    "txt": 2921
+   },
+   {
+    "r": "#/avisos",
+    "h": "#/avisos",
+    "ov": 0,
+    "txt": 1135
+   },
+   {
+    "r": "#/eventos/1",
+    "h": "#/eventos/1",
+    "ov": 0,
+    "txt": 1400
+   },
+   {
+    "r": "#/diretorio",
+    "h": "#/diretorio",
+    "ov": 0,
+    "txt": 1039
+   },
+   {
+    "r": "#/admin/usuarios",
+    "h": "#/admin/usuarios",
+    "ov": 0,
+    "txt": 1561
+   },
+   {
+    "r": "#/admin/noticias/nova",
+    "h": "#/admin/noticias/nova",
+    "ov": 0,
+    "txt": 1169
+   }
+  ],
+  "errors": []
+ },
+ {
+  "name": "firefox",
+  "vp": 1440,
+  "login": true,
+  "pages": [
+   {
+    "r": "#/dashboard",
+    "h": "#/dashboard",
+    "ov": 0,
+    "txt": 2958
+   },
+   {
+    "r": "#/avisos",
+    "h": "#/avisos",
+    "ov": 0,
+    "txt": 1172
+   },
+   {
+    "r": "#/eventos/1",
+    "h": "#/eventos/1",
+    "ov": 0,
+    "txt": 1437
+   },
+   {
+    "r": "#/diretorio",
+    "h": "#/diretorio",
+    "ov": 0,
+    "txt": 1076
+   },
+   {
+    "r": "#/admin/usuarios",
+    "h": "#/admin/usuarios",
+    "ov": 0,
+    "txt": 1598
+   },
+   {
+    "r": "#/admin/noticias/nova",
+    "h": "#/admin/noticias/nova",
+    "ov": 0,
+    "txt": 1207
+   }
+  ],
+  "errors": []
+ },
+ {
+  "name": "webkit",
+  "error": "browserType.launch: "
+ },
+ {
+  "name": "chromium",
+  "vp": 375,
+  "login": true,
+  "pages": [
+   {
+    "r": "#/dashboard",
+    "h": "#/dashboard",
+    "ov": 0,
+    "txt": 2921
+   },
+   {
+    "r": "#/avisos",
+    "h": "#/avisos",
+    "ov": 0,
+    "txt": 1135
+   },
+   {
+    "r": "#/eventos/1",
+    "h": "#/eventos/1",
+    "ov": 0,
+    "txt": 1400
+   },
+   {
+    "r": "#/diretorio",
+    "h": "#/diretorio",
+    "ov": 0,
+    "txt": 1135
+   },
+   {
+    "r": "#/admin/usuarios",
+    "h": "#/admin/usuarios",
+    "ov": 0,
+    "txt": 1673
+   },
+   {
+    "r": "#/admin/noticias/nova",
+    "h": "#/admin/noticias/nova",
+    "ov": 0,
+    "txt": 1204
+   }
+  ],
+  "errors": []
+ },
+ {
+  "name": "chromium",
+  "vp": 1440,
+  "login": true,
+  "pages": [
+   {
+    "r": "#/dashboard",
+    "h": "#/dashboard",
+    "ov": 0,
+    "txt": 2958
+   },
+   {
+    "r": "#/avisos",
+    "h": "#/avisos",
+    "ov": 0,
+    "txt": 1172
+   },
+   {
+    "r": "#/eventos/1",
+    "h": "#/eventos/1",
+    "ov": 0,
+    "txt": 1437
+   },
+   {
+    "r": "#/diretorio",
+    "h": "#/diretorio",
+    "ov": 0,
+    "txt": 1172
+   },
+   {
+    "r": "#/admin/usuarios",
+    "h": "#/admin/usuarios",
+    "ov": 0,
+    "txt": 1710
+   },
+   {
+    "r": "#/admin/noticias/nova",
+    "h": "#/admin/noticias/nova",
+    "ov": 0,
+    "txt": 1242
+   }
+  ],
+  "errors": []
+ }
+]

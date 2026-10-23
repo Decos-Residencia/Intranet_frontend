@@ -1,0 +1,637 @@
+<title>Auditoria QA Intranet Decós</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: relatório de laudo clínico — cabeçalho de prontuário, índice fixo à esquerda no desktop, seções em coluna única de leitura */
+:root{
+  --bg:#f6f4f4; --surface:#ffffff; --ink:#1d1a1c; --ink-2:#4f4549; --line:#e3dcde; --accent:#8a1c31; --accent-soft:#f6e4e8;
+  --crit:#b3122e; --crit-bg:#fde7eb; --high:#c2410c; --high-bg:#ffedd5; --med:#a16207; --med-bg:#fef3c7; --low:#3f6b8a; --low-bg:#e3eef6;
+  --ok:#15803d; --ok-bg:#dcfce7; --fail:#b3122e; --fail-bg:#fde7eb;
+  --f-display:'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --f-body:'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --f-mono:'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151213; --surface:#1e1a1c; --ink:#efe9eb; --ink-2:#b9adb2; --line:#352d30; --accent:#e58a9c; --accent-soft:#3a2229;
+  --crit:#ff8a9e; --crit-bg:#3d1a22; --high:#fdba74; --high-bg:#3b2414; --med:#fcd34d; --med-bg:#362b10; --low:#93c5e8; --low-bg:#172a38;
+  --ok:#86efac; --ok-bg:#143322; --fail:#ff8a9e; --fail-bg:#3d1a22; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#151213; --surface:#1e1a1c; --ink:#efe9eb; --ink-2:#b9adb2; --line:#352d30; --accent:#e58a9c; --accent-soft:#3a2229;
+  --crit:#ff8a9e; --crit-bg:#3d1a22; --high:#fdba74; --high-bg:#3b2414; --med:#fcd34d; --med-bg:#362b10; --low:#93c5e8; --low-bg:#172a38;
+  --ok:#86efac; --ok-bg:#143322; --fail:#ff8a9e; --fail-bg:#3d1a22; color-scheme:dark; }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 80px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));}
+.grid{display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)} nav.toc{display:none}}
+nav.toc{position:sticky;top:calc(24px + env(safe-area-inset-top, 0px));font-size:14px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;counter-reset:s}
+nav.toc a{display:block;padding:6px 10px;border-radius:6px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent}
+nav.toc a:hover{background:var(--surface);color:var(--ink);border-left-color:var(--accent)}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:26px;font-weight:800;margin-bottom:6px}
+h3{font-size:18px;font-weight:700}
+section{padding-top:56px;scroll-margin-top:16px}
+section > p.lead{color:var(--ink-2);max-width:68ch;margin:4px 0 20px}
+p{max-width:72ch}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+code{background:var(--accent-soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+
+/* Cabeçalho tipo prontuário */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.chart-top{padding:28px 28px 22px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.chart-top p{margin:0;color:var(--ink-2)}
+.chart-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));}
+.chart-meta div{padding:14px 28px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.chart-meta dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.chart-meta dd{margin:2px 0 0;font-weight:600;overflow-wrap:anywhere}
+
+.verdict{margin-top:20px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px}
+@media (max-width:760px){.verdict{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px}
+.verdict .panel p{margin:8px 0 0}
+.stamp{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:var(--high-bg);color:var(--high)}
+.vitals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.vitals div{background:var(--surface);padding:14px 16px}
+.vitals b{display:block;font-family:var(--f-display);font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.vitals span{font-size:13px;color:var(--ink-2)}
+
+.sevbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.sev{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sev::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.sev-Crítica{background:var(--crit-bg);color:var(--crit)}
+.sev-Alta{background:var(--high-bg);color:var(--high)}
+.sev-Média{background:var(--med-bg);color:var(--med)}
+.sev-Baixa{background:var(--low-bg);color:var(--low)}
+.tag{font-family:var(--f-mono);font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+
+/* Filtros */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 18px}
+.filters button{font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:36px}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filters .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.count{font-family:var(--f-mono);font-size:13px;color:var(--ink-2);margin-left:auto}
+
+/* Bugs */
+.bugs{display:flex;flex-direction:column;gap:14px}
+details.bug{background:var(--surface);border:1px solid var(--line);border-radius:12px;border-left:5px solid var(--line)}
+details.bug[data-sev="Crítica"]{border-left-color:var(--crit)}
+details.bug[data-sev="Alta"]{border-left-color:var(--high)}
+details.bug[data-sev="Média"]{border-left-color:var(--med)}
+details.bug[data-sev="Baixa"]{border-left-color:var(--low)}
+details.bug summary{list-style:none;cursor:pointer;padding:16px 18px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 14px;align-items:baseline}
+details.bug summary::-webkit-details-marker{display:none}
+.bid{font-family:var(--f-mono);font-weight:600;color:var(--ink-2);font-size:14px}
+.btitle{font-weight:700;font-size:17px}
+.bmeta{grid-column:2 / 4;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+details.bug summary .chev{transition:transform .2s;color:var(--ink-2)}
+details.bug[open] summary .chev{transform:rotate(90deg)}
+.bbody{padding:0 18px 20px 18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:820px){.bbody{grid-template-columns:minmax(0,1fr)}}
+.bbody dl{margin:0;display:flex;flex-direction:column;gap:10px}
+.bbody dt{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.bbody dd{margin:2px 0 0}
+.bbody ol{margin:2px 0 0;padding-left:20px}
+.shots{display:flex;flex-direction:column;gap:10px}
+.shots button{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);cursor:zoom-in;display:block;width:100%}
+.shots img{display:block;width:100%;max-height:420px;object-fit:contain;background:var(--bg)}
+.shots figcaption{font-size:13px;color:var(--ink-2)}
+figure{margin:0}
+.fix{background:var(--accent-soft);border-radius:8px;padding:10px 12px}
+
+/* Tabelas */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:600;white-space:nowrap;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.cell-ok{color:var(--ok);font-weight:600}
+.cell-bad{background:var(--fail-bg);color:var(--fail);font-weight:700}
+.cell-warn{background:var(--med-bg);color:var(--med);font-weight:600}
+.res{display:inline-block;font-family:var(--f-mono);font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
+.res-ok{background:var(--ok-bg);color:var(--ok)}
+.res-fail{background:var(--fail-bg);color:var(--fail)}
+.matrix td{text-align:center;font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+.matrix td:first-child{text-align:left}
+
+.thumbs{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;align-items:flex-start}
+.thumbs figure{flex:0 0 auto}
+.thumbs button{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:zoom-in;background:var(--surface);display:block}
+.thumbs img{display:block;height:260px;width:auto;max-width:none}
+.thumbs figcaption{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);margin-top:4px}
+
+.score{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:28px;border-radius:999px;font-family:var(--f-mono);font-weight:600;font-size:13px}
+.s-good{background:var(--ok-bg);color:var(--ok)} .s-mid{background:var(--med-bg);color:var(--med)} .s-bad{background:var(--fail-bg);color:var(--fail)}
+.dots{display:inline-flex;gap:3px} .dots i{width:10px;height:10px;border-radius:50%;background:var(--line);display:inline-block} .dots i.on{background:var(--accent)}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.cols .panel h3{margin-bottom:6px}
+.cols .panel ul{margin:6px 0 0;padding-left:18px}
+.cols .panel li{margin:3px 0}
+.phase{border-top:4px solid var(--accent)}
+.phase .eyebrow{display:block;margin-bottom:4px}
+
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1400px);max-height:94vh}
+dialog::backdrop{background:rgba(10,8,9,.82)}
+dialog img{display:block;max-width:100%;max-height:88vh;border-radius:8px;margin:0 auto}
+dialog p{color:#f1eaec;text-align:center;font-size:14px;margin:8px auto 0}
+dialog .close{position:absolute;top:8px;right:8px;font:inherit;font-weight:700;background:#fff;color:#1d1a1c;border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="grid">
+    <nav class="toc" aria-label="Índice do relatório">
+      <div class="eyebrow" style="padding:0 10px 8px">Índice</div>
+      <ol>
+        <li><a href="#resumo">Resumo executivo</a></li>
+        <li><a href="#escopo">Escopo e método</a></li>
+        <li><a href="#bugs">Defeitos encontrados</a></li>
+        <li><a href="#responsividade">Responsividade</a></li>
+        <li><a href="#acessibilidade">Acessibilidade (WCAG 2.2)</a></li>
+        <li><a href="#heuristicas">Heurísticas de usabilidade</a></li>
+        <li><a href="#desempenho">Desempenho</a></li>
+        <li><a href="#funcional">Testes funcionais</a></li>
+        <li><a href="#seguranca">Segurança e backend</a></li>
+        <li><a href="#fortes">Pontos fortes</a></li>
+        <li><a href="#plano">Plano de correção</a></li>
+        <li><a href="#limites">Limitações</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <header class="chart" id="resumo">
+        <div class="chart-top">
+          <span class="eyebrow">TASK 01 · Laudo de qualidade</span>
+          <h1>QA completo, auditoria UI/UX e responsividade da Intranet Hospital Decós</h1>
+          <p>Teste de ponta a ponta do frontend (SPA em HTML, Tailwind e JS) integrado à API FastAPI real, com os quatro perfis de acesso, seis larguras de tela e três temas.</p>
+        </div>
+        <dl class="chart-meta">
+          <div><dt>Data</dt><dd>23/10/2026</dd></div>
+          <div><dt>Frontend</dt><dd class="mono">Intranet_frontend @ 903b499</dd></div>
+          <div><dt>Backend</dt><dd class="mono">Intranet_backend @ 734fc32</dd></div>
+          <div><dt>Ambiente</dt><dd>Local · PostgreSQL 16 dedicado</dd></div>
+          <div><dt>Perfis</dt><dd>Admin · RH · Colaborador · Leitura</dd></div>
+          <div><dt>Navegadores</dt><dd>Chromium 1243 · Firefox 1495</dd></div>
+        </dl>
+      </header>
+
+      <div class="verdict">
+        <div class="panel">
+          <span class="stamp">Aprovado com ressalvas</span>
+          <p><strong>A intranet funciona e é segura.</strong> Login, sessão, permissões dos quatro perfis, troca de senha obrigatória, proteção contra XSS e tratamento de erros da API passaram em todos os testes. Nenhum erro de JavaScript ou resposta HTTP de falha apareceu nas 684 cargas de página.</p>
+          <p><strong>O que impede a aprovação plena é acessibilidade e o layout em telas médias e pequenas.</strong> Campos sem rótulo, modais e painéis que o teclado não alcança, contraste baixo e tabelas administrativas que escondem metade das colunas em 1024 px afetam o uso real no hospital, inclusive por quem usa leitor de tela ou trabalha em tablets e notebooks de posto de enfermagem.</p>
+          <div class="sevbar" id="sevbar"></div>
+        </div>
+        <div class="vitals">
+          <div><b>684</b><span>cargas de página auditadas</span></div>
+          <div><b>30</b><span>rotas × 6 larguras × 3 temas</span></div>
+          <div><b>27/34</b><span>casos E2E aprovados</span></div>
+          <div><b>329/330</b><span>testes do backend aprovados</span></div>
+          <div><b>11</b><span>regras WCAG violadas (axe-core)</span></div>
+          <div><b>55</b><span>Lighthouse desempenho, login mobile</span></div>
+        </div>
+      </div>
+
+      <section id="escopo">
+        <span class="eyebrow">01</span>
+        <h2>Escopo e método</h2>
+        <p class="lead">Tudo foi executado contra a aplicação real: API FastAPI com banco PostgreSQL dedicado, sem mocks, com massa de dados criada pela própria API.</p>
+        <div class="cols">
+          <div class="panel"><h3>Massa de dados</h3><ul>
+            <li>6 usuários: 1 Admin, 1 RH, 3 Colaboradores, 1 Leitura</li>
+            <li>6 setores, 8 avisos (1 rascunho), 4 eventos publicados, 4 FAQs</li>
+            <li>Aniversariantes no dia e no mês, nomes longos (“Mariana Albuquerque Ferreira dos Santos”)</li>
+          </ul></div>
+          <div class="panel"><h3>Matriz de execução</h3><ul>
+            <li>Larguras: 320, 375, 768, 1024, 1440 e 1920 px</li>
+            <li>Temas: claro e escuro (375 e 1440) e Vinho (amostra)</li>
+            <li>30 rotas, incluindo 404, formulários e telas administrativas</li>
+            <li>Chromium e Firefox; WebKit indisponível (ver limitações)</li>
+          </ul></div>
+          <div class="panel"><h3>Ferramentas</h3><ul>
+            <li>Playwright 1.56: E2E, capturas e métricas de layout</li>
+            <li>axe-core 4.11: WCAG 2.0, 2.1 e 2.2 A/AA e boas práticas</li>
+            <li>Lighthouse 12.8: desempenho e acessibilidade</li>
+            <li>pytest 9 e ruff: suíte e lint do backend</li>
+            <li>Revisão manual de capturas, código e contraste</li>
+          </ul></div>
+        </div>
+      </section>
+
+      <section id="bugs">
+        <span class="eyebrow">02</span>
+        <h2>Defeitos encontrados</h2>
+        <p class="lead">Cada defeito tem passos de reprodução, resultado esperado e obtido, evidência e causa no código. Clique para expandir e na imagem para ampliar.</p>
+        <div class="filters" role="group" aria-label="Filtrar defeitos">
+          <button type="button" data-f="sev" data-v="*" aria-pressed="true">Todos</button>
+          <button type="button" data-f="sev" data-v="Alta" aria-pressed="false">Alta</button>
+          <button type="button" data-f="sev" data-v="Média" aria-pressed="false">Média</button>
+          <button type="button" data-f="sev" data-v="Baixa" aria-pressed="false">Baixa</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button type="button" data-f="cat" data-v="*" aria-pressed="true">Todas as áreas</button>
+          <button type="button" data-f="cat" data-v="Acessibilidade" aria-pressed="false">Acessibilidade</button>
+          <button type="button" data-f="cat" data-v="Responsividade" aria-pressed="false">Responsividade</button>
+          <button type="button" data-f="cat" data-v="UI/UX" aria-pressed="false">UI/UX</button>
+          <button type="button" data-f="cat" data-v="Desempenho" aria-pressed="false">Desempenho</button>
+          <button type="button" data-f="cat" data-v="Qualidade" aria-pressed="false">Qualidade</button>
+          <span class="count" id="bugcount" aria-live="polite"></span>
+        </div>
+        <div class="bugs" id="buglist"></div>
+      </section>
+
+      <section id="responsividade">
+        <span class="eyebrow">03</span>
+        <h2>Responsividade</h2>
+        <p class="lead">Rolagem horizontal da página (px a mais que a viewport) medida em todas as rotas, pior caso entre perfis e temas. As marcações “visual” são defeitos confirmados na revisão manual que não geram rolagem da página.</p>
+        <div class="tbl"><table class="matrix" id="matrix"><thead><tr><th>Rota</th><th>320</th><th>375</th><th>768</th><th>1024</th><th>1440</th><th>1920</th></tr></thead><tbody></tbody></table></div>
+        <h3 style="margin:28px 0 10px">Início (perfil Colaborador) em cada largura</h3>
+        <div class="thumbs" id="thumbs"></div>
+      </section>
+
+      <section id="acessibilidade">
+        <span class="eyebrow">04</span>
+        <h2>Acessibilidade (WCAG 2.2 AA)</h2>
+        <p class="lead">Varredura axe-core em 1440 e 375 px, temas claro e escuro, todos os perfis (276 análises). Os números somam ocorrências em todas as análises; “telas” é quantas análises tiveram a violação.</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Regra</th><th>Impacto</th><th>Critério</th><th>Ocorrências</th><th>Telas</th><th>Exemplo</th></tr></thead>
+          <tbody id="axe"></tbody>
+        </table></div>
+        <h3 style="margin:28px 0 10px">Contraste medido nos tokens do tema</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Par de cores</th><th>Uso</th><th>Razão</th><th>Mínimo</th><th>Resultado</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">#94a3b8 / #f1f2f4</td><td>Texto <code>text-slate-400</code> sobre o fundo claro</td><td class="num">2,28:1</td><td class="num">4,5:1</td><td><span class="res res-fail">reprova</span></td></tr>
+            <tr><td class="mono">#6b7280 / #f1f2f4</td><td>Token <code>--muted</code> sobre o fundo claro</td><td class="num">4,32:1</td><td class="num">4,5:1</td><td><span class="res res-fail">reprova</span></td></tr>
+            <tr><td class="mono">#edeff2 / #ffffff</td><td>Borda dos campos (<code>--border</code>)</td><td class="num">1,15:1</td><td class="num">3:1</td><td><span class="res res-fail">reprova</span></td></tr>
+            <tr><td class="mono">#8E1B2E / #120c0f</td><td>Anel de foco vinho no tema escuro</td><td class="num">2,16:1</td><td class="num">3:1</td><td><span class="res res-fail">reprova</span></td></tr>
+            <tr><td class="mono">#8E1B2E / #ffffff</td><td>Anel de foco vinho no tema claro</td><td class="num">8,95:1</td><td class="num">3:1</td><td><span class="res res-ok">aprova</span></td></tr>
+            <tr><td class="mono">#ab98a0 / #1c1216</td><td><code>--muted</code> no tema escuro</td><td class="num">6,74:1</td><td class="num">4,5:1</td><td><span class="res res-ok">aprova</span></td></tr>
+          </tbody>
+        </table></div>
+        <h3 style="margin:28px 0 10px">Verificações manuais de teclado</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Verificação</th><th>Resultado</th><th>Observação</th></tr></thead>
+          <tbody>
+            <tr><td>Foco visível nos 40 primeiros elementos do Início</td><td><span class="res res-ok">aprova</span></td><td>Todos têm contorno; no tema escuro parte deles tem contraste insuficiente (B06).</td></tr>
+            <tr><td>Link “pular para o conteúdo”</td><td><span class="res res-fail">reprova</span></td><td>O primeiro Tab cai no seletor de perfil da barra lateral.</td></tr>
+            <tr><td>Modal de confirmação</td><td><span class="res res-fail">reprova</span></td><td>Foco fica atrás do modal, Esc não fecha (B02).</td></tr>
+            <tr><td>Painel lateral (notificações, busca, formulários)</td><td><span class="res res-fail">reprova</span></td><td>Sem <code>role="dialog"</code>, sem foco, Esc não fecha (B03).</td></tr>
+            <tr><td>Menu mobile</td><td><span class="res res-fail">reprova</span></td><td><code>aria-expanded</code> correto, mas foco não entra e Esc não fecha (B04).</td></tr>
+            <tr><td><code>prefers-reduced-motion</code></td><td><span class="res res-ok">aprova</span></td><td>Respeitado em transições, carrossel e notificações.</td></tr>
+            <tr><td><code>lang="pt-BR"</code> e título do documento</td><td><span class="res res-ok">aprova</span></td><td>Título fixo em todas as rotas; ideal seria refletir a tela atual.</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="heuristicas">
+        <span class="eyebrow">05</span>
+        <h2>Heurísticas de usabilidade (Nielsen)</h2>
+        <p class="lead">Avaliação de 1 a 5 com base na navegação pelos quatro perfis.</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Heurística</th><th>Nota</th><th>Observações</th></tr></thead>
+          <tbody id="heur"></tbody>
+        </table></div>
+      </section>
+
+      <section id="desempenho">
+        <span class="eyebrow">06</span>
+        <h2>Desempenho (Lighthouse 12.8)</h2>
+        <p class="lead">O login foi medido com cache vazio (primeiro acesso). O Início foi medido com sessão ativa e cache aquecido, por isso o desempenho dele sai inflado e não deve ser comparado ao do login.</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Página</th><th>Perfil</th><th>Desempenho</th><th>Acessibilidade</th><th>Boas práticas</th><th>SEO</th><th>FCP</th><th>LCP</th><th>TBT</th><th>Peso</th></tr></thead>
+          <tbody id="lh"></tbody>
+        </table></div>
+        <div class="cols" style="margin-top:14px">
+          <div class="panel"><h3>Causas principais</h3><ul>
+            <li><code>assets/img/news.png</code> com 1,4 MB e <code>login.png</code> com 540 KB, em PNG e sem <code>width</code>/<code>height</code></li>
+            <li>84 tags <code>&lt;script&gt;</code> e 30 folhas CSS sem bundle, minificação ou compressão</li>
+            <li>Tailwind Play CDN compila CSS no navegador a cada carga e bloqueia a renderização</li>
+          </ul></div>
+          <div class="panel"><h3>Bom resultado</h3><ul>
+            <li>CLS 0 em todas as medições: a página não “pula”</li>
+            <li>Nenhuma navegação passou de 2,5 s nas 684 cargas locais</li>
+            <li>Boas práticas e SEO com nota 100</li>
+          </ul></div>
+        </div>
+      </section>
+
+      <section id="funcional">
+        <span class="eyebrow">07</span>
+        <h2>Testes funcionais E2E</h2>
+        <p class="lead">34 casos automatizados com Playwright contra a API real. 27 aprovados e 7 reprovados; todas as reprovações são de acessibilidade ou feedback, nenhuma de regra de negócio.</p>
+        <div class="tbl"><table>
+          <thead><tr><th>ID</th><th>Caso de teste</th><th>Resultado</th><th>Defeito</th></tr></thead>
+          <tbody id="e2e"></tbody>
+        </table></div>
+      </section>
+
+      <section id="seguranca">
+        <span class="eyebrow">08</span>
+        <h2>Segurança e backend</h2>
+        <p class="lead">Fora do foco da task, mas verificado porque a interface depende dessas garantias.</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Verificação</th><th>Resultado</th><th>Evidência</th></tr></thead>
+          <tbody>
+            <tr><td>Suíte pytest (330 testes)</td><td><span class="res res-fail">329 aprovados · 1 falha</span></td><td>Falha em <code>test_perfis_rh_leitura.py:74</code>, ver B23</td></tr>
+            <tr><td>Lint (ruff)</td><td><span class="res res-ok">aprova</span></td><td>Nenhum apontamento em <code>app/</code> e <code>tests/</code></td></tr>
+            <tr><td>Bloqueio por tentativas de login</td><td><span class="res res-ok">aprova</span></td><td>5 respostas 401 e depois 429</td></tr>
+            <tr><td>Enumeração de usuários</td><td><span class="res res-ok">aprova</span></td><td>Mesma mensagem para e-mail inexistente e senha errada</td></tr>
+            <tr><td>CORS</td><td><span class="res res-ok">aprova</span></td><td>Origem não autorizada recebe 400 sem <code>Allow-Origin</code></td></tr>
+            <tr><td>Cabeçalhos de segurança da API</td><td><span class="res res-ok">aprova</span></td><td>CSP, X-Frame-Options, nosniff, Referrer e Permissions-Policy</td></tr>
+            <tr><td>XSS armazenado em avisos</td><td><span class="res res-ok">aprova</span></td><td>HTML no título e no conteúdo aparece como texto no mural, no detalhe, no modal e na lista</td></tr>
+            <tr><td>Documentação OpenAPI em produção</td><td><span class="res res-ok">aprova</span></td><td><code>/docs</code>, <code>/redoc</code> e <code>/openapi.json</code> desligados com <code>APP_ENV=production</code></td></tr>
+            <tr><td>Exclusão de aviso já lido</td><td><span class="res res-ok">aprova</span></td><td>API retorna 409 e orienta arquivar; a interface mostra a mensagem (com o problema visual de B09)</td></tr>
+            <tr><td>CSP do frontend (Vercel)</td><td><span class="res res-fail">ressalva</span></td><td><code>script-src 'unsafe-inline'</code> é exigido pelo Tailwind CDN, ver B24</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="fortes">
+        <span class="eyebrow">09</span>
+        <h2>Pontos fortes</h2>
+        <div class="cols">
+          <div class="panel"><h3>Permissões coerentes</h3><p>Menu, rotas e botões respeitam os quatro perfis. Leitura não vê inscrição em eventos, RH não acessa usuários nem auditoria, e o backend confirma com 403.</p></div>
+          <div class="panel"><h3>Sessão robusta</h3><p>Token inválido derruba a sessão, logout limpa o armazenamento e o primeiro acesso obriga a troca de senha sem deixar navegar.</p></div>
+          <div class="panel"><h3>Layout estável</h3><p>27 das 30 rotas não rolam horizontalmente em nenhuma largura. CLS zero. Três temas consistentes, com preferência persistida.</p></div>
+          <div class="panel"><h3>Mensagens úteis</h3><p>Erros da API chegam ao usuário em linguagem clara, como na exclusão de aviso já lido e na validação da nova senha.</p></div>
+        </div>
+        <div class="thumbs" style="margin-top:14px" id="okthumbs"></div>
+      </section>
+
+      <section id="plano">
+        <span class="eyebrow">10</span>
+        <h2>Plano de correção</h2>
+        <p class="lead">Ordem sugerida por impacto e esforço. A maior parte das correções é local, em poucos arquivos compartilhados.</p>
+        <div class="cols">
+          <div class="panel phase"><span class="eyebrow">Sprint 1 · alto impacto, baixo esforço</span><h3>Acessibilidade estrutural</h3><ul>
+            <li>B01 rótulos em todos os campos e selects</li>
+            <li>B02, B03 e B04: componente único de diálogo com foco, Esc e <code>role="dialog"</code></li>
+            <li>B06 foco em <code>select</code> e anel claro no tema escuro</li>
+            <li>B09 toast com tipo (sucesso/erro) e <code>aria-live</code></li>
+            <li>B13 <code>&lt;main&gt;</code> e link de pular</li>
+          </ul></div>
+          <div class="panel phase"><span class="eyebrow">Sprint 2 · layout</span><h3>Telas médias e pequenas</h3><ul>
+            <li>B07 e B08 quebras de linha nos filtros e na paginação</li>
+            <li>B11 tabelas em cartões abaixo de 1100 px</li>
+            <li>B10 FAB que não cobre conteúdo</li>
+            <li>B05 tokens de contraste</li>
+            <li>B14, B15 e B16 alvos de toque, cabeçalhos e busca no mobile</li>
+          </ul></div>
+          <div class="panel phase"><span class="eyebrow">Sprint 3 · acabamento</span><h3>Desempenho e manutenção</h3><ul>
+            <li>B20 imagens em WebP/AVIF com dimensões</li>
+            <li>B24 build do Tailwind e bundle dos scripts</li>
+            <li>B12 validação inline nos formulários</li>
+            <li>B17 a B19, B21 a B23 ajustes finos, README e teste quebrado</li>
+          </ul></div>
+        </div>
+      </section>
+
+      <section id="limites">
+        <span class="eyebrow">11</span>
+        <h2>Limitações</h2>
+        <div class="panel"><ul style="margin:0;padding-left:18px">
+          <li>WebKit (Safari) não pôde ser executado: o WSL não tem as bibliotecas de sistema e instalá-las exige sudo. Recomenda-se um teste manual em iPhone/iPad.</li>
+          <li>Upload de documentos não foi testado de ponta a ponta porque o armazenamento S3 do Supabase não está configurado no ambiente local; as telas de documentos foram auditadas vazias e com o formulário.</li>
+          <li>Recuperação de senha por e-mail depende do Supabase Auth e não foi exercitada.</li>
+          <li>O teste de RLS do backend foi pulado pela própria suíte (os papéis <code>anon</code>/<code>authenticated</code> só existem no Supabase).</li>
+          <li>Leitores de tela reais (NVDA, VoiceOver) não foram usados; os achados vêm do axe-core e de inspeção do DOM.</li>
+        </ul></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<dialog id="zoom" aria-label="Imagem ampliada"><button class="close" type="button" id="zoomclose">Fechar</button><img id="zoomimg" alt=""><p id="zoomcap"></p></dialog>
+
+<script>
+const BUGS = [
+ {id:"B01",sev:"Alta",cat:"Acessibilidade",t:"Campos de formulário e filtros sem rótulo acessível",where:"Login, formulários de aviso/evento/documento, perfil e 78 telas com filtros <code>select</code>",wcag:"1.3.1 · 3.3.2 · 4.1.2",
+  steps:["Abrir <code>#/login</code> com leitor de tela ou inspecionar o campo de e-mail","Abrir qualquer listagem com filtro, como <code>#/aniversariantes</code>"],
+  exp:"Cada campo anuncia seu nome (“E-mail”, “Setor”).",got:"O login usa só <code>placeholder</code>, que some ao digitar. axe-core: 156 campos sem rótulo em 30 telas e 114 selects sem nome em 78 telas (<code>#ani-setor</code>, <code>#ch-prio</code>, <code>#dc-versao</code>, <code>#ev-inicio</code>…).",
+  cause:"<code>src/pages/login/login.js:32-34</code> e formulários em <code>src/pages/admin/**</code>: <code>&lt;label class=\"field-label\"&gt;</code> não tem <code>for</code> ligado ao <code>id</code> do campo.",
+  fix:"Ligar cada <code>&lt;label&gt;</code> ao campo com <code>for</code>/<code>id</code>. Onde o rótulo visual não cabe (filtros, login), usar <code>aria-label</code> ou um rótulo visualmente oculto.",img:[["b13_login_campos","Login: campos só com placeholder e borda quase invisível"]]},
+ {id:"B02",sev:"Alta",cat:"Acessibilidade",t:"Modal de confirmação não é operável por teclado",where:"Todas as confirmações de exclusão (avisos, eventos, setores, usuários, FAQ)",wcag:"2.1.1 · 2.4.3 · 4.1.2",
+  steps:["Em <code>#/admin/noticias</code>, focar o ícone de lixeira com Tab e pressionar Enter","Pressionar Tab três vezes","Pressionar Esc"],
+  exp:"O foco entra no modal e fica preso nele; Esc cancela; o leitor anuncia o diálogo.",got:"O foco continua na tabela atrás do modal (o Tab percorre os botões de editar da lista), Esc não fecha e o modal não tem <code>role=\"dialog\"</code> nem <code>aria-modal</code>.",
+  cause:"<code>src/shared/ui/modal.js:7-21</code> só injeta HTML e adiciona <code>.open</code>; não move foco, não trata teclado.",
+  fix:"Usar <code>&lt;dialog&gt;</code> nativo com <code>showModal()</code>, que já resolve foco, Esc e backdrop. Devolver o foco ao botão de origem ao fechar.",img:[["b10_modal_foco_fora","Modal aberto, foco (em rosa) no botão de editar da tabela atrás dele"]]},
+ {id:"B03",sev:"Alta",cat:"Acessibilidade",t:"Painel lateral não recebe foco, não fecha com Esc e o X não tem nome",where:"Notificações, resultados da busca global, formulários de usuário/setor/solicitação",wcag:"2.1.1 · 2.4.3 · 4.1.2",
+  steps:["No Início, clicar no sino de notificações","Pressionar Esc","Inspecionar o botão X do painel"],
+  exp:"Foco vai para o painel, Esc fecha, X anuncia “Fechar”.",got:"O painel continua aberto após Esc, o foco fica no sino, não há <code>role=\"dialog\"</code>, e o X é um botão sem texto (axe <code>button-name</code>). O teste F10b mostra o mesmo para o painel da busca.",
+  cause:"<code>src/shared/ui/painel.js:6-19</code>; o único listener de Esc do app fecha o FAB (<code>src/app/actions.js:213</code>).",
+  fix:"Reaproveitar o mesmo componente de diálogo de B02; adicionar <code>aria-label=\"Fechar\"</code> ao X.",img:[["b11_painel_nao_fecha_esc","Painel de notificações ainda aberto depois de pressionar Esc"]]},
+ {id:"B04",sev:"Alta",cat:"Acessibilidade",t:"Menu mobile: X sem nome, foco não entra e Esc não fecha",where:"Todas as telas abaixo de 861 px",wcag:"2.1.1 · 2.4.3 · 4.1.2",
+  steps:["Em 375 px, abrir o menu pelo botão da barra superior","Pressionar Tab e depois Esc"],
+  exp:"Foco no primeiro item do menu; Esc fecha e devolve o foco ao botão.",got:"<code>aria-expanded</code> muda para true, mas o foco continua atrás do backdrop e Esc não fecha. O botão X é anunciado só como “botão” em 133 telas mobile.",
+  cause:"<code>src/shared/layout/sidebar.js:40</code> (X sem <code>aria-label</code>); <code>src/app/actions.js:39-42</code> não move foco.",
+  fix:"<code>aria-label=\"Fechar menu\"</code>, focar o primeiro link ao abrir, fechar com Esc e devolver foco ao botão.",img:[["b03_menu_mobile","Menu aberto em 375 px: X sobre “Intranet”, FAB e toast por cima do menu"]]},
+ {id:"B05",sev:"Alta",cat:"Acessibilidade",t:"Contraste de texto abaixo de 4,5:1 em quase todas as telas",where:"244 de 276 análises; legendas, metadados, rótulos de estatística, placeholders",wcag:"1.4.3",
+  steps:["Abrir qualquer tela no tema claro","Medir a cor de legendas como “Exibindo 1–4 de 10” ou datas dos cards"],
+  exp:"Texto normal com pelo menos 4,5:1.",got:"1.180 ocorrências. Pior caso: <code>text-slate-400</code> (#94a3b8) sobre o fundo #f1f2f4 = 2,28:1. O token <code>--muted</code> fica em 4,32:1. Botões salvar desabilitados também falham.",
+  cause:"<code>src/styles/base/tokens-e-temas.css:5-6</code> e uso direto de <code>text-slate-400</code> nas páginas.",
+  fix:"Escurecer <code>--muted</code> para ~#5b6270 e trocar <code>text-slate-400</code> por <code>text-slate-500</code> (claro) / manter slate-400 só no escuro.",img:[]},
+ {id:"B06",sev:"Alta",cat:"Acessibilidade",t:"Select sem indicador de foco e anel de foco quase invisível no tema escuro",where:"Todos os <code>select</code>; botões da barra superior e “Sair da Conta” no tema escuro",wcag:"2.4.7 · 1.4.11",
+  steps:["Em <code>#/admin/noticias</code>, chegar ao filtro de categoria com Tab","Trocar para o tema escuro e focar o botão de notificações"],
+  exp:"Indicador de foco com pelo menos 3:1 contra o fundo.",got:"O select tem <code>outline: none</code> e a borda muda para #edeff2 (1,15:1): não há sinal de foco. No escuro, o anel vinho #8E1B2E sobre #120c0f tem 2,16:1.",
+  cause:"<code>src/styles/base/acessibilidade.css:6</code> lista <code>a, button, input, textarea</code> mas não <code>select</code>; <code>formularios.css:18</code> zera o outline.",
+  fix:"Incluir <code>select:focus-visible</code> e <code>[tabindex]:focus-visible</code>; no tema escuro usar <code>outline-color</code> clara, como #f7b8c2.",img:[["b16_select_foco_light","Select focado (à direita): nenhuma diferença visual"],["b12_foco_escuro","Tema escuro: anel vinho de 2,16:1"]]},
+ {id:"B07",sev:"Alta",cat:"Responsividade",t:"Aniversariantes rola na horizontal em 320 e 375 px",where:"<code>#/aniversariantes</code>, todos os perfis",wcag:"1.4.10",
+  steps:["Abrir <code>#/aniversariantes</code> em 320 px","Rolar para o lado"],
+  exp:"Sem rolagem horizontal.",got:"A página fica 81 px mais larga em 320 px e 26 px em 375 px. O filtro “Setor: Todos” não encolhe e empurra a página; os cards ficam desalinhados com a largura da tela.",
+  cause:"Linha da busca + select sem <code>flex-wrap</code>/<code>min-width:0</code> em <code>src/pages/aniversariantes/mes.js</code>; o select cresce com o nome do setor mais longo.",
+  fix:"<code>flex-wrap:wrap</code> na linha de filtros e <code>min-width:0; max-width:100%</code> no select.",img:[["b01_aniversariantes_320","320 px: select de setor (em rosa) sai da tela"]]},
+ {id:"B08",sev:"Média",cat:"Responsividade",t:"Paginação do Mural de Avisos estoura em 320 px",where:"<code>#/avisos</code>",wcag:"1.4.10",
+  steps:["Abrir <code>#/avisos</code> em 320 px com mais de 3 páginas"],
+  exp:"Paginação quebra linha ou se compacta.",got:"“Anterior 1 2 3 4 Próximo” passa 30 px da tela e gera rolagem horizontal.",
+  cause:"<code>src/pages/avisos/mural.js:71</code>: <code>#avisos-pager</code> é <code>flex</code> sem <code>flex-wrap</code>; botões <code>.pg</code> têm <code>min-width:38px</code>.",
+  fix:"<code>flex-wrap:wrap</code> ou mostrar só “Anterior · 2 de 4 · Próximo” abaixo de 360 px.",img:[["b02_avisos_pager_320","Paginação cortada à direita em 320 px"]]},
+ {id:"B09",sev:"Média",cat:"UI/UX",t:"Toast de erro mostra ícone de sucesso e não é anunciado",where:"Todas as mensagens do sistema",wcag:"4.1.3 · 2.2.1",
+  steps:["Tentar excluir um aviso que já foi lido"],
+  exp:"Mensagem de erro com aparência de erro, anunciada ao leitor de tela e visível tempo suficiente.",got:"A mensagem “Este aviso já foi lido… Arquive-o” aparece com ✓, sem <code>role</code>/<code>aria-live</code>, e some em 2,6 s, pouco para ler uma frase de 100 caracteres.",
+  cause:"<code>src/shared/ui/toast.js:9</code> fixa <code>UI.icon(\"check\")</code> para qualquer mensagem; <code>setTimeout</code> de 2600 ms.",
+  fix:"<code>App.toast(msg, {tipo:\"erro\"})</code> com ícone e cor próprios, <code>role=\"status\"</code> (ou <code>alert</code> para erro) e duração proporcional ao texto, pausando no hover/foco.",img:[["b09_toast_erro_com_check","Erro exibido com ícone de confirmação"]]},
+ {id:"B10",sev:"Média",cat:"UI/UX",t:"Botão flutuante “Acesso Rápido” cobre conteúdo e fica acima do menu aberto",where:"Todas as telas; mais visível em tabelas administrativas e no card Próximos Eventos",wcag:"2.4.11",
+  steps:["Em 1440 px, abrir <code>#/admin/noticias</code> e rolar até a última linha","Em 375 px, abrir o menu lateral"],
+  exp:"O FAB não tapa ações nem textos e fica atrás de menus modais.",got:"O FAB e o rótulo “Acesso Rápido” cobrem os botões Arquivar/Excluir da última linha visível e o título de um evento no Início. Com o menu mobile aberto, o FAB (z-index 45) fica acima do backdrop (40).",
+  cause:"<code>src/styles/layout/quick-fab.css:3</code>; <code>layout.css:21</code>.",
+  fix:"Reservar <code>padding-bottom</code> no conteúdo igual à altura do FAB, esconder o rótulo após o primeiro uso e baixar o z-index do FAB para abaixo do backdrop quando o menu abre.",img:[["b07_fab_sobre_acoes_1440","FAB sobre as ações da tabela"],["b08_fab_eventos_1440","Rótulo do FAB sobre o texto do evento"]]},
+ {id:"B11",sev:"Alta",cat:"Responsividade",t:"Tabelas administrativas escondem metade das colunas até 1440 px",where:"Usuários, Notícias, Eventos, Documentos, Chamados, Avaliações, Auditoria",wcag:"1.4.10 · 2.1.1",
+  steps:["Abrir <code>#/admin/usuarios</code> em 1024 px","Abrir a mesma tela em 375 px"],
+  exp:"Todas as colunas, inclusive Ações, visíveis ou reorganizadas.",got:"Em 1024 px só 459 de 905 px da tabela aparecem: Perfil, Status e Ações ficam fora, sem pista de rolagem, e os setores viram “A…”, “Ce…”. Em 375 px vê-se só Usuário e Setor. A área rolável não recebe foco, então quem usa teclado não alcança as ações (axe <code>scrollable-region-focusable</code>).",
+  cause:"<code>src/styles/components/tabelas.css:13</code> força <code>min-width:860px</code> e <code>td:first-child{min-width:240px}</code>.",
+  fix:"Abaixo de ~1100 px, transformar cada linha em card (rótulo + valor) ou fixar a coluna Ações; adicionar <code>tabindex=\"0\"</code> e <code>aria-label</code> no contêiner rolável e um sombreado na borda indicando mais conteúdo.",img:[["b17_usuarios_1024","1024 px: colunas cortadas e setores ilegíveis"],["b06_tabela_usuarios_375","375 px: só Usuário e Setor visíveis"]]},
+ {id:"B12",sev:"Média",cat:"UI/UX",t:"Validação de formulários só por toast, sem marcar o campo",where:"Nova notícia, novo evento, novo documento, usuários",wcag:"3.3.1 · 3.3.3",
+  steps:["Em <code>#/admin/noticias/nova</code>, clicar em Publicar sem preencher nada"],
+  exp:"Mensagem junto ao campo com erro e <code>aria-invalid=\"true\"</code>, mantida até corrigir.",got:"Só um toast de 2,6 s (“Informe um título com pelo menos 5 caracteres”) e foco no campo; nenhum campo é marcado. Se houver dois erros, o usuário descobre um de cada vez.",
+  cause:"<code>src/pages/admin/noticias/formulario.js:147-158</code>.",
+  fix:"Validar todos os campos de uma vez, exibir mensagem inline com <code>aria-describedby</code> e <code>aria-invalid</code>, e um resumo no topo para formulários longos.",img:[]},
+ {id:"B13",sev:"Média",cat:"Acessibilidade",t:"Sem landmark <main> e sem link “pular para o conteúdo”",where:"Todas as telas autenticadas",wcag:"2.4.1 · 1.3.1",
+  steps:["Pressionar Tab ao abrir qualquer tela","Listar landmarks com leitor de tela"],
+  exp:"Primeiro Tab oferece “Pular para o conteúdo”; existe um <code>&lt;main&gt;</code>.",got:"O primeiro Tab vai para o seletor de perfil. 258/258 análises sem <code>main</code>; 3.288 ocorrências de conteúdo fora de landmark; dois <code>&lt;nav&gt;</code> sem nome distinto.",
+  cause:"<code>src/app/router.js:50</code> renderiza <code>&lt;div class=\"content\"&gt;</code>.",
+  fix:"Trocar por <code>&lt;main id=\"conteudo\" tabindex=\"-1\"&gt;</code>, inserir o link de pular como primeiro elemento do <code>body</code> e nomear as navegações com <code>aria-label</code>.",img:[]},
+ {id:"B14",sev:"Média",cat:"Acessibilidade",t:"Alvos de toque menores que 24×24 px",where:"Carrossel do Início, mostrar senha, Sair da Conta, botão de recolher menu",wcag:"2.5.8",
+  steps:["Em 375 px, medir os pontos do carrossel e o ícone de olho nos campos de senha"],
+  exp:"Pelo menos 24×24 px (ideal 44×44 em telas de toque).",got:"Pontos do carrossel com 6×6 e 18×6 px; mostrar/ocultar senha com 20×20; “Sair da Conta” com 20 px de altura; recolher menu com 22 px de largura.",
+  cause:"<code>.carousel-dot</code> em <code>src/styles/components/hero.css</code>; botões <code>data-toggle-pass</code>.",
+  fix:"Manter o desenho pequeno, mas aumentar a área clicável com <code>padding</code> ou um pseudo-elemento de 24 px ou mais.",img:[["b14_banner_dots_375","Pontos do carrossel (em rosa) e título do banner truncado"]]},
+ {id:"B15",sev:"Média",cat:"Responsividade",t:"Sobreposição no cabeçalho do login e do menu em telas estreitas",where:"<code>#/login</code> em 320–375 px; menu mobile",wcag:"1.4.10",
+  steps:["Abrir <code>#/login</code> em 375 px","Abrir o menu mobile"],
+  exp:"Logo, “Intranet” e botões lado a lado sem sobreposição.",got:"No login, o botão de tema cobre a palavra “Intranet” e o selo “Acesso restrito a colaboradores” quebra em duas linhas. No menu, o X fica em cima de “Intranet”.",
+  cause:"Cabeçalho do login sem regra para larguras estreitas em <code>src/styles/pages/login.css</code>; topo do menu em <code>sidebar.js:38-40</code>.",
+  fix:"Esconder “Intranet” abaixo de 400 px ou empilhar o selo; reservar espaço para o X no topo do menu.",img:[["b04_login_375","Login em 375 px: botão de tema sobre “Intranet”"]]},
+ {id:"B16",sev:"Média",cat:"UI/UX",t:"Busca global some no mobile, sem alternativa",where:"Barra superior abaixo de 768 px",wcag:"—",
+  steps:["Abrir o Início em 375 px e procurar a busca"],
+  exp:"Ícone de lupa que abre a busca.",got:"O formulário tem <code>hidden md:block</code> e nenhum botão o substitui. No celular não há como buscar avisos, documentos ou ramais, justamente o uso mais comum em plantão.",
+  cause:"<code>src/shared/layout/topbar.js:22</code>.",
+  fix:"Adicionar um botão de lupa visível só no mobile que abre a busca em tela cheia ou no painel lateral.",img:[["b15_topbar_mobile","Barra superior em 375 px: título truncado e sem busca"]]},
+ {id:"B17",sev:"Baixa",cat:"UI/UX",t:"Sombra do menu oculto vaza na borda esquerda",where:"Todas as telas abaixo de 861 px",wcag:"—",
+  steps:["Abrir qualquer tela em 375 px e observar a borda esquerda"],
+  exp:"Borda limpa.",got:"Uma faixa cinza de ~15 px aparece à esquerda do conteúdo.",
+  cause:"<code>src/styles/layout/layout.css:19</code>: <code>box-shadow:0 20px 60px</code> aplicado mesmo com o menu fora da tela.",
+  fix:"Aplicar a sombra só em <code>.sidebar-open</code>.",img:[["b05_sombra_sidebar_375","Faixa de sombra na borda esquerda"]]},
+ {id:"B18",sev:"Baixa",cat:"Acessibilidade",t:"Hierarquia de títulos inconsistente",where:"Login, detalhe de aviso, detalhe de evento, cards do mural",wcag:"1.3.1 · 2.4.6",
+  steps:["Listar os títulos da página com leitor de tela"],
+  exp:"Um <code>h1</code> por tela e níveis sem saltos.",got:"Login sem <code>h1</code>; <code>#/avisos/1</code> e <code>#/eventos/1</code> com dois <code>h1</code> (barra superior e conteúdo); 48 telas pulam de <code>h1</code> para <code>h3</code>.",
+  cause:"<code>src/shared/layout/topbar.js:21</code> usa <code>h1</code> para o título da barra.",
+  fix:"Usar <code>&lt;p&gt;</code> ou <code>h2</code> na barra superior quando a página já tem título, e <code>h2</code> nos cards.",img:[]},
+ {id:"B19",sev:"Baixa",cat:"UI/UX",t:"Textos de 9,6 a 11,5 px em rótulos e selos",where:"Rótulos de campos, badges, contadores do menu, avatares",wcag:"1.4.4",
+  steps:["Inspecionar <code>.field-label</code>, <code>.badge</code> e <code>.avatar-mini</code>"],
+  exp:"Mínimo de 12 px em texto informativo.",got:"<code>.field-label</code> 11,2 px; badges 10,9 px; “MENU PRINCIPAL” 11 px; iniciais do avatar 9,6 px; datas de evento com <code>text-[10px]</code>.",
+  cause:"<code>badges-e-pills.css</code>, <code>sidebar.css</code>, <code>formularios.css</code>.",
+  fix:"Subir para 12 px; manter o caixa-alta com <code>letter-spacing</code> para preservar o visual.",img:[]},
+ {id:"B20",sev:"Média",cat:"Desempenho",t:"Login lento no celular: imagens pesadas em PNG",where:"<code>#/login</code> e banner do Início",wcag:"—",
+  steps:["Rodar Lighthouse mobile em <code>#/login</code> com cache vazio"],
+  exp:"LCP abaixo de 2,5 s.",got:"Desempenho 55, FCP 6,5 s, LCP 7,0 s. <code>news.png</code> tem 1,4 MB e <code>login.png</code> 540 KB, sem dimensões, sem <code>srcset</code> e sem formato moderno. A foto do login nem aparece abaixo de 820 px, mas é baixada.",
+  cause:"<code>assets/img/</code>; <code>src/styles/pages/login.css:9</code> só esconde com <code>display:none</code>.",
+  fix:"Converter para WebP/AVIF (~80–150 KB), declarar <code>width</code>/<code>height</code>, usar <code>&lt;picture&gt;</code> com <code>media</code> para não baixar a foto no mobile, <code>fetchpriority=\"high\"</code> na imagem principal.",img:[]},
+ {id:"B21",sev:"Baixa",cat:"UI/UX",t:"Inconsistências de texto e informação repetida",where:"Início, Painel de Notícias, Usuários",wcag:"—",
+  steps:["Comparar o título da barra com o item do menu","Ver os cards de estatística"],
+  exp:"Mesmo nome para a mesma tela; números no mesmo formato.",got:"Barra diz “Dashboard” e o menu diz “Início”. “Alertas críticos 00” enquanto os demais mostram “0”. O Início tem paginação e “Ver todos os avisos” para a mesma lista. No mobile o título do banner é cortado (“Central de documentos e…”) e o da barra vira “Dashbo…”. O card “Colaboradores 3 · 1 RH · 1 leitura” mistura contagens.",
+  cause:"Títulos em <code>src/app/routes.js</code>/páginas; formatação em <code>src/pages/admin/noticias/lista.js</code>.",
+  fix:"Padronizar “Início”, formatar números sem zero à esquerda, deixar só “Ver todos” no Início e permitir duas linhas no título do banner.",img:[]},
+ {id:"B22",sev:"Baixa",cat:"Qualidade",t:"README do frontend descreve regras de perfil desatualizadas",where:"<code>Intranet_frontend/README.md</code>",wcag:"—",
+  steps:["Ler a seção “Sessão e papéis de acesso”"],
+  exp:"Documentação igual ao comportamento.",got:"O README fala em dois perfis (Colaborador e Admin) e diz que “não existe mais troca manual”. O sistema tem quatro perfis (Leitura, Colaborador, RH, Admin) e o Admin vê o botão “trocar” perfil na barra lateral.",
+  cause:"README não acompanhou a migração <code>0018_perfis_rh_leitura</code>.",
+  fix:"Atualizar a tabela de perfis e explicar a pré-visualização de papel do Admin.",img:[]},
+ {id:"B23",sev:"Média",cat:"Qualidade",t:"Teste do backend quebrado deixa regra do perfil Leitura sem cobertura",where:"<code>tests/integration/test_perfis_rh_leitura.py:74</code>",wcag:"—",
+  steps:["Rodar <code>pytest</code> com o PostgreSQL de teste"],
+  exp:"Leitura recebe 403 ao parabenizar.",got:"O teste chama <code>POST /aniversariantes/parabens</code>, que não existe (404), e falha. A rota real é <code>POST /parabens</code> (usada pelo frontend). A permissão de fato não está sendo verificada.",
+  cause:"Caminho errado no teste.",
+  fix:"Trocar para <code>/parabens</code>. Verificado manualmente: <code>POST /parabens</code> com o perfil Leitura já responde 403 “Seu perfil é somente leitura.”, então só o teste está errado.",img:[]},
+ {id:"B24",sev:"Baixa",cat:"Desempenho",t:"Tailwind via CDN de desenvolvimento e 84 scripts sem bundle",where:"<code>index.html</code>, <code>vercel.json</code>",wcag:"—",
+  steps:["Abrir o código-fonte de <code>index.html</code>"],
+  exp:"CSS gerado em build e scripts agrupados.",got:"<code>cdn.tailwindcss.com</code> compila CSS no navegador a cada carga (a própria Tailwind não recomenda em produção) e obriga <code>'unsafe-inline'</code> na CSP. São 84 <code>&lt;script&gt;</code> e 30 CSS sem minificação, compressão nem cache longo.",
+  cause:"Projeto sem etapa de build, decisão já registrada no README.",
+  fix:"Adicionar Tailwind CLI e um bundler leve (esbuild) no deploy da Vercel; remover <code>'unsafe-inline'</code> da CSP depois.",img:[]}
+];
+const SEVORDER={"Crítica":0,"Alta":1,"Média":2,"Baixa":3};
+const IMG="img/";
+const esc=(s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function renderBugs(){
+  const list=document.getElementById("buglist");
+  list.innerHTML=BUGS.slice().sort((a,b)=>SEVORDER[a.sev]-SEVORDER[b.sev]||a.id.localeCompare(b.id)).map((b)=>`
+  <details class="bug" data-sev="${b.sev}" data-cat="${b.cat}" id="${b.id}">
+    <summary><span class="bid">${b.id}</span><span class="btitle">${esc(b.t)}</span><span class="chev" aria-hidden="true">›</span>
+      <span class="bmeta"><span class="sev sev-${b.sev}">${b.sev}</span><span class="tag">${b.cat}</span>${b.wcag!=="—"?`<span class="tag">WCAG ${b.wcag}</span>`:""}</span></summary>
+    <div class="bbody">
+      <dl>
+        <div><dt>Onde</dt><dd>${b.where}</dd></div>
+        <div><dt>Passos para reproduzir</dt><dd><ol>${b.steps.map((s)=>`<li>${s}</li>`).join("")}</ol></dd></div>
+        <div><dt>Esperado</dt><dd>${b.exp}</dd></div>
+        <div><dt>Obtido</dt><dd>${b.got}</dd></div>
+        <div><dt>Causa no código</dt><dd>${b.cause}</dd></div>
+        <div class="fix"><dt>Correção sugerida</dt><dd>${b.fix}</dd></div>
+      </dl>
+      <div class="shots">${b.img.length?b.img.map(([f,c])=>`<figure><button type="button" data-zoom="${IMG}${f}.jpg" data-cap="${esc(b.id+" · "+c)}"><img src="${IMG}${f}.jpg" alt="${esc(c)}" loading="lazy"></button><figcaption>${esc(c)}</figcaption></figure>`).join(""):`<p style="color:var(--ink-2);margin:0">Evidência no código e nas medições citadas; sem captura dedicada.</p>`}</div>
+    </div>
+  </details>`).join("");
+  const by={}; BUGS.forEach((b)=>by[b.sev]=(by[b.sev]||0)+1);
+  document.getElementById("sevbar").innerHTML=`<span class="tag">${BUGS.length} defeitos</span>`+["Crítica","Alta","Média","Baixa"].filter((s)=>by[s]).map((s)=>`<span class="sev sev-${s}">${by[s]} ${s.toLowerCase()}${by[s]>1?"s":""}</span>`).join("");
+  applyFilter();
+}
+const filt={sev:"*",cat:"*"};
+function applyFilter(){
+  let n=0;
+  document.querySelectorAll("details.bug").forEach((d)=>{const ok=(filt.sev==="*"||d.dataset.sev===filt.sev)&&(filt.cat==="*"||d.dataset.cat===filt.cat); d.hidden=!ok; if(ok)n++;});
+  document.getElementById("bugcount").textContent=`${n} de ${BUGS.length}`;
+}
+document.querySelectorAll(".filters button").forEach((btn)=>btn.addEventListener("click",()=>{
+  const f=btn.dataset.f; filt[f]=btn.dataset.v;
+  document.querySelectorAll(`.filters button[data-f="${f}"]`).forEach((b)=>b.setAttribute("aria-pressed",String(b===btn)));
+  applyFilter();
+}));
+
+// Matriz de responsividade
+const MATRIX={"#/admin/auditoria":[0,0,0,0,0,0],"#/admin/avaliacoes":[0,0,0,0,0,0],"#/admin/chamados":[0,0,0,0,0,0],"#/admin/documentos":[0,0,0,0,0,0],"#/admin/documentos/novo":[0,0,0,0,0,0],"#/admin/eventos":[0,0,0,0,0,0],"#/admin/eventos/1/editar":[0,0,0,0,0,0],"#/admin/eventos/novo":[0,0,0,0,0,0],"#/admin/faqs":[0,0,0,0,0,0],"#/admin/noticias":[0,0,0,0,0,0],"#/admin/noticias/1/editar":[0,0,0,0,0,0],"#/admin/noticias/nova":[0,0,0,0,0,0],"#/admin/solicitacoes":[0,0,0,0,0,0],"#/admin/usuarios":[0,0,0,0,0,0],"#/aniversariantes":[81,26,0,0,0,0],"#/aniversariantes/hoje":[0,0,0,0,0,0],"#/avaliacoes":[0,0,0,0,0,0],"#/avisos":[30,0,0,0,0,0],"#/avisos/1":[0,0,0,0,0,0],"#/dashboard":[0,0,0,0,0,0],"#/diretorio":[0,0,0,0,0,0],"#/documentos":[0,0,0,0,0,0],"#/eventos":[0,0,0,0,0,0],"#/eventos/1":[0,0,0,0,0,0],"#/faq":[0,0,0,0,0,0],"#/login":[0,0,0,0,0,0],"#/notificacoes":[0,0,0,0,0,0],"#/perfil":[0,0,0,0,0,0],"#/rota-inexistente":[0,0,0,0,0,0],"#/trocar-senha":[0,0,0,0,0,0]};
+const TABELAS=["#/admin/auditoria","#/admin/avaliacoes","#/admin/chamados","#/admin/documentos","#/admin/eventos","#/admin/noticias","#/admin/usuarios"];
+const VISUAL={"#/login":{0:"B15",1:"B15"},"#/dashboard":{0:"B14",1:"B14",4:"B10",5:"B10"}};
+TABELAS.forEach((r)=>{VISUAL[r]={0:"B11",1:"B11",2:"B11",3:"B11",4:"B11"}});
+document.querySelector("#matrix tbody").innerHTML=Object.entries(MATRIX).map(([r,v])=>`<tr><td><code>${r}</code></td>${v.map((x,i)=>{
+  if(x>0) return `<td class="cell-bad">+${x} px</td>`;
+  const vis=VISUAL[r]&&VISUAL[r][i];
+  return vis?`<td class="cell-warn"><a href="#${vis}" data-open="${vis}">visual · ${vis}</a></td>`:`<td class="cell-ok">ok</td>`;}).join("")}</tr>`).join("");
+
+const thumbs=[320,375,768,1024,1440,1920].map((w)=>`<figure><button type="button" data-zoom="${IMG}matriz_${w}.jpg" data-cap="Início em ${w} px"><img src="${IMG}matriz_${w}.jpg" alt="Início em ${w} px" loading="lazy"></button><figcaption>${w} px</figcaption></figure>`).join("");
+document.getElementById("thumbs").innerHTML=thumbs;
+document.getElementById("okthumbs").innerHTML=[["ok_dashboard_escuro","Tema escuro"],["ok_dashboard_vinho","Tema Vinho"],["ok_leitura_evento","Perfil Leitura: evento sem botão de inscrição"]].map(([f,c])=>`<figure><button type="button" data-zoom="${IMG}${f}.jpg" data-cap="${c}"><img src="${IMG}${f}.jpg" alt="${c}" loading="lazy" style="height:200px"></button><figcaption>${c}</figcaption></figure>`).join("");
+
+// axe
+const AXE=[["label","Crítico","1.3.1 · 4.1.2",156,30,"<code>#dc-versao</code>, <code>#ev-inicio</code>, campos do perfil"],
+["button-name","Crítico","4.1.2",133,133,"X do menu mobile e do painel lateral"],
+["select-name","Crítico","4.1.2",114,78,"<code>#ani-setor</code>, <code>#ch-prio</code>, <code>#dir-andar</code>"],
+["color-contrast","Sério","1.4.3",1180,244,"#94a3b8 sobre #f1f2f4 = 2,28:1"],
+["target-size","Sério","2.5.8",72,32,"Pontos do carrossel 18×6 px; mostrar senha"],
+["scrollable-region-focusable","Sério","2.1.1",7,7,"<code>.overflow-x-auto</code> das tabelas no mobile"],
+["region","Moderado","boa prática",3288,258,"Conteúdo fora de landmarks"],
+["landmark-one-main","Moderado","boa prática",258,258,"Nenhuma tela tem <code>&lt;main&gt;</code>"],
+["landmark-unique","Moderado","boa prática",144,102,"Dois <code>&lt;nav&gt;</code> sem nome"],
+["heading-order","Moderado","boa prática",48,48,"<code>h1</code> → <code>h3</code> nos cards"],
+["page-has-heading-one","Moderado","boa prática",4,4,"Login sem <code>h1</code>"]];
+const impCls={"Crítico":"sev-Crítica","Sério":"sev-Alta","Moderado":"sev-Média"};
+document.getElementById("axe").innerHTML=AXE.map(([id,imp,c,n,p,ex])=>`<tr><td><code>${id}</code></td><td><span class="sev ${impCls[imp]}">${imp}</span></td><td>${c}</td><td class="num">${n.toLocaleString("pt-BR")}</td><td class="num">${p}</td><td>${ex}</td></tr>`).join("");
+
+// Heurísticas
+const H=[["Visibilidade do estado do sistema",4,"Estados de carregamento, contadores e selos de status claros. Toasts somem rápido demais (B09)."],
+["Correspondência com o mundo real",4,"Vocabulário hospitalar (POPs, ramais, plantões). “Dashboard” destoa do “Início” do menu (B21)."],
+["Controle e liberdade do usuário",3,"Há Cancelar e Voltar, mas Esc não fecha modal, painel nem menu (B02–B04)."],
+["Consistência e padrões",3,"Três temas coerentes. Formatos numéricos e títulos variam; validação aparece de formas diferentes."],
+["Prevenção de erros",4,"Confirmação antes de excluir, regra de arquivar aviso lido, troca de senha forçada."],
+["Reconhecimento em vez de memorização",4,"Acessos rápidos e breadcrumbs ajudam. No mobile a busca não existe (B16)."],
+["Flexibilidade e eficiência",3,"Busca global e filtros no desktop; sem atalhos de teclado e tabelas difíceis em telas médias (B11)."],
+["Estética e design minimalista",4,"Visual limpo e institucional. FAB permanente e paginação duplicada no Início adicionam ruído (B10, B21)."],
+["Ajudar a reconhecer e corrigir erros",2,"Erro com ícone de sucesso; campos inválidos não são marcados (B09, B12)."],
+["Ajuda e documentação",4,"FAQ, textos de apoio no login e na troca de senha."]];
+document.getElementById("heur").innerHTML=H.map(([h,s,o])=>`<tr><td><strong>${h}</strong></td><td><span class="dots" role="img" aria-label="${s} de 5">${[1,2,3,4,5].map((i)=>`<i class="${i<=s?"on":""}"></i>`).join("")}</span></td><td>${o}</td></tr>`).join("");
+
+// Lighthouse
+const sc=(v)=>`<span class="score ${v>=90?"s-good":v>=50?"s-mid":"s-bad"}">${v}</span>`;
+const LH=[["Login · mobile","anônimo",55,80,100,100,"6,5 s","7,0 s","290 ms","667 KB"],["Login · desktop","anônimo",87,80,100,100,"1,4 s","1,9 s","0 ms","1.197 KB"],["Início · mobile","colaborador*",100,83,100,100,"0,6 s","1,2 s","80 ms","51 KB*"],["Início · desktop","colaborador*",100,90,100,100,"0,2 s","0,3 s","0 ms","51 KB*"]];
+document.getElementById("lh").innerHTML=LH.map((r)=>`<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${sc(r[2])}</td><td>${sc(r[3])}</td><td>${sc(r[4])}</td><td>${sc(r[5])}</td><td class="num">${r[6]}</td><td class="num">${r[7]}</td><td class="num">${r[8]}</td><td class="num">${r[9]}</td></tr>`).join("")+`<tr><td colspan="10" style="color:var(--ink-2);font-size:13px">* cache aquecido pela sessão; o peso real do primeiro acesso é próximo ao do login.</td></tr>`;
+
+// E2E
+const E2E=[["F01","Sem sessão, a raiz redireciona ao login",1],["F02","Login vazio é bloqueado pela validação",1],["F03","Senha incorreta mostra “Email ou senha inválidos” e permanece no login",1],["F04","E-mail com maiúsculas e espaços é normalizado",1],["F05","Sessão persiste após recarregar",1],["F06","Troca de tema aplica e persiste após recarregar",1],["F07","Primeiro Tab leva a “pular para o conteúdo”",0,"B13"],["F08","Elemento focado tem indicador visível",1],["F09","Os 40 primeiros elementos focáveis mostram foco",1],["F10","Busca global encontra “vacinação”",1],["F10b","Painel da busca fecha com Esc",0,"B03"],["F11","Painel de notificações abre e fecha com Esc",0,"B03"],["F11b","Painel lateral recebe foco e tem semântica de diálogo",0,"B03"],["F12","Novo aviso vazio não é enviado e marca os campos",0,"B12"],["F13","HTML em aviso é escapado (sem XSS)",1],["F14","Logout limpa o token e volta ao login",1],["F15","Após logout, rota protegida exige login",1],["F16","Token inválido derruba a sessão",1],["F17","Nenhuma exceção JS durante o fluxo",1],["F18","Leitura não acessa <code>#/admin/noticias</code> nem <code>#/admin/usuarios</code>",1],["F18","Colaborador não acessa <code>#/admin/eventos</code> nem <code>#/admin/auditoria</code>",1],["F18","RH não acessa <code>#/admin/usuarios</code> nem <code>#/admin/auditoria</code>",1],["F19","Menu de cada perfil sem links administrativos proibidos (3 perfis)",1],["F20","Leitura não tem botão de inscrição em evento",1],["F21","Mobile: menu oculto por padrão e abre pelo botão",1],["F21b","Mobile: menu move o foco para dentro ao abrir",0,"B04"],["F22","Mobile: Esc fecha o menu",0,"B04"],["F23","Primeiro acesso força troca de senha e bloqueia navegação",1],["F24","Troca de senha rejeita senha fraca com mensagem",1],["X01","Firefox 375 e 1440 px: login e 6 telas sem erro nem rolagem",1],["X02","Chromium 375 e 1440 px: login e 6 telas sem erro nem rolagem",1],["X03","Exclusão de aviso lido mostra a mensagem do 409",1],["X04","Navegar entre telas volta a rolagem ao topo",1],["X05","684 cargas sem erro de console nem HTTP ≥ 400",1]];
+document.getElementById("e2e").innerHTML=E2E.map(([id,n,ok,b])=>`<tr><td class="mono">${id}</td><td>${n}</td><td><span class="res ${ok?"res-ok":"res-fail"}">${ok?"aprovado":"reprovado"}</span></td><td>${b?`<a href="#${b}" data-open="${b}">${b}</a>`:"—"}</td></tr>`).join("");
+
+renderBugs();
+
+// Abrir defeito a partir de links
+document.addEventListener("click",(e)=>{
+  const a=e.target.closest("[data-open]"); if(a){const d=document.getElementById(a.dataset.open); if(d){filt.sev="*";filt.cat="*";document.querySelectorAll('.filters button').forEach((b)=>b.setAttribute("aria-pressed",String(b.dataset.v==="*")));applyFilter();d.open=true;}}
+  const z=e.target.closest("[data-zoom]"); if(z){const dlg=document.getElementById("zoom"); document.getElementById("zoomimg").src=z.dataset.zoom; document.getElementById("zoomimg").alt=z.dataset.cap; document.getElementById("zoomcap").textContent=z.dataset.cap; dlg.showModal();}
+});
+document.getElementById("zoomclose").addEventListener("click",()=>document.getElementById("zoom").close());
+document.getElementById("zoom").addEventListener("click",(e)=>{if(e.target.id==="zoom")e.target.close();});
+if(location.hash&&/^#B\d+$/.test(location.hash)){const d=document.querySelector(location.hash); if(d)d.open=true;}
+</script>

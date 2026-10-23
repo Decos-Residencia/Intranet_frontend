@@ -1,0 +1,23 @@
+import { chromium } from "playwright";
+const b = await chromium.launch(process.env.CHR ? { executablePath: process.env.CHR } : {}); const BASE = "http://localhost:5500/";
+const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+await p.goto(BASE + "#/login"); await p.fill('input[name="email"]', "admin.qa@example.com"); await p.fill('input[name="senha"]', "SenhaQA123!");
+await p.locator('input[name="senha"]').press("Enter"); await p.waitForFunction(() => location.hash.startsWith("#/dashboard"));
+await p.goto(BASE + "#/admin/noticias"); await p.waitForTimeout(1500);
+const btn = p.locator('[data-action="delete-aviso"][data-id="9"]');
+console.log("botao excluir tem aria-label:", await btn.getAttribute("aria-label"));
+await btn.focus(); await p.keyboard.press("Enter"); await p.waitForTimeout(500);
+const m = await p.evaluate(() => { const m = document.querySelector("#modal"); return { open: m?.classList.contains("open"), role: m?.querySelector(".modal-card")?.getAttribute("role") || m?.getAttribute("role"), modal: m?.querySelector("[aria-modal]")?.getAttribute("aria-modal"), focusIn: !!document.activeElement.closest("#modal"), active: document.activeElement.innerText?.slice(0, 30) }; });
+console.log("modal:", JSON.stringify(m));
+await p.screenshot({ path: "out/shots/fluxo_modal_excluir.png" });
+await p.keyboard.press("Escape"); await p.waitForTimeout(400);
+console.log("fecha com Esc:", !(await p.evaluate(() => document.querySelector("#modal")?.classList.contains("open"))));
+// tab trap
+await p.waitForTimeout(200);
+for (let i = 0; i < 4; i++) await p.keyboard.press("Tab");
+console.log("foco após 4 Tabs dentro do modal?", await p.evaluate(() => !!document.activeElement.closest("#modal")), await p.evaluate(() => document.activeElement.outerHTML.slice(0, 80)));
+await p.locator('#modal [data-action="confirm-yes"]').click(); await p.waitForTimeout(1500);
+const toast = await p.evaluate(() => ({ t: document.querySelector("#toast")?.innerText, live: document.querySelector("#toast")?.getAttribute("aria-live"), role: document.querySelector("#toast")?.getAttribute("role"), icon: document.querySelector("#toast svg")?.outerHTML.slice(0, 60) }));
+console.log("toast após 409:", JSON.stringify(toast));
+await p.screenshot({ path: "out/shots/fluxo_excluir_409_toast.png" });
+await b.close();
