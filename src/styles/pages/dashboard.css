@@ -26,15 +26,22 @@ h3.dash-h:not(.mb-0):not(.mb-1):not(.mb-2):not(.mb-3){ margin-bottom:.75rem; }
 .dash-urgente{ display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; border-radius:var(--radius);
   background:linear-gradient(135deg, var(--wine-dark), var(--wine)); color:#fff; box-shadow:var(--shadow); }
 .dash-urgente:hover{ filter:brightness(1.06); }
-/* Bloco que abre e fecha com os comunicados urgentes dentro (<details>, acessível pelo teclado). */
-.dash-urgente-box{ border-radius:var(--radius); background:linear-gradient(135deg, var(--wine-dark), var(--wine)); color:#fff; box-shadow:var(--shadow); overflow:hidden; }
-.dash-urgente-box > summary.dash-urgente{ list-style:none; cursor:pointer; background:none; box-shadow:none; border-radius:0; }
-.dash-urgente-box > summary::-webkit-details-marker{ display:none; }
+/* Bloco que abre e fecha com os comunicados urgentes dentro: altura animada por grid (0fr → 1fr),
+   itens entram em sequência. Abre ao passar o mouse; clique ou teclado fixa. */
+.dash-urgente-box{ border-radius:var(--radius); background:linear-gradient(135deg, var(--wine-dark), var(--wine)); color:#fff; box-shadow:var(--shadow); overflow:hidden;
+  transition:box-shadow .45s cubic-bezier(.22,1,.36,1); }
+.dash-urgente-box.is-open{ box-shadow:0 18px 40px -18px rgba(110,15,34,.55), var(--shadow); }
+.dash-urgente-box > .dash-urgente{ width:100%; border:0; text-align:left; font:inherit; color:inherit; cursor:pointer; background:none; box-shadow:none; border-radius:0; }
 .dash-urgente-acao{ display:flex; align-items:center; gap:.35rem; font-weight:700; font-size:.875rem; white-space:nowrap; }
-.dash-urgente-seta{ transition:transform .2s; }
-.dash-urgente-box[open] .dash-urgente-seta{ transform:rotate(180deg); }
-.dash-urgente-fechar, .dash-urgente-box[open] .dash-urgente-abrir{ display:none; }
-.dash-urgente-box[open] .dash-urgente-fechar{ display:inline; }
+.dash-urgente-seta{ transition:transform .45s cubic-bezier(.22,1,.36,1); }
+.dash-urgente-box.is-open .dash-urgente-seta{ transform:rotate(180deg); }
+.dash-urgente-fechar, .dash-urgente-box.is-open .dash-urgente-abrir{ display:none; }
+.dash-urgente-box.is-open .dash-urgente-fechar{ display:inline; }
+.dash-urg-corpo{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .55s cubic-bezier(.22,1,.36,1), opacity .4s ease; }
+.dash-urgente-box.is-open .dash-urg-corpo{ grid-template-rows:1fr; opacity:1; }
+.dash-urg-dentro{ min-height:0; overflow:hidden; }
+.dash-urg-item{ opacity:0; transform:translateY(-6px); transition:opacity .4s ease, transform .5s cubic-bezier(.22,1,.36,1); transition-delay:0s; }
+.dash-urgente-box.is-open .dash-urg-item{ opacity:1; transform:none; transition-delay:calc(.08s + var(--i, 0) * .06s); }
 .dash-urg-lista{ list-style:none; margin:0; padding:0 1.25rem 1.25rem; display:flex; flex-direction:column; gap:.75rem; }
 .dash-urg-item{ display:flex; gap:1rem; align-items:flex-start; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16); border-radius:calc(var(--radius) - 4px); padding:1rem; }
 .dash-urg-foto{ flex:0 0 clamp(96px, 22%, 200px); aspect-ratio:16/10; max-width:100%; border-radius:10px; overflow:hidden; background:rgba(255,255,255,.12); }
@@ -43,9 +50,9 @@ h3.dash-h:not(.mb-0):not(.mb-1):not(.mb-2):not(.mb-3){ margin-bottom:.75rem; }
 .dash-urg-novo{ font-size:.7rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; background:#fff; color:var(--wine-dark); border-radius:999px; padding:.1rem .5rem; }
 .dash-urg-texto{ font-size:.9rem; color:rgba(255,255,255,.88); margin:.25rem 0 .5rem; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .dash-urg-ler{ font-weight:700; font-size:.875rem; color:#fff; text-decoration:underline; text-underline-offset:3px; }
-.dash-urg-ler:focus-visible, .dash-urgente-box > summary:focus-visible{ outline:3px solid #fff; outline-offset:-3px; }
+.dash-urg-ler:focus-visible, .dash-urgente-box > .dash-urgente:focus-visible{ outline:3px solid #fff; outline-offset:-3px; }
 @media (max-width: 560px){ .dash-urg-item{ flex-direction:column; } .dash-urg-foto{ flex-basis:auto; width:100%; } }
-@media (prefers-reduced-motion: reduce){ .dash-urgente-seta, .dash-urg-foto img{ transition:none; } }
+@media (prefers-reduced-motion: reduce){ .dash-urgente-box, .dash-urgente-seta, .dash-urg-corpo, .dash-urg-item, .dash-urg-foto img{ transition:none !important; } }
 .dash-urgente-ic{ width:2.5rem; height:2.5rem; border-radius:999px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
 /* ---------- Avisos (selos de leitura em components/badges-e-pills.css) ---------- */

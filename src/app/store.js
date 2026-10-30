@@ -456,7 +456,7 @@
   // Aniversariantes reais (GET /aniversariantes*): só usuários ativos, só dia e mês.
   const apiAniversariante = (a) => ({
     id: a.id, nome: a.nome, cargo: a.cargo || "—", setor: a.setor || "—", dia: a.dia, mes: a.mes,
-    hoje: a.hoje, diasRestantes: a.dias_restantes, jaParabenizado: a.ja_parabenizado, podeParabenizar: a.pode_parabenizar,
+    hoje: a.hoje, diasRestantes: a.dias_restantes, jaParabenizado: a.ja_parabenizado, podeParabenizar: a.pode_parabenizar, totalParabens: a.total_parabens || 0,
   });
   function aniversariantesAll() { return state.api.aniversariantes.map(apiAniversariante); }
   function aniversariantesHoje() { return state.api.aniversariantesHoje.map(apiAniversariante); }
@@ -473,7 +473,7 @@
   }
   function marcarParabenizado(id) {
     ["aniversariantes", "aniversariantesHoje", "aniversariantesProximos"].forEach((k) => {
-      state.api[k].forEach((a) => { if (a.id === id) { a.ja_parabenizado = true; a.pode_parabenizar = false; } });
+      state.api[k].forEach((a) => { if (a.id === id) { if (!a.ja_parabenizado && a.hoje) a.total_parabens = (a.total_parabens || 0) + 1; a.ja_parabenizado = true; a.pode_parabenizar = false; } });
     });
   }
 

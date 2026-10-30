@@ -280,6 +280,11 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
 - **Comunicados urgentes na Inicial**: um bloco que abre e fecha (`<details>`, teclado incluído) com todos os urgentes
   em destaque dentro, não lidos primeiro, cada um com resumo, foto (se tiver) e "Ler comunicado"; abre sozinho quando há
   urgente não lido.
+- **Comunicados urgentes (animação)**: o bloco abre ao passar o mouse e fecha ao sair (com atraso curto); clique ou
+  teclado fixam aberto/fechado; abre e fecha com altura animada e os comunicados entram em sequência (sem animação
+  com "menos movimento"). Fechado, os links de dentro ficam fora do Tab (`inert`).
+- **Aniversariante do Dia**: cada cartão mostra quantas pessoas já deram parabéns; o aniversariante vê o mural
+  "Seus recados de hoje" (quem mandou, setor, hora e texto), que só ele lê e que some no dia seguinte.
 - **Foto opcional no aviso**: campo no formulário (prévia, trocar e remover); aparece no detalhe, como miniatura no mural
   e no bloco de urgentes.
 - **Meus chamados** agora é uma seção do **Meu painel** (lista completa com filtros e "Abrir chamado"); `#/chamados` abre o painel.

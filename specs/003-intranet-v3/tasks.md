@@ -181,3 +181,4 @@ Caminhos relativos a `residencia qa/`. **Sem commit até o usuário liberar.**
 - [X] T055 Minhas revisões (`#/revisoes`, `GET /documentos/minhas-revisoes`, responsável envia a nova versão); sem as telas de avaliações; Meus chamados dentro do Meu painel; pytest 513, `check-v6` 11/11
 - [X] T056 "Pedir avaliação" no formulário do documento, com as avaliações do documento e o status; `check-v7` 12/12
 - [X] T057 Bloco de comunicados urgentes que abre e fecha na Inicial e foto opcional no aviso (migração `0032_avisos_imagem`); pytest 515, `check-v8` 19/19
+- [X] T058 Urgentes da Inicial com animação suave e abertura ao passar o mouse; recados de aniversário só para o aniversariante (migração `0033_parabens_mensagem`); pytest 516, `check-v8` 23/23, `check-v9` 7/7

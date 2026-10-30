@@ -43,6 +43,28 @@
     </a></li>`;
   }
 
+  /* ---------- comunicados urgentes: abre ao passar o mouse; clique/teclado fixa ---------- */
+  function ligarUrgentes(box) {
+    const botao = box.querySelector(".dash-urgente"), corpo = box.querySelector(".dash-urg-corpo");
+    let fixo = box.dataset.fixo === "1", espera = 0;
+    const abrir = (sim) => {
+      box.classList.toggle("is-open", sim);
+      botao.setAttribute("aria-expanded", String(sim));
+      corpo.inert = !sim; // fechado: os links de dentro saem da ordem do Tab
+    };
+    abrir(fixo);
+    // Só em aparelhos com mouse: no toque, o clique decide.
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      box.addEventListener("mouseenter", () => { clearTimeout(espera); espera = setTimeout(() => abrir(true), 120); });
+      box.addEventListener("mouseleave", () => { clearTimeout(espera); if (!fixo) espera = setTimeout(() => abrir(false), 350); });
+    }
+    botao.addEventListener("click", () => {
+      clearTimeout(espera);
+      const abrirAgora = !box.classList.contains("is-open") || !fixo;
+      fixo = abrirAgora; abrir(abrirAgora);
+    });
+  }
+
   /* ---------- carrossel de próximos eventos (com a foto de capa) ---------- */
   function acaoSlide(e) {
     if (!App.state.auth) return e.aberto ? `<a href="#/login" data-action="entrar" class="btn-white px-5">${icon("lock", "w-4 h-4")} Entrar para se inscrever</a>` : "";
@@ -216,7 +238,7 @@
         </div>
       </section>` : "";
 
-    const itemUrgente = (a) => `<li class="dash-urg-item">
+    const itemUrgente = (a, i) => `<li class="dash-urg-item" style="--i:${i}">
         ${a.temImagem ? `<span class="dash-urg-foto" data-foto-caixa><img data-foto-aviso="${a.id}" alt="" decoding="async"></span>` : ""}
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap mb-1">${logado && !a.lido ? `<span class="dash-urg-novo">Não lido</span>` : ""}<span class="text-xs text-white/80">${esc(a.data)}</span></div>
@@ -225,15 +247,17 @@
           <a href="#/avisos/${a.id}" class="dash-urg-ler">Ler comunicado ${icon("chevron-right", "w-4 h-4 inline")}</a>
         </div></li>`;
     const alertaUrgente = urgentes.length ? `
-      <details class="dash-urgente-box mb-6" ${urgentesNaoLidos ? "open" : ""}>
-        <summary class="dash-urgente">
+      <section class="dash-urgente-box mb-6" data-urgentes data-fixo="${urgentesNaoLidos ? 1 : 0}" aria-label="Comunicados urgentes">
+        <button type="button" class="dash-urgente" aria-expanded="false" aria-controls="dash-urg-corpo">
           <span class="dash-urgente-ic">${icon("alert-triangle", "w-5 h-5")}</span>
           <span class="min-w-0 flex-1"><span class="block text-xs font-extrabold tracking-wide">${urgentes.length === 1 ? "COMUNICADO URGENTE" : `${urgentes.length} COMUNICADOS URGENTES`}${urgentesNaoLidos ? ` · ${urgentesNaoLidos} NÃO ${urgentesNaoLidos === 1 ? "LIDO" : "LIDOS"}` : ""}</span>
             <span class="block font-bold truncate">${esc(urgentes[0].titulo)}</span></span>
           <span class="dash-urgente-acao"><span class="dash-urgente-abrir">Ver ${urgentes.length === 1 ? "comunicado" : "comunicados"}</span><span class="dash-urgente-fechar">Fechar</span>${icon("chevron-down", "w-4 h-4 dash-urgente-seta")}</span>
-        </summary>
-        <ul class="dash-urg-lista">${urgentes.map(itemUrgente).join("")}</ul>
-      </details>` : "";
+        </button>
+        <div id="dash-urg-corpo" class="dash-urg-corpo" inert><div class="dash-urg-dentro">
+          <ul class="dash-urg-lista">${urgentes.map(itemUrgente).join("")}</ul>
+        </div></div>
+      </section>` : "";
 
     const blocoGestao = gestor ? `
       <section class="mb-6" aria-labelledby="dash-visao">
@@ -306,8 +330,8 @@
         }));
         const caixa = document.querySelector("[data-carrossel]");
         if (caixa) { Lib.wireCarrossel(caixa); App.carregarFotosEventos(caixa); }
-        const urg = document.querySelector(".dash-urgente-box");
-        if (urg) App.carregarFotos(urg);
+        const urg = document.querySelector("[data-urgentes]");
+        if (urg) { App.carregarFotos(urg); ligarUrgentes(urg); }
         if (gestor) carregarGestao();
         document.getElementById("dash-add-atalho")?.addEventListener("click", () => App.abrirNovoAtalho(() => App.render()));
         const btn = document.querySelector('[data-auto-confetti="1"]');
