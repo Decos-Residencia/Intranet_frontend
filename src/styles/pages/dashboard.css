@@ -130,7 +130,7 @@ html[data-movimento="reduzido"] .ev-carrossel-trilho{ transition:none; }
 
 /* ---------- Carrossel: a foto sozinha; informações e controles numa faixa abaixo dela ---------- */
 .ev-slide{ flex-direction:column; align-items:stretch; min-height:0; }
-.ev-slide-foto{ position:relative; display:block; height:clamp(220px, 28vw, 360px); overflow:hidden;
+.ev-slide-foto{ position:relative; display:block; height:180px; overflow:hidden;
   background:linear-gradient(135deg, var(--wine-dark), var(--wine)); }
 .ev-slide-foto .ev-slide-img{ position:absolute; inset:0; }
 .ev-slide-sem-foto{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.45);
@@ -138,16 +138,22 @@ html[data-movimento="reduzido"] .ev-carrossel-trilho{ transition:none; }
 .ev-slide-data{ position:absolute; left:1.25rem; top:1.25rem; padding:.4rem .75rem; border-radius:.75rem;
   background:rgba(60,10,20,.88); color:#fff; font-size:.8rem; font-weight:800; letter-spacing:.04em; }
 .ev-slide-legenda{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
-  padding:1rem 1.25rem; background:var(--wine-dark); color:#fff; }
+  padding:.85rem 1.25rem; background:var(--wine-dark); color:#fff; }
 .ev-slide-legenda .ev-slide-titulo{ font-size:clamp(1.1rem, 1rem + .6vw, 1.45rem); text-shadow:none; }
 .ev-slide-legenda .ev-slide-info{ margin-top:.2rem; font-size:.88rem; color:rgba(255,255,255,.9); }
 .ev-slide-descricao{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
   max-width:46rem; margin:.5rem 0; font-size:.9rem; line-height:1.4; color:rgba(255,255,255,.88); }
 .ev-slide-acoes{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
 .ev-carrossel-controles{ position:static; justify-content:center; padding:0 .75rem .4rem; background:var(--wine-dark); }
+@media (min-width:900px){
+  .ev-slide{ flex-direction:row; min-height:280px; }
+  .ev-slide-foto{ flex:0 0 40%; height:auto; min-height:280px; }
+  .ev-slide-legenda{ flex:1; min-width:0; align-content:center; padding:1rem 1.25rem; }
+  .ev-slide-descricao{ -webkit-line-clamp:1; }
+}
 @media (max-width:640px){
-  .ev-slide-foto{ height:220px; }
-  .ev-slide-legenda{ padding:1rem 1.1rem; }
+  .ev-slide-foto{ height:170px; }
+  .ev-slide-legenda{ padding:.85rem 1.1rem; }
   .ev-carrossel-controles{ left:auto; }
 }
 

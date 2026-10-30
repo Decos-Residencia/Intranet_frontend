@@ -39,7 +39,7 @@
     </a></li>`;
   }
 
-  /* ---------- comunicados urgentes: compactos até o usuário abrir ---------- */
+  /* ---------- comunicados urgentes: conteúdo visível na página inicial ---------- */
   function ligarUrgentes(box) {
     const botao = box.querySelector(".dash-urgente"), corpo = box.querySelector(".dash-urg-corpo");
     const abrir = (sim) => {
@@ -47,7 +47,7 @@
       botao.setAttribute("aria-expanded", String(sim));
       corpo.inert = !sim; // fechado: os links de dentro saem da ordem do Tab
     };
-    abrir(false);
+    abrir(true);
     botao.addEventListener("click", () => abrir(!box.classList.contains("is-open")));
   }
 
