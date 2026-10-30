@@ -119,13 +119,65 @@
             <p class="text-sm text-slate-500 dark:text-slate-400">O arquivo vai para um armazenamento <b>privado</b>. Os colaboradores abrem por um link temporário (60 s) gerado após conferir o login e o setor.</p>
             <p class="text-xs text-slate-400 mt-3">Validamos o tipo real do arquivo, não só a extensão.</p>
           </div>
+          ${id && App.can("manage_reviews") ? `<section class="card p-5" aria-labelledby="dc-av-h">
+            <div class="flex items-center justify-between gap-2 mb-2"><h3 id="dc-av-h" class="font-bold text-slate-800 dark:text-slate-100">Avaliações</h3>
+              <button type="button" id="dc-pedir-avaliacao" class="btn-wine text-xs px-3 py-1.5 flex items-center gap-1">${icon("plus", "w-3.5 h-3.5")} Pedir avaliação</button></div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Peça a alguém que leia e aprove ou rejeite este documento. A pessoa é avisada e responde em “Minhas revisões”.</p>
+            <ul id="dc-avaliacoes" class="space-y-2" aria-live="polite"><li class="text-sm text-slate-500 dark:text-slate-400">Carregando…</li></ul>
+          </section>` : ""}
         </aside>
       </form>`,
       init() { iniciar(id); },
     };
   }
 
+  /* ---------- avaliações do documento (POST /avaliacoes-documentos) ---------- */
+  const ROT_AV = { PENDENTE: ["blue", "Pendente"], EM_ANALISE: ["amber", "Em análise"], APROVADO: ["green", "Aprovado"], REJEITADO: ["red", "Rejeitado"] };
+
+  async function carregarAvaliacoes(id) {
+    const box = $("dc-avaliacoes");
+    if (!box) return;
+    try {
+      const r = await Services.avaliacoes.list({ documento_id: id, page_size: 50 });
+      if (!document.contains(box)) return;
+      box.innerHTML = r.items.length ? r.items.map((a) => {
+        const [tom, rot] = ROT_AV[a.status] || ["gray", a.status];
+        return `<li class="text-sm"><div class="flex items-center justify-between gap-2"><span class="font-semibold text-slate-800 dark:text-slate-100 truncate">${esc(a.avaliador_nome || "—")}</span>${badge(tom, rot)}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">pedida em ${esc(UI.fmtDataHora(a.data_solicitacao))}</div>
+          ${a.status === "REJEITADO" && a.observacao ? `<div class="text-xs text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-line">${esc(a.observacao)}</div>` : ""}</li>`;
+      }).join("") : `<li class="text-sm text-slate-500 dark:text-slate-400">Nenhuma avaliação pedida ainda.</li>`;
+    } catch (err) { box.innerHTML = `<li class="text-sm text-slate-500 dark:text-slate-400">Não foi possível carregar. ${esc(err.message || "")}</li>`; }
+  }
+
+  function pedirAvaliacao(id) {
+    const pessoas = [...(App.state.api.usuariosRaw || [])].filter((u) => u.ativo !== false && u.id !== App.state.user?.id)
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    App.openPanel("Pedir avaliação", `<form id="dc-av-form" class="space-y-4" novalidate>
+      <p class="text-sm text-slate-500 dark:text-slate-400">${esc($("dc-titulo")?.value || "Documento")}</p>
+      <div><label class="field-label" for="dc-av-pessoa">QUEM VAI AVALIAR *</label><select id="dc-av-pessoa" class="field-input"><option value="">Escolha a pessoa</option>${pessoas.map((u) => `<option value="${u.id}">${esc(u.nome)}${u.setor?.nome ? ` · ${esc(u.setor.nome)}` : ""}</option>`).join("")}</select>
+        <div class="field-hint">Documento de setor só pode ser avaliado por alguém do setor.</div></div>
+      <div><label class="field-label" for="dc-av-obs">O QUE VERIFICAR</label><textarea id="dc-av-obs" class="field-input" rows="3" maxlength="5000" placeholder="Opcional. Ex.: conferir as doses da página 3"></textarea></div>
+      <p id="dc-av-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></p>
+      <button type="submit" class="btn-wine w-full py-3">Pedir avaliação</button></form>`);
+    $("dc-av-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const erro = $("dc-av-erro"), pessoa = $("dc-av-pessoa").value, obs = $("dc-av-obs").value.trim();
+      if (!pessoa) { erro.textContent = "Escolha quem vai avaliar."; erro.classList.remove("hidden"); $("dc-av-pessoa").focus(); return; }
+      const corpo = { documento_id: Number(id), avaliador_id: Number(pessoa) };
+      if (obs) corpo.observacao = obs;
+      try {
+        await Services.avaliacoes.create(corpo);
+        App.closePanel(); App.toast("Avaliação pedida: a pessoa foi avisada");
+        carregarAvaliacoes(id);
+      } catch (err) { erro.textContent = err.message || "Não foi possível pedir a avaliação."; erro.classList.remove("hidden"); }
+    });
+  }
+
   async function iniciar(id) {
+    if (id && $("dc-pedir-avaliacao")) {
+      $("dc-pedir-avaliacao").addEventListener("click", () => pedirAvaliacao(id));
+      carregarAvaliacoes(id);
+    }
     const arq = $("dc-arquivo");
     document.querySelector("[data-pick-document-file]")?.addEventListener("click", (e) => {
       e.preventDefault();

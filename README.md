@@ -275,5 +275,7 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
 - **Minhas revisões** (`#/revisoes`, no menu para quem é responsável por algum documento ou tem avaliação pendente):
   documentos com o prazo, "Enviar nova versão" (com a próxima revisão) e as avaliações pedidas à pessoa. Os alertas
   de validade e de avaliação apontam para cá. Saíram as telas "Minhas avaliações" e "Gerenciar avaliações".
+- **Pedir avaliação** no formulário de edição do documento (quem tem `gerenciar_avaliacoes`): escolhe a pessoa e o que
+  verificar; a seção lista as avaliações do documento com o status (e o motivo, se rejeitada).
 - **Meus chamados** agora é uma seção do **Meu painel** (lista completa com filtros e "Abrir chamado"); `#/chamados` abre o painel.
 - Os rótulos dos formulários do painel lateral agora são ligados aos campos (`for`/`id`), para leitor de tela.
