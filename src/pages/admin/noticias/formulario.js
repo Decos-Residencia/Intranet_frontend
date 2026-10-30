@@ -59,6 +59,14 @@
           <div><label class="field-label" for="nt-destaque">EXIBIR EM DESTAQUE ATÉ</label>
             <input type="datetime-local" id="nt-destaque" class="field-input max-w-xs">
             <div class="field-hint">Opcional. Depois dessa data o aviso sai da Inicial e do topo do mural sozinho, mas continua no histórico e na busca.</div></div>
+          <div><span class="field-label" id="nt-foto-lbl">FOTO (OPCIONAL)</span>
+            <div class="flex items-center gap-3 flex-wrap">
+              <span id="nt-foto-previa" class="nt-foto-previa" hidden><img id="nt-foto-img" alt="Prévia da foto do comunicado"></span>
+              <label class="btn-outline px-4 py-2 text-sm cursor-pointer">${icon("upload", "w-4 h-4 inline")} <span id="nt-foto-txt">Escolher foto</span>
+                <input type="file" id="nt-foto" accept="image/jpeg,image/png,image/webp" class="sr-only" aria-labelledby="nt-foto-lbl"></label>
+              <button type="button" id="nt-foto-remover" class="btn-outline px-4 py-2 text-sm" hidden>Remover foto</button>
+            </div>
+            <div class="field-hint" id="nt-foto-info">JPG, PNG ou WEBP até 5 MB. Aparece no comunicado, no mural e no bloco de urgentes da Inicial.</div></div>
           <div id="nt-revisao-aviso" class="hidden" role="status"></div>
           <div id="nt-publicacao" class="card p-4 hidden">
             <label class="field-label">PUBLICAÇÃO</label>
@@ -95,7 +103,40 @@
     };
   }
 
+  /* ---------- foto opcional: { arquivo } a enviar, { remover: true } ou null (não mexe) ---------- */
+  const $ = (i) => document.getElementById(i);
+  let fotoPendente = null;
+  const MAX_FOTO = 5 * 1024 * 1024;
+  function mostrarFoto(url) {
+    $("nt-foto-img").src = url; $("nt-foto-previa").hidden = !url; $("nt-foto-remover").hidden = !url;
+    $("nt-foto-txt").textContent = url ? "Trocar foto" : "Escolher foto";
+  }
+  function ligarFoto() {
+    fotoPendente = null;
+    $("nt-foto").addEventListener("change", () => {
+      const f = $("nt-foto").files?.[0];
+      if (!f) return;
+      if (!["image/jpeg", "image/png", "image/webp"].includes(f.type) || f.size > MAX_FOTO) {
+        $("nt-foto-info").textContent = "Use JPG, PNG ou WEBP de até 5 MB."; $("nt-foto").value = ""; return;
+      }
+      fotoPendente = { arquivo: f };
+      mostrarFoto(URL.createObjectURL(f));
+      $("nt-foto-info").textContent = `${f.name}: será enviada ao salvar.`;
+    });
+    $("nt-foto-remover").addEventListener("click", () => {
+      fotoPendente = { remover: true }; $("nt-foto").value = ""; mostrarFoto("");
+      $("nt-foto-info").textContent = "A foto será removida ao salvar.";
+    });
+  }
+  async function salvarFoto(id) {
+    if (!fotoPendente) return;
+    if (fotoPendente.arquivo) await Services.avisos.definirImagem(id, fotoPendente.arquivo);
+    else await Services.avisos.removerImagem(id);
+    App.esquecerFotoAviso(id);
+  }
+
   async function iniciar(id) {
+    ligarFoto();
     const $ = (i) => document.getElementById(i);
     let atual = null;           // aviso carregado (edição)
     let modo = "publicar";
@@ -132,6 +173,7 @@
       setPrio(atual.categoria === "urgente" ? "urgente" : "normal");
       if (atual.publicar_em && ["AGENDADO", "EM_REVISAO"].includes(atual.status)) $("nt-quando").value = paraInputLocal(atual.publicar_em);
       if (atual.destaque_ate) $("nt-destaque").value = paraInputLocal(atual.destaque_ate);
+      if (atual.tem_imagem) App.fotoAviso(atual.id).then((url) => mostrarFoto(url)).catch(() => {});
       const faixa = $("nt-revisao-aviso");
       if (atual.status === "EM_REVISAO") {
         faixa.className = "revisao-faixa revisao-faixa-espera";
@@ -199,8 +241,9 @@
     const botoes = document.querySelectorAll('[data-action="save-noticia"]');
     botoes.forEach((b) => { b.disabled = true; });
     try {
-      if (f.dataset.id) await Services.avisos.update(f.dataset.id, payload);
-      else await Services.avisos.create(payload);
+      const salvo = f.dataset.id ? await Services.avisos.update(f.dataset.id, payload) : await Services.avisos.create(payload);
+      try { await salvarFoto(salvo.id); }
+      catch (err) { App.toast(`Comunicado salvo, mas a foto não foi enviada: ${err.message || "tente de novo"}`); await App.loadApiData(); return; }
       await App.loadApiData();
       App.toast({ publicar: "Notícia publicada no mural!", agendar: `Notícia agendada para ${fmtHora.format(new Date(quandoIso || Date.now()))}`, rascunho: "Rascunho salvo", salvar: "Alterações salvas", revisao: "Enviado para revisão: você será avisado da decisão", retirar: "Retirado da revisão (voltou a rascunho)" }[modo]);
       setTimeout(() => App.go("#/admin/noticias"), 500);

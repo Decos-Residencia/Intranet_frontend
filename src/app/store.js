@@ -229,7 +229,7 @@
     const autor = nomeDoUsuario(a.autor_id) || (state.auth ? "Autor não identificado" : "Comunicação Decós");
     return {
       id: String(a.id), apiId: a.id, source: "api", own: true, categoria, lido: !!a.lido,
-      emDestaque: a.em_destaque !== false, destaqueAte: a.destaque_ate || null,
+      emDestaque: a.em_destaque !== false, destaqueAte: a.destaque_ate || null, temImagem: !!a.tem_imagem,
       titulo: a.titulo, resumo: conteudo.length > 180 ? conteudo.slice(0, 180) + "…" : conteudo || "Sem conteúdo.",
       data: fmt(fmtLonga, a.data_publicacao), dataCurta: fmt(fmtCurta, a.data_publicacao),
       autor, autorSigla: nomeDoUsuario(a.autor_id) ? UI.iniciais(autor) : "?", imagem: "",

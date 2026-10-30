@@ -277,5 +277,10 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
   de validade e de avaliação apontam para cá. Saíram as telas "Minhas avaliações" e "Gerenciar avaliações".
 - **Pedir avaliação** no formulário de edição do documento (quem tem `gerenciar_avaliacoes`): escolhe a pessoa e o que
   verificar; a seção lista as avaliações do documento com o status (e o motivo, se rejeitada).
+- **Comunicados urgentes na Inicial**: um bloco que abre e fecha (`<details>`, teclado incluído) com todos os urgentes
+  em destaque dentro, não lidos primeiro, cada um com resumo, foto (se tiver) e "Ler comunicado"; abre sozinho quando há
+  urgente não lido.
+- **Foto opcional no aviso**: campo no formulário (prévia, trocar e remover); aparece no detalhe, como miniatura no mural
+  e no bloco de urgentes.
 - **Meus chamados** agora é uma seção do **Meu painel** (lista completa com filtros e "Abrir chamado"); `#/chamados` abre o painel.
 - Os rótulos dos formulários do painel lateral agora são ligados aos campos (`for`/`id`), para leitor de tela.
