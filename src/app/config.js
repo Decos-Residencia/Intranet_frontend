@@ -5,8 +5,8 @@
    localhost em desenvolvimento → PRODUCTION_API_URL.
    ========================================================================= */
 (function () {
-  // Preencha com a URL pública do backend (Render) no deploy de produção.
-  const PRODUCTION_API_URL = "https://intranet-backend-dzhs.onrender.com";
+  // Em produção, a Vercel encaminha /api ao backend pelo mesmo domínio do frontend.
+  const PRODUCTION_API_URL = "/api";
 
   const runtime = window.__DECOS_CONFIG__ || {};
   const host = location.hostname;
