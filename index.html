@@ -15,6 +15,29 @@
       }
     })();
   </script>
+  <!-- Preferências de tema e acessibilidade ANTES do CSS: evita a tela "piscar" no visual padrão.
+       A cópia vem de features/preferencias.js; a fonte da verdade é a conta (GET /auth/me). -->
+  <script>
+    (function () {
+      var d = document.documentElement, p = {}, t = null;
+      try { p = JSON.parse(localStorage.getItem("decos_intranet_prefs") || "{}") || {}; } catch (e) { p = {}; }
+      try { t = (JSON.parse(localStorage.getItem("decos_intranet_state") || "{}") || {}).theme; } catch (e) { t = null; }
+      if (p.texto && p.texto !== 100) d.dataset.texto = String(p.texto);
+      if (p.escala && p.escala !== "normal") d.dataset.escala = p.escala;
+      if (p.espacamento === "amplo") d.dataset.espacamento = "amplo";
+      // Alto contraste: a escolha da conta vale; sem escolha, segue o sistema (prefers-contrast).
+      if (p.alto_contraste === true || (p.alto_contraste === undefined && window.matchMedia && matchMedia("(prefers-contrast: more)").matches)) d.dataset.contraste = "alto";
+      if (p.reduzir_movimento) d.dataset.movimento = "reduzido";
+      if (p.reduzir_transparencia) d.dataset.transparencia = "reduzida";
+      if (p.sublinhar_links) d.dataset.links = "sublinhado";
+      if (p.foco_reforcado) d.dataset.foco = "reforcado";
+      if (p.fonte_leitura) d.dataset.fonte = "leitura";
+      var tema = p.tema || t;
+      if (tema === "auto") tema = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      if (tema === "dark") d.classList.add("dark");
+      if (tema === "red") d.classList.add("theme-red");
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Intranet Corporativa · Hospital Decós</title>
   <meta name="description" content="Intranet corporativa do Hospital Decós — avisos, eventos, documentos, POPs, ramais e painel administrativo.">
@@ -32,7 +55,7 @@
         extend: {
           colors: {
             wine: { DEFAULT:'#8E1B2E', 50:'#FCE9ED', 100:'#F7D6DD', 600:'#8E1B2E', 700:'#6E0F22', 800:'#5A0C1C' },
-            crimson: { DEFAULT:'#F5334D', 500:'#F5334D' },
+            crimson: { DEFAULT:'#C8102E', 500:'#C8102E' },
           },
           fontFamily: { sans:['Public Sans','system-ui','sans-serif'] },
         },
@@ -46,7 +69,7 @@
        recorrer sempre a 700), 800 fica reservado para os poucos momentos de destaque. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
   <!-- Estilos: base → layout → componentes → telas -->
   <link rel="stylesheet" href="/src/styles/base/tokens-e-temas.css">
@@ -69,10 +92,13 @@
   <link rel="stylesheet" href="/src/styles/components/formularios.css">
   <link rel="stylesheet" href="/src/styles/components/notificacoes.css">
   <link rel="stylesheet" href="/src/styles/components/painel.css">
+  <link rel="stylesheet" href="/src/styles/components/abre-no-mouse.css">
   <link rel="stylesheet" href="/src/styles/components/modal.css">
   <link rel="stylesheet" href="/src/styles/components/toast.css">
   <link rel="stylesheet" href="/src/styles/components/confete.css">
+  <link rel="stylesheet" href="/src/styles/components/glass.css">
   <link rel="stylesheet" href="/src/styles/pages/dashboard.css">
+  <link rel="stylesheet" href="/src/styles/pages/painel.css">
   <link rel="stylesheet" href="/src/styles/pages/avisos.css">
   <link rel="stylesheet" href="/src/styles/pages/eventos.css">
   <link rel="stylesheet" href="/src/styles/pages/documentos.css">
@@ -106,6 +132,15 @@
   <script src="/src/services/chamados.service.js"></script>
   <script src="/src/services/dashboard.service.js"></script>
   <script src="/src/services/auditoria.service.js"></script>
+  <script src="/src/services/preferencias.service.js"></script>
+  <script src="/src/services/acessos.service.js"></script>
+  <script src="/src/services/atalhos.service.js"></script>
+  <script src="/src/services/agenda.service.js"></script>
+  <script src="/src/services/painel.service.js"></script>
+  <script src="/src/services/treinamentos.service.js"></script>
+  <script src="/src/services/revisao.service.js"></script>
+  <script src="/src/services/calendario.service.js"></script>
+  <script src="/src/services/vagas.service.js"></script>
 
   <!-- 2. shared: peças de interface, layout e utilidades -->
   <script src="/src/shared/ui/icones.js"></script>
@@ -124,11 +159,15 @@
   <script src="/src/shared/layout/topbar.js"></script>
   <script src="/src/shared/layout/quick-fab.js"></script>
   <script src="/src/shared/lib/listas.js"></script>
-  <script src="/src/shared/lib/carrosseis.js"></script>
   <script src="/src/shared/lib/arquivos.js"></script>
+  <script src="/src/shared/lib/leitor-pdf.js"></script>
+  <script src="/src/shared/lib/carrossel.js"></script>
 
   <!-- 3. features: ações do usuário (painéis, busca, downloads, tema) -->
   <script src="/src/features/aparencia.js"></script>
+  <script src="/src/features/preferencias.js"></script>
+  <script src="/src/features/lembretes.js"></script>
+  <script src="/src/features/atalhos.js"></script>
   <script src="/src/features/solicitacoes.js"></script>
   <script src="/src/features/eventos.js"></script>
   <script src="/src/features/notificacoes-painel.js"></script>
@@ -150,6 +189,10 @@
   <script src="/src/pages/eventos/detalhe.js"></script>
   <script src="/src/pages/admin/chamados/lista.js"></script>
   <script src="/src/pages/admin/eventos/lista.js"></script>
+  <script src="/src/pages/admin/treinamentos/obrigatorios.js"></script>
+  <script src="/src/pages/admin/eventos/institucional.js"></script>
+  <script src="/src/pages/admin/vagas/lista.js"></script>
+  <script src="/src/pages/admin/revisao/fila.js"></script>
   <script src="/src/pages/admin/eventos/formulario.js"></script>
   <script src="/src/pages/documentos/central.js"></script>
   <script src="/src/pages/documentos/visualizar.js"></script>
@@ -159,6 +202,11 @@
   <script src="/src/pages/admin/faqs/faqs.js"></script>
   <script src="/src/pages/diretorio/diretorio.js"></script>
   <script src="/src/pages/perfil/perfil.js"></script>
+  <script src="/src/pages/configuracoes/configuracoes.js"></script>
+  <script src="/src/pages/chamados/meus.js"></script>
+  <script src="/src/pages/agenda/agenda.js"></script>
+  <script src="/src/pages/painel/painel.js"></script>
+  <script src="/src/pages/vagas/mural.js"></script>
   <script src="/src/pages/documentos/restrito.js"></script>
   <script src="/src/pages/notificacoes/notificacoes.js"></script>
   <script src="/src/pages/admin/_comum.js"></script>
@@ -167,6 +215,7 @@
   <script src="/src/pages/admin/documentos/lista.js"></script>
   <script src="/src/pages/admin/documentos/formulario.js"></script>
   <script src="/src/pages/admin/usuarios/usuarios.js"></script>
+  <script src="/src/pages/admin/acessos/acessos.js"></script>
   <script src="/src/pages/admin/auditoria/auditoria.js"></script>
 
   <!-- 5. app: rotas, roteador, ações globais e boot (sempre por último) -->

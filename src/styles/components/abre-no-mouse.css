@@ -1,0 +1,13 @@
+/* "Abre ao passar o mouse": o texto do cartão se estende suavemente quando o mouse para nele
+   (~0,2 s) ou quando ele recebe foco. Fechado: N linhas com esmaecido no fim.
+   Uso: .abre-mouse no cartão e .abre-texto (bloco) ou .abre-linha (uma linha com reticências). */
+.abre-mouse .abre-texto{ max-height:var(--abre-altura, 2.9em); overflow:hidden; line-height:1.45;
+  -webkit-mask-image:linear-gradient(#000 55%, transparent); mask-image:linear-gradient(#000 55%, transparent);
+  transition:max-height .45s cubic-bezier(.22,.61,.36,1) 0s; }
+.abre-mouse:hover .abre-texto, .abre-mouse:focus-within .abre-texto, .abre-mouse:focus-visible .abre-texto{
+  max-height:30em; -webkit-mask-image:none; mask-image:none; transition-delay:.18s; }
+.abre-mouse .abre-linha{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.abre-mouse:hover .abre-linha, .abre-mouse:focus-within .abre-linha, .abre-mouse:focus-visible .abre-linha{ white-space:normal; overflow-wrap:anywhere; }
+.abre-mouse{ transition:box-shadow .3s ease; }
+.abre-mouse:hover{ box-shadow:var(--shadow-lg); }
+html[data-movimento="reduzido"] .abre-mouse, html[data-movimento="reduzido"] .abre-mouse .abre-texto{ transition:none; }

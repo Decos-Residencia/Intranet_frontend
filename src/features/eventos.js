@@ -21,7 +21,16 @@
       data: dataCurta.format(ini), dataLonga: dataLonga.format(ini), horario, local: e.local, organizador: e.organizador,
       vagas: e.vagas, inscritos: e.inscritos, livres: e.vagas_disponiveis, status: e.status, encerrado: e.encerrado,
       aberto: e.inscricoes_abertas, inscrito: e.inscrito, cancelado: e.status === "CANCELADO",
+      tipo: e.tipo || "EVENTO", treinamento: e.tipo === "TREINAMENTO", visto: !!e.visto, temImagem: !!e.tem_imagem, temBanner: !!e.tem_banner,
+      vagasTxt: textoVagas(e.vagas, e.vagas_disponiveis, e.inscritos),
     };
+  }
+
+  // Limite de vagas em uma linha, igual em todas as telas: "12 de 30 vagas livres", "Esgotado (30 vagas)".
+  function textoVagas(vagas, livres, inscritos) {
+    if (!vagas) return `Sem limite de vagas${inscritos ? ` · ${inscritos} ${inscritos === 1 ? "inscrito" : "inscritos"}` : ""}`;
+    if (!livres) return `Esgotado (${vagas} ${vagas === 1 ? "vaga" : "vagas"})`;
+    return `${livres} de ${vagas} ${vagas === 1 ? "vaga livre" : "vagas livres"}`;
   }
 
   function eventosProximos() { return App.state.api.eventosProximos.map(eventoView); }
@@ -61,6 +70,42 @@
     catch (err) { App.toast(err.message || "Evento não encontrado."); }
   }
 
-  Object.assign(App, { eventoView, eventosProximos, minhasInscricoes, inscreverEvento: inscrever, cancelarInscricaoEvento: cancelarInscricao, baixarIcs, adicionarAgenda });
+  // Link da foto de capa (assinado, 60 s). Guardado por 45 s para não pedir de novo a cada tela.
+  const fotos = new Map();
+  async function fotoEvento(id, tipo = "capa") {
+    const chave = `${id}:${tipo}`, c = fotos.get(chave);
+    if (c && c.ate > Date.now()) return c.url;
+    const r = await Services.eventos.imagem(id, tipo);
+    if (!/^https?:\/\//.test(r.url)) throw new Error("Endereço de imagem inválido.");
+    fotos.set(chave, { url: r.url, ate: Date.now() + 45000 });
+    return r.url;
+  }
+  // Foto com proporção muito diferente do espaço (ex.: retrato num banner largo) seria cortada:
+  // nesse caso ela aparece inteira e o resto do espaço é a própria foto desfocada ao fundo.
+  function ajustarFoto(img, url) {
+    if (img.dataset.preencher === "1") return; // Inicial: a foto sempre preenche a faixa (esticada)
+    const caixa = img.parentElement?.getBoundingClientRect();
+    if (!caixa?.width || !caixa.height || !img.naturalWidth) return;
+    const diferenca = (img.naturalWidth / img.naturalHeight) / (caixa.width / caixa.height);
+    if (diferenca > 0.8 && diferenca < 1.25) return;
+    img.classList.add("foto-inteira");
+    if (!img.previousElementSibling?.classList.contains("foto-fundo")) {
+      const fundo = document.createElement("img");
+      fundo.className = "foto-fundo"; fundo.alt = ""; fundo.src = url;
+      fundo.setAttribute("aria-hidden", "true");
+      img.before(fundo);
+    }
+  }
+  // Preenche <img data-foto-evento="id"> dentro de `raiz`; sem foto (ou erro) fica o fundo da marca.
+  function carregarFotosEventos(raiz = document) {
+    raiz.querySelectorAll("img[data-foto-evento]").forEach((img) => {
+      fotoEvento(Number(img.dataset.fotoEvento), img.dataset.fotoTipo || "capa")
+        .then((url) => { img.addEventListener("load", () => { ajustarFoto(img, url); img.classList.add("is-loaded"); }, { once: true }); img.src = url; })
+        .catch(() => img.remove());
+    });
+  }
+  function esquecerFoto(id) { ["capa", "banner"].forEach((t) => fotos.delete(`${Number(id)}:${t}`)); }
+
+  Object.assign(App, { fotoEvento, carregarFotosEventos, esquecerFoto, eventoView, eventosProximos, minhasInscricoes, inscreverEvento: inscrever, cancelarInscricaoEvento: cancelarInscricao, baixarIcs, adicionarAgenda });
   Object.assign(UI, { fmtMesAno: (d) => { const t = mesAno.format(d); return t.charAt(0).toUpperCase() + t.slice(1); }, fmtDataHora: (iso) => dataHora.format(new Date(iso)) });
 })();

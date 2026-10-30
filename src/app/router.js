@@ -13,11 +13,13 @@
     // Enquanto a sessão não foi validada em GET /auth/me, nada é decidido pelo hash.
     if (!state.ready || state.loadError) { app.innerHTML = state.loadError ? connectionError(state.loadError) : loadingScreen(); return; }
 
-    let hash = location.hash || "#/login";
+    let hash = location.hash || "#/dashboard";
 
     const publicRoute = hash === "#/login" || hash.startsWith("#/redefinir-senha");
-    if (!state.auth && !publicRoute) { location.hash = "#/login"; return; }
-    if (state.auth && hash === "#/login") { location.hash = state.user?.must_change_password ? "#/trocar-senha" : "#/dashboard"; return; }
+    const rotaAberta = App.routes.find((r) => r.re.test(hash))?.publica;
+    // Visitante (sem login) só vê o conteúdo institucional; o resto pede login e volta depois.
+    if (!state.auth && !publicRoute && !rotaAberta) { App.guardarDestino(hash); return; }
+    if (state.auth && hash === "#/login") { location.hash = state.user?.must_change_password ? "#/trocar-senha" : App.destinoAposLogin(); return; }
     // Senha temporária: nenhuma outra tela abre até a troca (também após recarregar a página).
     if (state.auth && state.user?.must_change_password && hash !== "#/trocar-senha") { location.hash = "#/trocar-senha"; return; }
 
@@ -36,18 +38,23 @@
     } else {
       app.innerHTML = App.shell(page.html, page.titleCrimson ? `<span class="text-crimson">${page.title}</span>` : page.title, hash);
     }
+    // Título da aba = tela atual (leitores de tela anunciam a navegação).
+    const tituloTela = String(page.title || "").replace(/<[^>]*>/g, "").trim();
+    document.title = tituloTela ? `${tituloTela} · Intranet Decós` : "Intranet Corporativa · Hospital Decós";
     page.init && page.init();
     App.afterRender();
     App.touchNotificacoes?.();
   }
 
   function shell(inner, title, hash) {
-    return `<div class="layout">
+    return `<a href="#conteudo" class="skip-link" data-action="skip-content">Pular para o conteúdo</a>
+    <div class="layout">
       <div class="drawer-backdrop" data-action="close-menu"></div>
       ${UI.sidebar(state, hash || location.hash)}
+      <button type="button" data-action="toggle-sidebar" class="sidebar-alca" aria-label="${state.sidebarCollapsed ? "Expandir menu" : "Recolher menu"}" aria-expanded="${!state.sidebarCollapsed}" title="${state.sidebarCollapsed ? "Expandir menu" : "Recolher menu"}">${UI.icon(state.sidebarCollapsed ? "chevron-right" : "chevron-left", "w-4 h-4")}</button>
       <div class="main">
         ${UI.topbar(state, title)}
-        <div class="content page-fade">${inner}</div>
+        <main id="conteudo" class="content page-fade" tabindex="-1">${inner}</main>
       </div>
       ${UI.quickFab(App.can("interact"))}
     </div>`;

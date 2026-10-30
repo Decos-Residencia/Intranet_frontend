@@ -1,3 +1,7 @@
 /* Card */
-/* ---------- Card ---------- */
-.card{ background:var(--card); border:1px solid var(--border); border-radius:1rem; }
+/* ---------- Card ----------
+   Fundo, borda, raio e sombra vêm de components/glass.css (superfície de vidro fosco). */
+.card{ border-radius:var(--radius); }
+
+/* Resposta da equipe num chamado (Meus chamados) */
+.ch-resposta{ border-left:3px solid var(--wine); background:var(--surface-strong); border-radius:.6rem; padding:.75rem .9rem; }

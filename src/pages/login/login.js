@@ -13,8 +13,8 @@
         <header class="login-topbar">
           ${logo()}
           <div class="flex items-center gap-3">
-            <button data-action="cycle-theme" class="icon-btn" title="Aparência: ${{light:"Claro",dark:"Escuro",red:"Vinho"}[App.state.theme]} — clique para trocar">
-              ${icon({light:"sun",dark:"moon",red:"wine"}[App.state.theme] || "sun", "w-5 h-5")}
+            <button type="button" data-action="open-theme" aria-haspopup="menu" aria-expanded="false" class="icon-btn" title="Aparência: ${App.THEMES[App.state.theme]?.label || "Claro"}" aria-label="Aparência: ${App.THEMES[App.state.theme]?.label || "Claro"}. Trocar tema">
+              ${icon(App.THEMES[App.state.theme]?.icon || "sun", "w-5 h-5")}
             </button>
             <span class="pill-restrito">${icon("lock", "w-3.5 h-3.5")} Acesso restrito a colaboradores</span>
           </div>
@@ -27,14 +27,15 @@
               <h2 class="text-hero text-slate-500 dark:text-slate-300 mb-1 flex items-center gap-2">
                 <span class="w-1 h-7 bg-wine rounded-full"></span>Olá, <strong class="text-slate-800 dark:text-white font-extrabold">colaborador</strong>
               </h2>
-              <p class="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">Você está na área exclusiva do colaborador. Informe seus dados de acesso para entrar na intranet do Hospital Decós.</p>
+              <p class="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">Avisos, eventos, FAQ e documentos gerais podem ser vistos sem entrar. Para se inscrever, abrir chamados, ver o diretório e documentos do seu setor, entre com sua conta.</p>
               <form data-action="do-login" class="space-y-4">
-                <input name="email" type="email" required placeholder="E-mail" class="login-input" autocomplete="email">
+                <input name="email" type="email" required placeholder="E-mail" aria-label="E-mail" class="login-input" autocomplete="email">
                 <div class="relative">
-                  <input name="senha" type="password" required placeholder="Senha" class="login-input pr-12" autocomplete="current-password">
-                  <button type="button" data-action="toggle-pass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">${icon("eye","w-5 h-5")}</button>
+                  <input name="senha" type="password" required placeholder="Senha" aria-label="Senha" class="login-input pr-12" autocomplete="current-password">
+                  <button type="button" data-action="toggle-pass" aria-label="Mostrar ou ocultar a senha" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400">${icon("eye","w-5 h-5")}</button>
                 </div>
-                <div class="flex items-center justify-end pt-2">
+                <div class="flex items-center justify-end gap-3 pt-2 flex-wrap">
+                  <a href="#/dashboard" class="btn-outline px-5 py-3">Ver sem entrar</a>
                   <button type="submit" class="btn-wine px-8 py-3">Acessar</button>
                 </div>
               </form>
@@ -80,7 +81,7 @@
               App.go("#/trocar-senha");
             } else {
               App.toast("Bem-vindo à Intranet Decós!");
-              App.go("#/dashboard");
+              App.go(App.destinoAposLogin());
             }
           } catch (err) {
             App.toast(err.message || "Não foi possível entrar.");

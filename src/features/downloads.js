@@ -4,9 +4,9 @@
 (function () {
   // O arquivo fica no Supabase Storage PRIVADO. O backend valida login e permissão por setor e devolve
   // uma URL assinada de 60 s, usada na hora (nunca guardada). inline=true abre no navegador.
-  async function abrirDocumento(id, inline = true) {
+  async function abrirDocumento(id, inline = true, versaoId = null) {
     try {
-      const r = await Services.documentos.download(id, inline);
+      const r = versaoId ? await Services.documentos.downloadVersao(id, versaoId, inline) : await Services.documentos.download(id, inline);
       if (!/^https?:\/\//.test(r.url)) throw new Error("Endereço de download inválido.");
       const a = document.createElement("a");
       a.href = r.url; a.rel = "noopener noreferrer";

@@ -6,3 +6,8 @@
 .urgent-feature-photo::after{ content:""; position:absolute; inset:0;
   background:linear-gradient(0deg,rgba(0,0,0,.35),transparent 40%); }
 @media (max-width:760px){ .urgent-feature-photo::after{ background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.5)); } }
+
+/* Urgente em destaque: painel da marca no lugar de uma foto fixa (avisos não têm imagem no cadastro). */
+.urgent-feature-marca{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; min-height:200px; color:#fff;
+  background:radial-gradient(420px 220px at 80% 0%, rgba(255,255,255,.16), transparent 60%), linear-gradient(135deg, #7a0f1f, var(--crimson, #C8102E)); }
+.noticia-destaque{ box-shadow:inset 4px 0 0 #0f766e; }

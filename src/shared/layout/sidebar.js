@@ -34,25 +34,21 @@
     };
     const navLinks = items.map((it) => (it.children ? group(it) : link(it))).join("");
 
-    return `<aside class="sidebar ${state.sidebarCollapsed ? "sidebar-collapsed" : ""}">
+    return `<aside class="sidebar ${state.sidebarCollapsed ? "sidebar-collapsed" : ""}" aria-label="Menu principal">
       <div class="sidebar-accent"></div>
       <div class="sidebar-brand-row px-5 pt-5 pb-4 flex items-center justify-between">${logo()}
-        <button data-action="close-menu" class="icon-btn w-9 h-9 md:hidden">${icon("x","w-5 h-5")}</button>
+        <button type="button" data-action="close-menu" class="icon-btn w-9 h-9 md:hidden" aria-label="Fechar menu">${icon("x","w-5 h-5")}</button>
       </div>
 
-      <div class="px-4 mb-3">
-        <button type="button" data-action="open-role" class="role-pill" title="Seu papel de acesso: ${esc(App.roleInfo().label)}">
-          ${icon(App.roleInfo().icon, "w-4 h-4 shrink-0")}
-          <span class="sb-label role-pill-txt">PERFIL: ${esc(App.roleInfo().curto)}${App.realRole() !== App.role() ? " · SIMULADO" : ""}</span>
-          <span class="sb-label role-pill-more">${App.realRole() === "admin" ? "trocar" : "ver"} ${icon("chevron-right", "w-3 h-3")}</span>
-        </button>
-      </div>
 
       <div class="sb-label px-5 mb-2 text-[11px] font-extrabold tracking-wide sb-muted">MENU PRINCIPAL</div>
       <nav class="px-3 space-y-1 flex-1 overflow-y-auto">${navLinks}</nav>
 
       <div class="sidebar-footer mt-auto px-4 pt-4 pb-4 sb-border-t">
-        <a href="#/perfil" class="profile-link flex items-center gap-3 mb-3" title="${esc(u.nome)}" data-label="Meu perfil">
+        <a href="${DB.SITE_HOSPITAL}" target="_blank" rel="noopener noreferrer" class="site-link mb-3" title="Site do Hospital Decós (abre em nova aba)" data-label="Site do Hospital Decós">
+          ${icon("external-link", "w-4 h-4 shrink-0")}<span class="sb-label flex-1">Site do Hospital Decós</span><span class="sr-only">(abre em nova aba)</span>
+        </a>
+        ${state.auth ? `        <a href="#/perfil" class="profile-link flex items-center gap-3 mb-3" title="${esc(u.nome)}" data-label="Meu perfil">
           <div class="avatar avatar-soft text-xs profile-avatar">${foto(u.nome)}${esc(iniciais(u.nome))}</div>
           <div class="sb-label min-w-0">
             <div class="font-bold text-sm truncate sb-text">${esc(u.nome)}</div>
@@ -61,7 +57,7 @@
         </a>
         <button data-action="logout" class="logout-link flex items-center gap-2 text-sm sb-muted hover:text-wine transition-colors" title="Sair da Conta" data-label="Sair da conta">
           ${icon("log-out", "w-4 h-4")} <span class="sb-label">Sair da Conta</span>
-        </button>
+        </button>` : `<a href="#/login" data-action="entrar" class="btn-wine w-full" data-label="Entrar">${icon("lock", "w-4 h-4")} <span class="sb-label">Entrar</span></a>`}
       </div>
     </aside>`;
   }

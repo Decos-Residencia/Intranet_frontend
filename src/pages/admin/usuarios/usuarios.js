@@ -65,8 +65,8 @@
             <h3 class="font-bold text-slate-800 dark:text-slate-100">Colaboradores e Papéis de Acesso</h3>
             <div class="flex gap-2 flex-wrap">
               <div class="search-box w-48"><span>${icon("search","w-4 h-4 text-slate-400")}</span><input id="us-busca" placeholder="Buscar..." class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
-              <select id="us-role" class="select-field"><option value="">Papel: Todos</option>${App.ROLE_ORDER.map((r) => `<option value="${r}">${DB.roles[r].label}</option>`).join("")}</select>
-              <select id="us-status" class="select-field"><option value="">Status: Todos</option><option value="Ativo" selected>Status: Ativos</option><option value="Inativo">Status: Inativos</option></select>
+              <select id="us-role" class="select-field" aria-label="Filtrar por papel"><option value="">Papel: Todos</option>${App.ROLE_ORDER.map((r) => `<option value="${r}">${DB.roles[r].label}</option>`).join("")}</select>
+              <select id="us-status" class="select-field" aria-label="Filtrar por status"><option value="">Status: Todos</option><option value="Ativo" selected>Status: Ativos</option><option value="Inativo">Status: Inativos</option></select>
             </div>
           </div>
           <div class="card overflow-x-auto"><table class="w-full text-sm text-left">

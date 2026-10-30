@@ -3,7 +3,10 @@
    Todo botão/link com data-action="..." é tratado aqui.
    ========================================================================= */
 (function () {
-  const { state, THEMES } = App;
+  const { state } = App;
+
+  const EXIGEM_LOGIN = new Set(["inscrever-evento", "cancelar-inscricao", "open-chamado", "celebrate", "open-pedido",
+    "download-doc", "open-notif", "aviso-leitores", "evento-inscritos"]);
 
   function wireGlobal() {
     document.addEventListener("click", async (e) => {
@@ -14,17 +17,14 @@
       const el = e.target.closest("[data-action]");
       if (!el) return;
       const a = el.dataset.action;
-      if (a === "cycle-theme") { const order = Object.keys(THEMES); const i = order.indexOf(state.theme);
-        state.theme = order[(i + 1) % order.length]; App.save();
-        App.toast("Aparência: " + THEMES[state.theme].label); App.applyThemeLive(); }
-      else if (a === "zoom") { const v = el.closest(".doc-viewer"); if (v) { const z = Math.min(1.6, Math.max(0.6, (parseFloat(v.dataset.zoom) || 1) + Number(el.dataset.dir) * 0.1)); v.dataset.zoom = String(z); v.style.setProperty("--zoom", z); const l = v.querySelector(".zoom-label"); if (l) l.textContent = Math.round(z * 100) + "%"; } }
+      // Visitante: qualquer interação pede login e volta para a mesma tela depois.
+      if (!App.state.auth && EXIGEM_LOGIN.has(a)) { e.preventDefault(); App.pedirLogin(); return; }
+      if (a === "entrar") { e.preventDefault(); App.pedirLogin(location.hash, false); return; }
+      if (a === "zoom") { const v = el.closest(".doc-viewer"); if (v) { const z = Math.min(1.6, Math.max(0.6, (parseFloat(v.dataset.zoom) || 1) + Number(el.dataset.dir) * 0.1)); v.dataset.zoom = String(z); v.style.setProperty("--zoom", z); const l = v.querySelector(".zoom-label"); if (l) l.textContent = Math.round(z * 100) + "%"; } }
       else if (a === "print-doc") { e.preventDefault(); window.print(); }
-      else if (a === "set-role") { App.setPreviewRole(el.dataset.role); App.closePanel(); App.toast("Visão: " + App.roleInfo().label); if (location.hash === "#/dashboard") App.render(); else location.hash = "#/dashboard"; }
-      else if (a === "set-cenario") { App.setPreviewAniversario(el.dataset.cenario === "aniversariante"); App.closePanel(); App.toast(el.dataset.cenario === "aniversariante" ? "Cenário: aniversariante" : "Cenário: normal"); if (location.hash === "#/dashboard") App.render(); else location.hash = "#/dashboard"; }
-      else if (a === "open-role") { e.preventDefault(); App.openRolePanel(); }
-      else if (a === "open-theme") { e.preventDefault(); App.openThemePanel(); }
-      else if (a === "set-theme") { state.theme = el.dataset.theme; App.save(); App.closePanel();
-        App.toast("Aparência: " + THEMES[state.theme].label); App.applyThemeLive(); }
+      else if (a === "open-theme") { e.preventDefault(); App.openThemeMenu(el); }
+      // O hash é a rota da SPA: o atalho só move o foco, sem mudar o endereço.
+      else if (a === "skip-content") { e.preventDefault(); document.getElementById("conteudo")?.focus(); }
       else if (a === "toggle-submenu") {
         const group = el.closest(".nav-group");
         const collapsed = !!document.querySelector(".sidebar-collapsed");
@@ -38,7 +38,7 @@
       }
       else if (a === "toggle-sidebar") {
         const toggle = document.querySelector(".sidebar-toggle");
-        if (window.innerWidth <= 860) {
+        if (window.innerWidth <= 860 && !el.classList.contains("sidebar-alca")) {
           const open = document.querySelector(".sidebar")?.classList.toggle("sidebar-open");
           document.querySelector(".drawer-backdrop")?.classList.toggle("show", !!open);
           toggle?.classList.toggle("sidebar-toggle-open", !!open);
@@ -49,12 +49,20 @@
           }
         } else {
           state.sidebarCollapsed = !state.sidebarCollapsed; App.save();
+          if (state.auth) App.salvarPreferencias?.({ menu_recolhido: state.sidebarCollapsed }).catch(() => {});
           document.querySelector(".sidebar")?.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
           toggle?.classList.toggle("sidebar-toggle-collapsed", state.sidebarCollapsed);
           toggle?.setAttribute("aria-expanded", state.sidebarCollapsed ? "false" : "true");
           if (toggle) {
             toggle.title = state.sidebarCollapsed ? "Expandir menu" : "Minimizar menu";
             toggle.setAttribute("aria-label", toggle.title);
+          }
+          const alca = document.querySelector(".sidebar-alca");
+          if (alca) {
+            alca.title = state.sidebarCollapsed ? "Expandir menu" : "Recolher menu";
+            alca.setAttribute("aria-label", alca.title);
+            alca.setAttribute("aria-expanded", String(!state.sidebarCollapsed));
+            alca.innerHTML = UI.icon(state.sidebarCollapsed ? "chevron-right" : "chevron-left", "w-4 h-4");
           }
         }
       }
@@ -127,7 +135,9 @@
           catch (err) { App.toast(err.message || "Não foi possível excluir a pergunta."); }
           await App.loadApiData(); App.render();
         }, "Sim, excluir"); }
-      else if (a === "open-doc-url") { e.preventDefault(); await App.abrirDocumento(el.dataset.id, true); }
+      else if (a === "open-doc-url") { e.preventDefault();
+        if (el.dataset.antiga) App.toast("Atenção: esta é uma versão ANTIGA, não é a que está em vigor.");
+        await App.abrirDocumento(el.dataset.id, true, el.dataset.versao || null); }
       else if (a === "replace-doc") { e.preventDefault(); await PagesAdmin.substituirDocumento(); }
       else if (a === "toggle-doc") { e.preventDefault();
         try { await Services.documentos.update(el.dataset.id, { ativo: el.dataset.ativo === "true" });
@@ -159,7 +169,7 @@
       else if (a === "preview-noticia") { e.preventDefault(); PagesAdmin.previewNoticia(el.dataset.id); }
       else if (a === "aviso-status") { e.preventDefault();
         const { id, status } = el.dataset;
-        const msg = { PUBLICADO: "Aviso publicado", ARQUIVADO: "Aviso arquivado", RASCUNHO: "Agendamento cancelado (voltou a rascunho)" }[status] || "Aviso atualizado";
+        const msg = { PUBLICADO: "Aviso publicado", ARQUIVADO: "Aviso arquivado", RASCUNHO: "Agendamento cancelado (voltou a rascunho)", EM_REVISAO: "Enviado para revisão" }[status] || "Aviso atualizado";
         try { await Services.avisos.update(id, { status }); App.toast(msg); }
         catch (err) { App.toast(err.message || "Não foi possível alterar o aviso."); }
         await App.loadApiData(); App.render(); }
@@ -175,9 +185,10 @@
       else if (a === "add-agenda") { e.preventDefault(); await App.adicionarAgenda(el.dataset.id); }
       else if (a === "save-evento") { e.preventDefault(); try { await PagesAdmin.submitEvento(); } catch (err) { App.toast(err.message || "Não foi possível salvar o evento."); } }
       else if (a === "evento-inscritos") { e.preventDefault(); await PagesAdmin.inscritosEvento(el.dataset.id, el.dataset.titulo); }
+      else if (a === "aviso-leitores") { e.preventDefault(); await PagesAdmin.leitoresAviso(el.dataset.id, el.dataset.titulo); }
       else if (a === "evento-status") { e.preventDefault();
         const { id, status } = el.dataset;
-        const msg = { PUBLICADO: "Evento publicado — os colaboradores foram avisados", CANCELADO: "Evento cancelado — os inscritos foram avisados" }[status] || "Evento atualizado";
+        const msg = { PUBLICADO: "Evento publicado — os colaboradores foram avisados", CANCELADO: "Evento cancelado — os inscritos foram avisados", EM_REVISAO: "Enviado para revisão" }[status] || "Evento atualizado";
         try { await Services.eventos.update(id, { status }); App.toast(msg); }
         catch (err) { App.toast(err.message || "Não foi possível alterar o evento."); }
         await App.loadApiData(); App.render(); }

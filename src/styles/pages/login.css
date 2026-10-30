@@ -12,3 +12,4 @@
 .login-input:focus{ border-color:var(--wine); }
 .login-footer{ display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; color:rgba(255,255,255,.85); font-size:.8rem; }
 .pill-restrito{ display:inline-flex; align-items:center; gap:.4rem; background:var(--card); color:var(--wine); font-size:.78rem; font-weight:700; padding:.5rem 1rem; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.dark .pill-restrito{ color:#f7b8c2; }

@@ -1,0 +1,17 @@
+Suíte do backend (Intranet_backend @ 734fc32) — pytest 9.1.1, PostgreSQL 16 dedicado, RUN_POSTGRES_TESTS=1
+Data: 23/10/2026 · duração: 184 s
+Coletados: 331 · executados: 330 · aprovados: 329 · falhas: 1 · pulados: 1
+
+Falhas:
+  - tests.integration.test_perfis_rh_leitura::test_leitura_consulta_mas_nao_interage
+      E       AssertionError: assert 404 == 403
+      E        +  where 404 = <Response [404 Not Found]>.status_code
+      E        +    where <Response [404 Not Found]> = post('/aniversariantes/parabens', headers={'Authorization': '<redacted>'}, json={'aniversariante_id': 1})
+
+Pulados:
+  - tests.integration.test_rls::test_public_roles_have_no_table_privileges — Papéis anon/authenticated só existem no Supabase.
+
+Análise da falha: o teste chama POST /aniversariantes/parabens (404), mas a rota é POST /parabens.
+Verificado manualmente: POST /parabens com perfil LEITURA responde 403 'Seu perfil é somente leitura.'.
+
+Lint: ruff check app tests → All checks passed!

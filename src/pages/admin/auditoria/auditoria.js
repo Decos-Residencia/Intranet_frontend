@@ -58,7 +58,10 @@
       <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div><div class="text-sm text-slate-400">Hospital Decós Intranet • Administração</div>
         <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Log de Auditoria</h2></div>
-        <button data-action="export-audit" class="btn-outline px-4 py-2 text-sm flex items-center gap-2">${icon("download","w-4 h-4")} Exportar CSV</button>
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" id="aud-evidencias" class="btn-wine px-4 py-2 text-sm flex items-center gap-2">${icon("file-text","w-4 h-4")} Exportar evidências (PDF)</button>
+          <button data-action="export-audit" class="btn-outline px-4 py-2 text-sm flex items-center gap-2">${icon("download","w-4 h-4")} Exportar CSV</button>
+        </div>
       </div>
       <div class="card ring-1 ring-wine/10 mb-4 p-4 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
         ${icon("shield","w-5 h-5 text-wine")} Registro das criações, edições, exclusões, promoções, desativações e redefinições de senha feitas por administradores. As senhas nunca são registradas.
@@ -75,6 +78,7 @@
         <span id="audit-info"></span><div class="flex gap-1.5 items-center" id="audit-pager"></div>
       </div>`,
       init() {
+        document.getElementById("aud-evidencias").addEventListener("click", () => PagesAdmin.dialogoEvidencias());
         document.querySelectorAll('[data-filter-group="audit"] [data-filter]').forEach((btn) => btn.addEventListener("click", () => {
           document.querySelectorAll('[data-filter-group="audit"] [data-filter]').forEach((b) => b.classList.remove("chip-active"));
           btn.classList.add("chip-active"); estado.entidade = btn.dataset.filter; estado.page = 1; carregar();
@@ -104,4 +108,38 @@
   }
 
   Object.assign(PagesAdmin, { adminAuditoria, exportarAuditoria });
+  // Pacote de evidências para acreditação: período (até 12 meses) e setor opcional.
+  function dialogoEvidencias() {
+    const hoje = new Date(), iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const tresMeses = new Date(hoje); tresMeses.setMonth(hoje.getMonth() - 3);
+    App.openPanel("Exportar evidências", `<form id="evd-form" class="space-y-4" novalidate>
+      <p class="text-sm text-slate-600 dark:text-slate-300">PDF com capa e sumário: leituras de avisos, treinamentos (inscritos, presença e pendências dos obrigatórios) e o histórico de versões dos documentos. A geração fica registrada na auditoria.</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="field-label" for="evd-de">DE *</label><input id="evd-de" type="date" class="field-input" value="${iso(tresMeses)}"></div>
+        <div><label class="field-label" for="evd-ate">ATÉ *</label><input id="evd-ate" type="date" class="field-input" value="${iso(hoje)}"></div>
+      </div>
+      <div><label class="field-label" for="evd-setor">SETOR</label><select id="evd-setor" class="field-input"><option value="">Todos os setores</option>
+        ${App.setoresAll().map((s) => `<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select></div>
+      <p id="evd-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></p>
+      <button type="submit" class="btn-wine w-full py-3" id="evd-gerar">${icon("download", "w-4 h-4")} Gerar PDF</button></form>`);
+    const form = document.getElementById("evd-form"), erro = document.getElementById("evd-erro");
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const de = document.getElementById("evd-de").value, ate = document.getElementById("evd-ate").value, setor = document.getElementById("evd-setor").value;
+      const dias = (new Date(ate) - new Date(de)) / 86400000;
+      const falha = !de || !ate ? "Informe o período." : dias < 0 ? "O fim não pode ser antes do início." : dias > 366 ? "Escolha um período de até 12 meses." : "";
+      if (falha) { erro.textContent = falha; erro.classList.remove("hidden"); return; }
+      const botao = document.getElementById("evd-gerar"); botao.disabled = true; botao.textContent = "Gerando…";
+      try {
+        const pdf = await App.API.request(`/auditoria/evidencias.pdf${Services.toQuery({ de, ate, setor_id: setor || undefined })}`, { blob: true, timeout: 60000 });
+        App.downloadFile(`evidencias-${de}-${ate}.pdf`, pdf, "application/pdf");
+        App.closePanel(); App.toast("PDF de evidências gerado");
+      } catch (err) {
+        erro.textContent = err.message || "Não foi possível gerar o PDF."; erro.classList.remove("hidden");
+        botao.disabled = false; botao.innerHTML = `${icon("download", "w-4 h-4")} Gerar PDF`;
+      }
+    });
+  }
+
+  Object.assign(PagesAdmin, { dialogoEvidencias });
 })();

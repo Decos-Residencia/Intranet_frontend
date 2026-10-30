@@ -17,7 +17,7 @@
 
   function linha(d) {
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${d.ativo ? "" : "opacity-70"}" data-id="${d.id}">
-      <td class="py-3.5 pl-4"><div class="flex items-center gap-2 mb-1">${badge("blue", esc(d.categoria))}<span class="text-xs text-slate-400">v${esc(d.versao)} • atualizado em ${esc(quando(d.atualizado_em))}</span></div>
+      <td class="py-3.5 pl-4"><div class="flex items-center gap-2 mb-1">${badge("blue", esc(d.categoria))}${d.vigente ? "" : badge("gray", "Sem versão vigente")}<span class="text-xs text-slate-500 dark:text-slate-400">v${esc(d.versao)}${d.total_versoes > 1 ? ` (${d.total_versoes} versões)` : ""} • atualizado em ${esc(quando(d.atualizado_em))}</span></div>
         <div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-sm">${esc(d.titulo)}</div>
         <div class="text-xs text-slate-400 truncate max-w-sm">${esc(d.arquivo_nome)}</div></td>
       <td class="text-sm text-slate-500 dark:text-slate-400">${esc(d.enviado_por || "—")}</td>
@@ -29,7 +29,7 @@
         <button class="act-btn" data-action="open-doc-url" data-id="${d.id}" title="Abrir arquivo">${icon("eye", "w-4 h-4")}</button>
         <button class="act-btn" data-action="download-doc" data-id="${d.id}" title="Baixar">${icon("download", "w-4 h-4")}</button>
         <a href="#/admin/documentos/${d.id}/editar" class="act-btn" title="Editar / substituir arquivo">${icon("edit", "w-4 h-4")}</a>
-        <button class="act-btn act-btn-danger" data-action="delete-doc" data-id="${d.id}" data-alvo="${esc(d.titulo)}" title="Excluir">${icon("trash", "w-4 h-4")}</button>
+        ${App.can("delete_forever") ? `<button class="act-btn act-btn-danger" data-action="delete-doc" data-id="${d.id}" data-alvo="${esc(d.titulo)}" title="Excluir definitivamente" aria-label="Excluir definitivamente ${esc(d.titulo)}">${icon("trash", "w-4 h-4")}</button>` : ""}
       </div></td>
     </tr>`;
   }
@@ -58,7 +58,8 @@
       const corpo = document.getElementById("doc-rows"), info = document.getElementById("doc-info"), pager = document.getElementById("doc-pager");
       if (!corpo) return;
       try {
-        const r = await Services.documentos.list({ page: estado.page, page_size: POR_PAGINA, q: estado.q, categoria: estado.categoria, setor_id: estado.setor_id, ativo: estado.ativo });
+        // O gestor vê também os documentos que só têm versões antigas.
+        const r = await Services.documentos.list({ page: estado.page, page_size: POR_PAGINA, q: estado.q, categoria: estado.categoria, setor_id: estado.setor_id, ativo: estado.ativo, incluir_antigas: true });
         if (!document.getElementById("doc-rows")) return;
         const paginas = Math.max(1, Math.ceil(r.total / POR_PAGINA));
         const filtrado = estado.q || estado.categoria || estado.setor_id || estado.ativo;
@@ -94,8 +95,8 @@
         <div class="flex gap-2 items-center flex-wrap">
           <div class="search-box w-56"><span>${icon("search", "w-4 h-4 text-slate-400")}</span>
             <input id="doc-busca" placeholder="Buscar título, arquivo..." maxlength="200" class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
-          <select id="doc-cat" class="select-field"><option value="">Categoria: todas</option></select>
-          <select id="doc-setor" class="select-field"><option value="">Setor: todos</option>${setores.map((s) => `<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select>
+          <select id="doc-cat" class="select-field" aria-label="Filtrar por categoria"><option value="">Categoria: todas</option></select>
+          <select id="doc-setor" class="select-field" aria-label="Filtrar por setor"><option value="">Setor: todos</option>${setores.map((s) => `<option value="${s.id}">${esc(s.nome)}</option>`).join("")}</select>
         </div>
       </div>
       <div class="card overflow-x-auto">

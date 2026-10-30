@@ -1,0 +1,213 @@
+{
+ "pages": [],
+ "functional": [
+  {
+   "id": "F01",
+   "name": "Sem sessão, raiz redireciona ao login",
+   "ok": true,
+   "detail": "http://localhost:5500/#/login"
+  },
+  {
+   "id": "F02",
+   "name": "Login vazio é bloqueado pela validação",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F03",
+   "name": "Senha incorreta exibe mensagem e permanece no login",
+   "ok": true,
+   "detail": "Email ou senha inválidos."
+  },
+  {
+   "id": "F04",
+   "name": "E-mail com maiúsculas/espaços é normalizado no login",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F05",
+   "name": "Sessão persiste após recarregar",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F06",
+   "name": "Troca de tema aplica e persiste",
+   "ok": true,
+   "detail": " → dark → reload: dark"
+  },
+  {
+   "id": "F07",
+   "name": "Primeiro Tab leva a um 'pular para o conteúdo'",
+   "ok": false,
+   "detail": "{\"tag\":\"BUTTON\",\"text\":\"PERFIL: ADMIN\\ntrocar\",\"href\":null,\"outline\":\"solid 3px\",\"shadow\":\"none\"}"
+  },
+  {
+   "id": "F08",
+   "name": "Elemento focado tem indicador visível",
+   "ok": true,
+   "detail": "solid 3px | none"
+  },
+  {
+   "id": "F09",
+   "name": "Todos os 40 primeiros elementos focáveis mostram foco",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F10",
+   "name": "Busca global encontra 'vacinação'",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F10b",
+   "name": "Painel de busca fecha com Esc",
+   "ok": false,
+   "detail": ""
+  },
+  {
+   "id": "F11b",
+   "name": "Painel lateral recebe foco e tem semântica de diálogo",
+   "ok": false,
+   "detail": "{\"focusIn\":false,\"role\":null,\"modal\":null,\"label\":null}"
+  },
+  {
+   "id": "F11",
+   "name": "Painel de notificações abre e fecha com Esc",
+   "ok": false,
+   "detail": "open=true afterEsc=true"
+  },
+  {
+   "id": "F12",
+   "name": "Novo aviso vazio não é enviado e marca campos inválidos",
+   "ok": false,
+   "detail": "{\"hash\":\"#/admin/noticias/nova\",\"invalid\":[],\"aria\":0}"
+  },
+  {
+   "id": "F13",
+   "name": "Conteúdo HTML em aviso é escapado (sem XSS)",
+   "ok": true,
+   "detail": "window.__xss=undefined"
+  },
+  {
+   "id": "F14",
+   "name": "Logout limpa token e volta ao login",
+   "ok": true,
+   "detail": "http://localhost:5500/#/login"
+  },
+  {
+   "id": "F15",
+   "name": "Após logout, rota protegida exige login",
+   "ok": true,
+   "detail": "http://localhost:5500/#/login"
+  },
+  {
+   "id": "F16",
+   "name": "Token inválido derruba sessão para o login",
+   "ok": true,
+   "detail": "http://localhost:5500/#/login"
+  },
+  {
+   "id": "F17",
+   "name": "Sem exceções JS não tratadas durante o fluxo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F23",
+   "name": "Primeiro acesso força troca de senha e bloqueia navegação",
+   "ok": true,
+   "detail": "http://localhost:5500/#/trocar-senha → http://localhost:5500/#/trocar-senha"
+  },
+  {
+   "id": "F24",
+   "name": "Troca de senha rejeita senha fraca/divergente com mensagem",
+   "ok": true,
+   "detail": "• Pelo menos 8 caracteres"
+  },
+  {
+   "id": "F18",
+   "name": "leitura não acessa #/admin/noticias",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F18",
+   "name": "leitura não acessa #/admin/usuarios",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F19",
+   "name": "leitura: menu sem links administrativos proibidos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F20",
+   "name": "leitura: sem botão de inscrição habilitado em evento",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F18",
+   "name": "colaborador não acessa #/admin/eventos",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F18",
+   "name": "colaborador não acessa #/admin/auditoria",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F19",
+   "name": "colaborador: menu sem links administrativos proibidos",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "id": "F18",
+   "name": "rh não acessa #/admin/usuarios",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F18",
+   "name": "rh não acessa #/admin/auditoria",
+   "ok": true,
+   "detail": "http://localhost:5500/#/dashboard"
+  },
+  {
+   "id": "F19",
+   "name": "rh: menu sem links administrativos proibidos",
+   "ok": true,
+   "detail": "#/admin/noticias, #/admin/eventos, #/admin/documentos, #/admin/faqs"
+  },
+  {
+   "id": "F21b",
+   "name": "Mobile: menu aberto atualiza aria-expanded e move foco para o menu",
+   "ok": false,
+   "detail": "{\"exp\":\"true\",\"focusIn\":false}"
+  },
+  {
+   "id": "F21",
+   "name": "Mobile: sidebar oculta por padrão e abre pelo botão de menu",
+   "ok": true,
+   "detail": "antes=false aberto=true"
+  },
+  {
+   "id": "F22",
+   "name": "Mobile: Esc fecha o menu lateral",
+   "ok": false,
+   "detail": "fechado=false"
+  }
+ ],
+ "meta": {
+  "started": "2026-10-23T14:54:51.369Z",
+  "finished": "2026-10-23T14:55:36.290Z"
+ }
+}

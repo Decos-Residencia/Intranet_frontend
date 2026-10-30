@@ -1,0 +1,959 @@
+{
+ "total_loads": 684,
+ "axe": [
+  {
+   "id": "label",
+   "impact": "critical",
+   "help": "Form elements must have labels",
+   "nodes": 156,
+   "pages": 30,
+   "where": [
+    "#/admin/documentos/novo (admin/1440/dark)",
+    "#/admin/documentos/novo (admin/1440/light)",
+    "#/admin/documentos/novo (admin/375/dark)",
+    "#/admin/documentos/novo (admin/375/light)",
+    "#/admin/documentos/novo (rh/1440/dark)",
+    "#/admin/documentos/novo (rh/375/dark)",
+    "#/admin/eventos/1/editar (admin/1440/dark)",
+    "#/admin/eventos/1/editar (admin/1440/light)"
+   ],
+   "targets": [
+    "#dc-arquivo",
+    "#dc-versao",
+    "#ev-fim",
+    "#ev-inicio",
+    "div:nth-child(1) > .field-input.opacity-80[readonly=\"\"]",
+    "input[value=\"Admin QA\"]",
+    "input[value=\"Administrador\"]",
+    "input[value=\"Analista de RH Sênior\"]"
+   ],
+   "sample": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, re"
+  },
+  {
+   "id": "button-name",
+   "impact": "critical",
+   "help": "Buttons must have discernible text",
+   "nodes": 133,
+   "pages": 133,
+   "where": [
+    "#/admin/auditoria (admin/375/dark)",
+    "#/admin/auditoria (admin/375/light)",
+    "#/admin/avaliacoes (admin/375/dark)",
+    "#/admin/avaliacoes (admin/375/light)",
+    "#/admin/chamados (admin/375/dark)",
+    "#/admin/chamados (admin/375/light)",
+    "#/admin/documentos (admin/375/dark)",
+    "#/admin/documentos (admin/375/light)"
+   ],
+   "targets": [
+    ".absolute",
+    ".md\\:hidden",
+    ".w-9"
+   ],
+   "sample": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not"
+  },
+  {
+   "id": "select-name",
+   "impact": "critical",
+   "help": "Select element must have an accessible name",
+   "nodes": 114,
+   "pages": 78,
+   "where": [
+    "#/admin/avaliacoes (admin/1440/dark)",
+    "#/admin/avaliacoes (admin/1440/light)",
+    "#/admin/avaliacoes (admin/375/dark)",
+    "#/admin/avaliacoes (admin/375/light)",
+    "#/admin/chamados (admin/1440/dark)",
+    "#/admin/chamados (admin/1440/light)",
+    "#/admin/chamados (admin/375/dark)",
+    "#/admin/chamados (admin/375/light)"
+   ],
+   "targets": [
+    "#ani-setor",
+    "#av-doc",
+    "#av-pessoa",
+    "#ch-prio",
+    "#ch-tipo",
+    "#dc-ativo",
+    "#dc-setor",
+    "#dir-andar"
+   ],
+   "sample": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, re"
+  },
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "help": "Elements must meet minimum color contrast ratio thresholds",
+   "nodes": 1180,
+   "pages": 244,
+   "where": [
+    "#/admin/auditoria (admin/1440/dark)",
+    "#/admin/auditoria (admin/1440/light)",
+    "#/admin/auditoria (admin/375/dark)",
+    "#/admin/auditoria (admin/375/light)",
+    "#/admin/avaliacoes (admin/1440/dark)",
+    "#/admin/avaliacoes (admin/1440/light)",
+    "#/admin/avaliacoes (admin/375/dark)",
+    "#/admin/avaliacoes (admin/375/light)"
+   ],
+   "targets": [
+    "#aviso-lido",
+    "#dc-salvar",
+    "#dir-info",
+    "#doc-grid-empty > .text-slate-400.text-sm",
+    "#doc-info",
+    "#ev-salvar",
+    "#nt-salvar",
+    ".audit-row.border-b.border-slate-50:nth-child(1) > .flex-1 > .text-slate-700.dark\\:text-slate-200.text-sm > .font-semibold.text-wine"
+   ],
+   "sample": "Fix any of the following:\n  Element has insufficient color contrast of 2.28 (foreground color: #94a3b8, background color: #f1f2f4, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+  },
+  {
+   "id": "target-size",
+   "impact": "serious",
+   "help": "All touch targets must be 24px large, or leave sufficient space",
+   "nodes": 72,
+   "pages": 32,
+   "where": [
+    "#/dashboard (admin/1440/dark)",
+    "#/dashboard (admin/1440/light)",
+    "#/dashboard (admin/375/dark)",
+    "#/dashboard (admin/375/light)",
+    "#/dashboard (colaborador/1440/dark)",
+    "#/dashboard (colaborador/1440/light)",
+    "#/dashboard (colaborador/375/dark)",
+    "#/dashboard (colaborador/375/light)"
+   ],
+   "targets": [
+    ".absolute",
+    ".active",
+    "button[data-dot=\"1\"]",
+    "button[data-toggle-pass=\"ts-atual\"]",
+    "button[data-toggle-pass=\"ts-conf\"]",
+    "button[data-toggle-pass=\"ts-nova\"]"
+   ],
+   "sample": "Fix any of the following:\n  Target has insufficient size (18px by 6px, should be at least 24px by 24px)\n  Target has insufficient space to its closest neighbors. Safe clickable space has a diameter of 14px instead of at "
+  },
+  {
+   "id": "scrollable-region-focusable",
+   "impact": "serious",
+   "help": "Scrollable region must have keyboard access",
+   "nodes": 7,
+   "pages": 7,
+   "where": [
+    "#/admin/avaliacoes (admin/375/dark)",
+    "#/admin/avaliacoes (admin/375/light)",
+    "#/admin/chamados (admin/375/dark)",
+    "#/admin/chamados (admin/375/light)",
+    "#/admin/documentos (admin/375/dark)",
+    "#/admin/documentos (admin/375/light)",
+    "#/admin/documentos (rh/375/dark)"
+   ],
+   "targets": [
+    ".overflow-x-auto"
+   ],
+   "sample": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+  },
+  {
+   "id": "region",
+   "impact": "moderate",
+   "help": "All page content should be contained by landmarks",
+   "nodes": 3288,
+   "pages": 258,
+   "where": [
+    "#/admin/auditoria (admin/1440/dark)",
+    "#/admin/auditoria (admin/1440/light)",
+    "#/admin/auditoria (admin/375/dark)",
+    "#/admin/auditoria (admin/375/light)",
+    "#/admin/avaliacoes (admin/1440/dark)",
+    "#/admin/avaliacoes (admin/1440/light)",
+    "#/admin/avaliacoes (admin/375/dark)",
+    "#/admin/avaliacoes (admin/375/light)"
+   ],
+   "targets": [
+    "#ani-busca",
+    "#ani-grid",
+    "#ani-setor",
+    "#audit-busca",
+    "#av-lista",
+    "#dc-categoria",
+    "#dir-andar",
+    "#dir-busca"
+   ],
+   "sample": "Fix any of the following:\n  Some page content is not contained by landmarks"
+  },
+  {
+   "id": "landmark-one-main",
+   "impact": "moderate",
+   "help": "Document should have one main landmark",
+   "nodes": 258,
+   "pages": 258,
+   "where": [
+    "#/admin/auditoria (admin/1440/dark)",
+    "#/admin/auditoria (admin/1440/light)",
+    "#/admin/auditoria (admin/375/dark)",
+    "#/admin/auditoria (admin/375/light)",
+    "#/admin/avaliacoes (admin/1440/dark)",
+    "#/admin/avaliacoes (admin/1440/light)",
+    "#/admin/avaliacoes (admin/375/dark)",
+    "#/admin/avaliacoes (admin/375/light)"
+   ],
+   "targets": [
+    "html"
+   ],
+   "sample": "Fix all of the following:\n  Document does not have a main landmark"
+  },
+  {
+   "id": "landmark-unique",
+   "impact": "moderate",
+   "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+   "nodes": 144,
+   "pages": 102,
+   "where": [
+    "#/admin/documentos/novo (admin/1440/dark)",
+    "#/admin/documentos/novo (admin/1440/light)",
+    "#/admin/documentos/novo (admin/375/dark)",
+    "#/admin/documentos/novo (admin/375/light)",
+    "#/admin/documentos/novo (rh/1440/dark)",
+    "#/admin/documentos/novo (rh/375/dark)",
+    "#/admin/eventos/1/editar (admin/1440/dark)",
+    "#/admin/eventos/1/editar (admin/1440/light)"
+   ],
+   "targets": [
+    ".px-3",
+    ".sidebar"
+   ],
+   "sample": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+  },
+  {
+   "id": "heading-order",
+   "impact": "moderate",
+   "help": "Heading levels should only increase by one",
+   "nodes": 48,
+   "pages": 48,
+   "where": [
+    "#/avisos/1 (admin/1440/dark)",
+    "#/avisos/1 (admin/1440/light)",
+    "#/avisos/1 (admin/375/dark)",
+    "#/avisos/1 (admin/375/light)",
+    "#/avisos/1 (colaborador/1440/dark)",
+    "#/avisos/1 (colaborador/1440/light)",
+    "#/avisos/1 (colaborador/375/dark)",
+    "#/avisos/1 (colaborador/375/light)"
+   ],
+   "targets": [
+    ".p-5 > .mb-1",
+    "a[data-tag=\"Institucional\"] > .min-w-0.flex-1 > .mb-1.gap-2.flex-wrap > h3",
+    "h3"
+   ],
+   "sample": "Fix any of the following:\n  Heading order invalid"
+  },
+  {
+   "id": "page-has-heading-one",
+   "impact": "moderate",
+   "help": "Page should contain a level-one heading",
+   "nodes": 4,
+   "pages": 4,
+   "where": [
+    "#/login (anon/1440/dark)",
+    "#/login (anon/1440/light)",
+    "#/login (anon/375/dark)",
+    "#/login (anon/375/light)"
+   ],
+   "targets": [
+    "html"
+   ],
+   "sample": "Fix all of the following:\n  Page must have a level-one heading"
+  }
+ ],
+ "overflow": [
+  {
+   "route": "#/aniversariantes",
+   "role": "admin",
+   "vp": "320",
+   "theme": "light",
+   "excess": 81,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "admin_320_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "rh",
+   "vp": "320",
+   "theme": "light",
+   "excess": 81,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "rh_320_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "colaborador",
+   "vp": "320",
+   "theme": "light",
+   "excess": 81,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "colaborador_320_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "leitura",
+   "vp": "320",
+   "theme": "light",
+   "excess": 81,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "leitura_320_light_aniversariantes"
+  },
+  {
+   "route": "#/avisos",
+   "role": "admin",
+   "vp": "320",
+   "theme": "light",
+   "excess": 30,
+   "els": [
+    "div#avisos-pager.flex.gap-1.5 «Anterior 1 2 3 4 Próximo»",
+    "button.pg «Próximo»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "admin_320_light_avisos"
+  },
+  {
+   "route": "#/avisos",
+   "role": "rh",
+   "vp": "320",
+   "theme": "light",
+   "excess": 30,
+   "els": [
+    "div#avisos-pager.flex.gap-1.5 «Anterior 1 2 3 4 Próximo»",
+    "button.pg «Próximo»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "rh_320_light_avisos"
+  },
+  {
+   "route": "#/avisos",
+   "role": "colaborador",
+   "vp": "320",
+   "theme": "light",
+   "excess": 30,
+   "els": [
+    "div#avisos-pager.flex.gap-1.5 «Anterior 1 2 3 4 Próximo»",
+    "button.pg «Próximo»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "colaborador_320_light_avisos"
+  },
+  {
+   "route": "#/avisos",
+   "role": "leitura",
+   "vp": "320",
+   "theme": "light",
+   "excess": 30,
+   "els": [
+    "div#avisos-pager.flex.gap-1.5 «Anterior 1 2 3 4 Próximo»",
+    "button.pg «Próximo»",
+    "button.fab-btn «Acessos rápidos»",
+    "span.fab-ico.fab-ico-open"
+   ],
+   "shot": "leitura_320_light_avisos"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "admin",
+   "vp": "375",
+   "theme": "light",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "admin_375_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "admin",
+   "vp": "375",
+   "theme": "dark",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "admin_375_dark_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "rh",
+   "vp": "375",
+   "theme": "light",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "rh_375_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "rh",
+   "vp": "375",
+   "theme": "dark",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "rh_375_dark_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "colaborador",
+   "vp": "375",
+   "theme": "light",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "colaborador_375_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "colaborador",
+   "vp": "375",
+   "theme": "dark",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "colaborador_375_dark_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "leitura",
+   "vp": "375",
+   "theme": "light",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "leitura_375_light_aniversariantes"
+  },
+  {
+   "route": "#/aniversariantes",
+   "role": "leitura",
+   "vp": "375",
+   "theme": "dark",
+   "excess": 26,
+   "els": [
+    "div.flex.gap-2.items-center «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "select#ani-setor.select-field «Setor: Todos Centro Cirúrgico Enfermagem»",
+    "button.fab-btn «Acessos rápidos»"
+   ],
+   "shot": "leitura_375_dark_aniversariantes"
+  }
+ ],
+ "overflow_by_vp": {
+  "320": 8,
+  "375": 8
+ },
+ "overflow_routes": [
+  [
+   "#/aniversariantes",
+   "320"
+  ],
+  [
+   "#/aniversariantes",
+   "375"
+  ],
+  [
+   "#/avisos",
+   "320"
+  ]
+ ],
+ "small_targets": [
+  {
+   "el": "button.logout-link.flex.items-center",
+   "count": 252,
+   "ex": {
+    "el": "button.logout-link.flex.items-center «Sair da Conta»",
+    "w": 110,
+    "h": 20
+   },
+   "route": "#/dashboard"
+  },
+  {
+   "el": "a.text-slate-500.dark:text-slate-400.hover:text-wine",
+   "count": 228,
+   "ex": {
+    "el": "a.text-slate-500.dark:text-slate-400.hover:text-wine «Início»",
+    "w": 34,
+    "h": 20
+   },
+   "route": "#/avisos/1"
+  },
+  {
+   "el": "button.icon-btn.sidebar-toggle",
+   "count": 162,
+   "ex": {
+    "el": "button.icon-btn.sidebar-toggle «Minimizar menu»",
+    "w": 22,
+    "h": 40
+   },
+   "route": "#/dashboard"
+  },
+  {
+   "el": "button.absolute.right-3.top-1/2",
+   "count": 40,
+   "ex": {
+    "el": "button.absolute.right-3.top-1/2 «Mostrar ou ocultar»",
+    "w": 20,
+    "h": 20
+   },
+   "route": "#/trocar-senha"
+  },
+  {
+   "el": "input#doc-busca.bg-transparent.outline-none.flex-1",
+   "count": 18,
+   "ex": {
+    "el": "input#doc-busca.bg-transparent.outline-none.flex-1",
+    "w": 198,
+    "h": 20
+   },
+   "route": "#/documentos"
+  },
+  {
+   "el": "button.carousel-dot.active",
+   "count": 15,
+   "ex": {
+    "el": "button.carousel-dot.active «Slide 1»",
+    "w": 18,
+    "h": 6
+   },
+   "route": "#/dashboard"
+  },
+  {
+   "el": "button.carousel-dot",
+   "count": 15,
+   "ex": {
+    "el": "button.carousel-dot «Slide 2»",
+    "w": 6,
+    "h": 6
+   },
+   "route": "#/dashboard"
+  },
+  {
+   "el": "a.text-xs.font-bold.text-wine",
+   "count": 15,
+   "ex": {
+    "el": "a.text-xs.font-bold.text-wine «Ver aniversariante do dia»",
+    "w": 246,
+    "h": 16
+   },
+   "route": "#/dashboard"
+  },
+  {
+   "el": "input#ani-busca.bg-transparent.outline-none.flex-1",
+   "count": 12,
+   "ex": {
+    "el": "input#ani-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/aniversariantes"
+  },
+  {
+   "el": "input#dir-busca.bg-transparent.outline-none.flex-1",
+   "count": 12,
+   "ex": {
+    "el": "input#dir-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/diretorio"
+  },
+  {
+   "el": "input#not-busca.bg-transparent.outline-none.flex-1",
+   "count": 6,
+   "ex": {
+    "el": "input#not-busca.bg-transparent.outline-none.flex-1",
+    "w": 182,
+    "h": 20
+   },
+   "route": "#/admin/noticias"
+  },
+  {
+   "el": "input#dc-arquivo.file-input-hidden",
+   "count": 6,
+   "ex": {
+    "el": "input#dc-arquivo.file-input-hidden",
+    "w": 1,
+    "h": 1
+   },
+   "route": "#/admin/documentos/novo"
+  },
+  {
+   "el": "input#ev-busca.bg-transparent.outline-none.flex-1",
+   "count": 6,
+   "ex": {
+    "el": "input#ev-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/admin/eventos"
+  },
+  {
+   "el": "input#faq-adm-busca.bg-transparent.outline-none.flex-1",
+   "count": 6,
+   "ex": {
+    "el": "input#faq-adm-busca.bg-transparent.outline-none.flex-1",
+    "w": 182,
+    "h": 20
+   },
+   "route": "#/admin/faqs"
+  },
+  {
+   "el": "input#us-busca.bg-transparent.outline-none.flex-1",
+   "count": 3,
+   "ex": {
+    "el": "input#us-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/admin/usuarios"
+  },
+  {
+   "el": "input#ch-busca.bg-transparent.outline-none.flex-1",
+   "count": 3,
+   "ex": {
+    "el": "input#ch-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/admin/chamados"
+  },
+  {
+   "el": "input#audit-busca.bg-transparent.outline-none.flex-1",
+   "count": 3,
+   "ex": {
+    "el": "input#audit-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/admin/auditoria"
+  },
+  {
+   "el": "input#av-busca.bg-transparent.outline-none.flex-1",
+   "count": 3,
+   "ex": {
+    "el": "input#av-busca.bg-transparent.outline-none.flex-1",
+    "w": 171,
+    "h": 20
+   },
+   "route": "#/admin/avaliacoes"
+  }
+ ],
+ "tiny_text": [
+  {
+   "el": "label.field-label",
+   "count": 960,
+   "px": 11.2,
+   "ex": "label.field-label «NOME COMPLETO»"
+  },
+  {
+   "el": "span.sb-label.role-pill-txt",
+   "count": 672,
+   "px": 11.52,
+   "ex": "span.sb-label.role-pill-txt «PERFIL: ADMIN»"
+  },
+  {
+   "el": "span.sb-label.role-pill-more",
+   "count": 672,
+   "px": 11.52,
+   "ex": "span.sb-label.role-pill-more «trocar»"
+  },
+  {
+   "el": "div.sb-label.px-5.mb-2",
+   "count": 672,
+   "px": 11,
+   "ex": "div.sb-label.px-5.mb-2 «MENU PRINCIPAL»"
+  },
+  {
+   "el": "span.sb-label.nav-count",
+   "count": 432,
+   "px": 11.2,
+   "ex": "span.sb-label.nav-count «10»"
+  },
+  {
+   "el": "span.badge.badge-blue",
+   "count": 424,
+   "px": 10.88,
+   "ex": "span.badge.badge-blue «Comunicado»"
+  },
+  {
+   "el": "span.badge.badge-green",
+   "count": 248,
+   "px": 10.88,
+   "ex": "span.badge.badge-green «Publicado»"
+  },
+  {
+   "el": "span.stat-label",
+   "count": 224,
+   "px": 10.88,
+   "ex": "span.stat-label «COMUNICADOS PUBLICADOS»"
+  },
+  {
+   "el": "div",
+   "count": 224,
+   "px": 11,
+   "ex": "div «S»"
+  },
+  {
+   "el": "span.avatar-mini",
+   "count": 200,
+   "px": 9.6,
+   "ex": "span.avatar-mini «AQ»"
+  },
+  {
+   "el": "span.tag-outline",
+   "count": 192,
+   "px": 11.2,
+   "ex": "span.tag-outline «Institucional»"
+  },
+  {
+   "el": "span.tag-outline.mb-3.inline-block",
+   "count": 160,
+   "px": 11.2,
+   "ex": "span.tag-outline.mb-3.inline-block «Enfermagem»"
+  },
+  {
+   "el": "div.birthday-pill.mx-auto.w-max",
+   "count": 160,
+   "px": 11.2,
+   "ex": "div.birthday-pill.mx-auto.w-max «dia 23»"
+  },
+  {
+   "el": "div.avatar-soft.w-8.h-8",
+   "count": 160,
+   "px": 10,
+   "ex": "div.avatar-soft.w-8.h-8 «AQ»"
+  },
+  {
+   "el": "div.text-[10px].font-bold.tracking-wider",
+   "count": 128,
+   "px": 10,
+   "ex": "div.text-[10px].font-bold.tracking-wider «DATA»"
+  }
+ ],
+ "console": [],
+ "http": [],
+ "broken_imgs": [],
+ "no_alt": [],
+ "redirects": [
+  [
+   "admin",
+   "#/login",
+   "#/dashboard"
+  ]
+ ],
+ "h1": [
+  [
+   "#/avisos/1",
+   2
+  ],
+  [
+   "#/eventos/1",
+   2
+  ],
+  [
+   "#/login",
+   0
+  ]
+ ],
+ "landmarks_missing_main": [
+  "#/admin/auditoria",
+  "#/admin/avaliacoes",
+  "#/admin/chamados",
+  "#/admin/documentos",
+  "#/admin/documentos/novo",
+  "#/admin/eventos",
+  "#/admin/eventos/1/editar",
+  "#/admin/eventos/novo",
+  "#/admin/faqs",
+  "#/admin/noticias",
+  "#/admin/noticias/1/editar",
+  "#/admin/noticias/nova",
+  "#/admin/solicitacoes",
+  "#/admin/usuarios",
+  "#/aniversariantes",
+  "#/aniversariantes/hoje",
+  "#/avaliacoes",
+  "#/avisos",
+  "#/avisos/1",
+  "#/dashboard",
+  "#/diretorio",
+  "#/documentos",
+  "#/eventos",
+  "#/eventos/1",
+  "#/faq",
+  "#/login",
+  "#/notificacoes",
+  "#/perfil",
+  "#/rota-inexistente",
+  "#/trocar-senha"
+ ],
+ "slow": [],
+ "titles": [
+  [
+   "#/admin/auditoria",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/avaliacoes",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/chamados",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/documentos",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/documentos/novo",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/eventos",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/eventos/1/editar",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/eventos/novo",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/faqs",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/noticias",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/noticias/1/editar",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/noticias/nova",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/solicitacoes",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/admin/usuarios",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/aniversariantes",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/aniversariantes/hoje",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/avaliacoes",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/avisos",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/avisos/1",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/dashboard",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/diretorio",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/documentos",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/eventos",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/eventos/1",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/faq",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/login",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/notificacoes",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/perfil",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/rota-inexistente",
+   "Intranet Corporativa · Hospital Decós"
+  ],
+  [
+   "#/trocar-senha",
+   "Intranet Corporativa · Hospital Decós"
+  ]
+ ]
+}

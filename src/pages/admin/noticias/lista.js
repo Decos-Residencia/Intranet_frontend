@@ -8,8 +8,8 @@
   const { icon, badge, esc } = UI;
   const { statCard, statusBadge, prioBadge, TIPOS_NOTICIA } = AdminUI;
 
-  const STATUS = [["", "Todos"], ["PUBLICADO", "Publicados"], ["AGENDADO", "Agendados"], ["RASCUNHO", "Rascunhos"], ["ARQUIVADO", "Arquivados"]];
-  const ROTULO = { PUBLICADO: "Publicado", AGENDADO: "Agendado", RASCUNHO: "Rascunho", ARQUIVADO: "Arquivado" };
+  const STATUS = [["", "Todos"], ["PUBLICADO", "Publicados"], ["EM_REVISAO", "Em revisão"], ["AGENDADO", "Agendados"], ["RASCUNHO", "Rascunhos"], ["ARQUIVADO", "Arquivados"]];
+  const ROTULO = { PUBLICADO: "Publicado", AGENDADO: "Agendado", RASCUNHO: "Rascunho", ARQUIVADO: "Arquivado", EM_REVISAO: "Em Revisão" };
   const CATEGORIAS = [["", "Categoria: todas"], ["comunicado", "Comunicado"], ["evento", "Evento"], ["promocao", "Promoção"], ["noticia", "Notícia"], ["urgente", "Urgente"]];
   const POR_PAGINA = 20;
   const fmtHora = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -24,24 +24,30 @@
       : a.status === "ARQUIVADO" ? `Criado em ${quando(a.criado_em)}` : `Criado em ${quando(a.criado_em)}`;
     const autor = App.nomeDoUsuario(a.autor_id) || "—";
     const btn = (acao, rotulo, extra = "") => `<button class="btn-outline text-xs px-2.5 py-1.5" data-action="aviso-status" data-id="${a.id}" data-status="${acao}" ${extra}>${rotulo}</button>`;
-    const principais = {
+    // Quem aprova publica direto; os demais só arquivam ou mandam para revisão (spec 003).
+    const principais = App.can("approve") ? {
       PUBLICADO: btn("ARQUIVADO", "Arquivar"),
       AGENDADO: btn("PUBLICADO", "Publicar agora") + btn("RASCUNHO", "Cancelar agend."),
       RASCUNHO: btn("PUBLICADO", "Publicar"),
       ARQUIVADO: btn("PUBLICADO", "Republicar"),
-    }[a.status];
+      EM_REVISAO: `<a href="#/admin/revisao" class="btn-outline text-xs px-2.5 py-1.5">Revisar</a>`,
+    }[a.status] : {
+      PUBLICADO: btn("ARQUIVADO", "Arquivar"),
+      AGENDADO: btn("RASCUNHO", "Cancelar agend."),
+      RASCUNHO: btn("EM_REVISAO", "Enviar p/ revisão"),
+    }[a.status] || "";
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40" data-id="${a.id}">
       <td class="py-3.5 pl-4"><div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-xs">${esc(a.titulo)}</div>
         <div class="text-xs text-slate-400">${esc(rotuloCat(a.categoria))} • ${esc(datas)}</div></td>
       <td class="text-sm text-slate-500 dark:text-slate-400">${esc(autor)}</td>
       <td>${statusBadge(ROTULO[a.status])}${a.status === "AGENDADO" ? `<div class="text-[11px] text-slate-400 mt-1">${esc(quando(a.publicar_em))}</div>` : ""}</td>
       <td>${prioBadge(urgente ? "urgente" : "normal")}</td>
-      <td class="text-sm font-semibold text-slate-600 dark:text-slate-300" title="Usuários únicos que abriram o aviso">${a.leituras ?? 0}</td>
+      <td><button type="button" class="leitores-btn" data-action="aviso-leitores" data-id="${a.id}" data-titulo="${esc(a.titulo)}" aria-label="Ver quem leu: ${a.leituras ?? 0} ${(a.leituras ?? 0) === 1 ? "leitura" : "leituras"}">${icon("eye", "w-3.5 h-3.5")} ${a.leituras ?? 0}</button></td>
       <td><div class="flex items-center gap-1.5 justify-end pr-4 flex-wrap">
         ${principais}
         <button class="act-btn" data-action="preview-noticia" data-id="${a.id}" title="Visualizar">${icon("eye", "w-4 h-4")}</button>
         <a href="#/admin/noticias/${a.id}/editar" class="act-btn" title="Editar">${icon("edit", "w-4 h-4")}</a>
-        <button class="act-btn act-btn-danger" data-action="delete-aviso" data-id="${a.id}" data-alvo="${esc(a.titulo)}" title="Excluir">${icon("trash", "w-4 h-4")}</button>
+        ${App.can("delete_forever") ? `<button class="act-btn act-btn-danger" data-action="delete-aviso" data-id="${a.id}" data-alvo="${esc(a.titulo)}" title="Excluir definitivamente" aria-label="Excluir definitivamente ${esc(a.titulo)}">${icon("trash", "w-4 h-4")}</button>` : ""}
       </div></td>
     </tr>`;
   }
@@ -100,7 +106,7 @@
         <div class="flex gap-2 items-center flex-wrap">
           <div class="search-box w-60"><span>${icon("search", "w-4 h-4 text-slate-400")}</span>
             <input id="not-busca" placeholder="Buscar título ou conteúdo..." maxlength="200" class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
-          <select id="not-cat" class="select-field">${CATEGORIAS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
+          <select id="not-cat" class="select-field" aria-label="Filtrar por categoria">${CATEGORIAS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
         </div>
       </div>
       <div class="card overflow-x-auto">
@@ -145,5 +151,17 @@
       </div>`);
   }
 
-  Object.assign(PagesAdmin, { adminNoticias, previewNoticia });
+  // Painel "Quem leu": nome, setor e data de cada leitura (GET /avisos/{id}/leitores).
+  async function leitoresAviso(id, titulo) {
+    let r;
+    try { r = await Services.avisos.leitores(id, { page_size: 100 }); } catch (err) { App.toast(err.message || "Não foi possível carregar as leituras."); return; }
+    App.openPanel(`Quem leu — ${esc(titulo)}`, r.total
+      ? `<div class="text-sm text-slate-500 dark:text-slate-400 mb-3">${r.total} ${r.total === 1 ? "pessoa leu" : "pessoas leram"} este aviso${r.total > r.items.length ? ` (mostrando as ${r.items.length} mais recentes)` : ""}.</div>
+         <ul class="card divide-y divide-slate-100 dark:divide-slate-800">${r.items.map((l) => `<li class="p-3 flex items-center justify-between gap-3"><div class="min-w-0">
+           <div class="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">${esc(l.nome)}</div><div class="text-xs text-slate-500 dark:text-slate-400 truncate">${esc(l.setor || "—")}</div></div>
+           <span class="text-xs text-slate-500 dark:text-slate-400 shrink-0">${esc(UI.fmtDataHora(l.lido_em))}</span></li>`).join("")}</ul>`
+      : `<div class="text-sm text-slate-500 dark:text-slate-400 text-center py-8">Ninguém abriu este aviso ainda.</div>`);
+  }
+
+  Object.assign(PagesAdmin, { leitoresAviso, adminNoticias, previewNoticia });
 })();

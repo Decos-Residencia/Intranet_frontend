@@ -55,14 +55,14 @@
                   <label class="field-label" for="rs-nova">NOVA SENHA</label>
                   <div class="relative">
                     <input id="rs-nova" type="password" class="field-input pr-12" autocomplete="new-password" required maxlength="1024" placeholder="Mínimo de 8 caracteres">
-                    <button type="button" data-toggle-pass="rs-nova" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-label="Mostrar ou ocultar">${icon("eye", "w-5 h-5")}</button>
+                    <button type="button" data-toggle-pass="rs-nova" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400" aria-label="Mostrar ou ocultar">${icon("eye", "w-5 h-5")}</button>
                   </div>
                 </div>
                 <div>
                   <label class="field-label" for="rs-conf">CONFIRMAR NOVA SENHA</label>
                   <div class="relative">
                     <input id="rs-conf" type="password" class="field-input pr-12" autocomplete="new-password" required maxlength="1024" placeholder="Repita a nova senha">
-                    <button type="button" data-toggle-pass="rs-conf" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-label="Mostrar ou ocultar">${icon("eye", "w-5 h-5")}</button>
+                    <button type="button" data-toggle-pass="rs-conf" class="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400" aria-label="Mostrar ou ocultar">${icon("eye", "w-5 h-5")}</button>
                   </div>
                 </div>
                 <ul class="text-xs space-y-1" id="rs-regras">${REGRAS.map(([k, t]) => `<li data-regra="${k}">• ${t}</li>`).join("")}</ul>

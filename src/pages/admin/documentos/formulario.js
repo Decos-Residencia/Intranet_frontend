@@ -2,24 +2,37 @@
    Tela: Adicionar / Editar Documento (ADMIN)
    Rota: #/admin/documentos/novo · #/admin/documentos/:id/editar
    Upload real: arquivo + metadados vão para POST /documentos (multipart); o backend valida (20 MB; PDF,
-   DOC, DOCX, XLS, XLSX; extensão + MIME + conteúdo) e grava no Supabase Storage privado. Editar muda só
-   os metadados; "Substituir arquivo" usa PUT /documentos/{id}/arquivo (o anterior só some depois do novo).
+   DOC, DOCX, XLS, XLSX; extensão + MIME + conteúdo) e grava no Supabase Storage privado.
+   Descrição obrigatória (mín. 10). Todo envio diz se a versão é a VIGENTE ou ANTIGA. Na edição, o
+   histórico mostra todas as versões; nova versão usa POST /documentos/{id}/versoes e nenhum arquivo
+   anterior é apagado (vira "versão antiga").
    ========================================================================= */
 (function () {
-  const { breadcrumb, esc, icon } = UI;
+  const { breadcrumb, esc, icon, badge } = UI;
   const { TIPOS_DOC } = AdminUI;
 
   const MAX_BYTES = 20 * 1024 * 1024;
   const EXTENSOES = ["pdf", "doc", "docx", "xls", "xlsx"];
   const bytes = (n) => (n < 1048576 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1048576).toFixed(1).replace(".", ",")} MB`);
 
-  const fld = (label, html, hint) => `<div><label class="field-label">${label}</label>${html}${hint ? `<div class="field-hint">${hint}</div>` : ""}</div>`;
+  // O rótulo aponta para o primeiro campo com id do bloco (leitores de tela anunciam o nome).
+  const fld = (label, html, hint) => {
+    const alvo = (html.match(/<(?:input|select|textarea)[^>]*\sid="([^"]+)"/) || [])[1];
+    return `<div><label class="field-label" ${alvo ? `for="${alvo}"` : ""}>${label}</label>${html}${hint ? `<div class="field-hint">${hint}</div>` : ""}</div>`;
+  };
   const filePicker = () => `<input id="dc-arquivo" type="file" class="file-input-hidden" accept=".pdf,.doc,.docx,.xls,.xlsx">
     <div class="file-picker">
       <button type="button" data-pick-document-file class="file-picker-btn">${icon("upload", "w-4 h-4")} Escolher arquivo</button>
       <span id="dc-arquivo-label" class="file-picker-name">Nenhum arquivo escolhido</span>
     </div>`;
   const $ = (i) => document.getElementById(i);
+  const MIN_DESC = 10;
+  // Escolha obrigatória: a versão enviada é a que vale (vigente) ou entra só no histórico (antiga)?
+  const escolhaVersao = (nome) => `<fieldset class="space-y-2"><legend class="field-label">ESTA VERSÃO É *</legend>
+    <label class="versao-opt"><input type="radio" name="${nome}" value="true"><span><b>Versão nova (vigente)</b><small>Passa a ser a exibida para todos. A atual vira "versão antiga".</small></span></label>
+    <label class="versao-opt"><input type="radio" name="${nome}" value="false"><span><b>Versão antiga</b><small>Entra só no histórico, marcada como obsoleta.</small></span></label>
+  </fieldset>`;
+  const vigenteEscolhido = (nome) => document.querySelector(`input[name="${nome}"]:checked`)?.value;
 
   // Mensagem de estado do envio: idle | enviando | sucesso | erro
   function estado(tipo, texto) {
@@ -55,21 +68,37 @@
             ${fld("TÍTULO DO DOCUMENTO *", `<input id="dc-titulo" class="field-input" maxlength="200" placeholder="Ex: POP — Higienização das Mãos">`)}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${fld("CATEGORIA *", `<input id="dc-categoria" class="field-input" maxlength="100" list="dc-cats" placeholder="Ex: POP, Protocolo, Manual"><datalist id="dc-cats">${categorias.map((c) => `<option value="${esc(c)}">`).join("")}</datalist>`)}
-              ${fld("VERSÃO", `<input id="dc-versao" class="field-input" maxlength="30" value="1.0">`, "Texto livre controlado por você (ex.: 1.0, 2.3, 2026-10).")}
+              ${fld(id ? "RÓTULO DA VERSÃO EXIBIDA" : "VERSÃO *", `<input id="dc-versao" class="field-input" maxlength="30" value="1.0">`, "Ex.: 1.0, 2.3, 2026-10.")}
             </div>
-            ${fld("DESCRIÇÃO", `<textarea id="dc-desc" class="field-input" rows="3" maxlength="2000" placeholder="Opcional: resumo do que o documento contém"></textarea>`)}
+            <div><label class="field-label" for="dc-desc">DESCRIÇÃO *</label>
+              <textarea id="dc-desc" class="field-input" rows="3" maxlength="2000" required aria-describedby="dc-desc-ajuda" placeholder="Para que serve este documento, a quem se aplica e o que ele contém"></textarea>
+              <div id="dc-desc-ajuda" class="field-hint flex justify-between gap-2"><span>Obrigatória, no mínimo ${MIN_DESC} caracteres.</span><span id="dc-desc-cont" aria-live="polite">0/2000</span></div></div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${fld("QUEM PODE VER", `<select id="dc-setor" class="field-input"><option value="">Geral — todos os colaboradores</option>${setores.map((s) => `<option value="${s.id}">Somente o setor ${esc(s.nome)}</option>`).join("")}</select>`, "Documentos restritos só aparecem para o setor escolhido e para administradores.")}
               ${fld("STATUS", `<select id="dc-ativo" class="field-input"><option value="true">Ativo (visível)</option><option value="false">Inativo (escondido)</option></select>`)}
             </div>
+            <fieldset><legend class="field-label">PERMISSÃO DO ARQUIVO</legend>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label class="versao-opt"><input type="radio" name="dc-permissao" value="download" checked><span><b>${icon("download", "w-4 h-4 inline -mt-0.5")} Download disponível</b><small>Manuais de uso comum e formulários: dá para baixar e imprimir.</small></span></label>
+                <label class="versao-opt"><input type="radio" name="dc-permissao" value="visualizacao"><span><b>${icon("eye", "w-4 h-4 inline -mt-0.5")} Somente visualização</b><small>Documento crítico: só leitura na tela, sem download, impressão nem cópia.</small></span></label>
+              </div></fieldset>
           </div>
-          <div class="card p-6" id="dc-bloco-arquivo">
-            ${id ? `<div class="font-bold text-slate-800 dark:text-slate-100 mb-1">Arquivo atual</div><div class="text-sm text-slate-500 dark:text-slate-400 mb-4" id="dc-atual">Carregando…</div>
-              <div class="font-bold text-slate-800 dark:text-slate-100 mb-2">Substituir arquivo</div>
-              ${fld("NOVO ARQUIVO", filePicker(), "O arquivo anterior só é removido depois que o novo estiver salvo com sucesso.")}
-              <button type="button" data-action="replace-doc" class="btn-outline mt-3 px-5 py-2.5">Substituir arquivo</button>`
-              : fld("ARQUIVO *", filePicker(), "PDF, DOC, DOCX, XLS ou XLSX — até 20 MB. O arquivo é guardado em um armazenamento privado.")}
-            <div id="dc-arquivo-info" class="text-xs text-slate-400 mt-2"></div>
+          <div class="card p-6 space-y-4" id="dc-bloco-arquivo">
+            ${id ? `<div><div class="font-bold text-slate-800 dark:text-slate-100 mb-1">Arquivo exibido agora</div><div class="text-sm text-slate-500 dark:text-slate-400" id="dc-atual">Carregando…</div></div>
+              <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                <div class="font-bold text-slate-800 dark:text-slate-100">Enviar outra versão</div>
+                ${fld("ARQUIVO *", filePicker(), "Nenhum arquivo anterior é apagado: ele fica no histórico.")}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${fld("RÓTULO DA NOVA VERSÃO *", `<input id="dc-nv-rotulo" class="field-input" maxlength="30" placeholder="Ex.: 2.0">`)}
+                  ${fld("O QUE MUDOU", `<input id="dc-nv-obs" class="field-input" maxlength="1000" placeholder="Opcional">`)}
+                </div>
+                ${escolhaVersao("dc-nv-vigente")}
+                <button type="button" data-action="replace-doc" class="btn-outline px-5 py-2.5">${icon("upload", "w-4 h-4")} Enviar versão</button>
+              </div>
+              <div class="pt-4 border-t border-slate-100 dark:border-slate-800"><div class="font-bold text-slate-800 dark:text-slate-100 mb-2">Histórico de versões</div><div id="dc-versoes"></div></div>`
+              : `${fld("ARQUIVO *", filePicker(), "PDF, DOC, DOCX, XLS ou XLSX — até 20 MB. O arquivo é guardado em um armazenamento privado.")}
+                ${escolhaVersao("dc-vigente")}`}
+            <div id="dc-arquivo-info" class="text-xs text-slate-500 dark:text-slate-400"></div>
           </div>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div id="dc-estado" class="hidden"></div>
@@ -106,14 +135,19 @@
       $("dc-arquivo-info").textContent = f ? (erro || `${f.name} · ${bytes(f.size)}`) : "";
       $("dc-arquivo-info").className = `text-xs mt-2 ${erro ? "text-red-600" : "text-slate-400"}`;
     });
+    const desc = $("dc-desc"), cont = $("dc-desc-cont");
+    const contar = () => { cont.textContent = `${desc.value.trim().length}/2000`; };
+    desc.addEventListener("input", contar);
     if (!id) return;
     try {
       const d = await Services.documentos.get(id);
       if (!$("form-doc")) return;
       $("dc-titulo").value = d.titulo; $("dc-categoria").value = d.categoria; $("dc-versao").value = d.versao;
-      $("dc-desc").value = d.descricao || ""; $("dc-setor").value = d.setor_id ? String(d.setor_id) : ""; $("dc-ativo").value = d.ativo ? "true" : "false";
-      $("dc-atual").innerHTML = `<b>${esc(d.arquivo_nome)}</b> · ${bytes(d.tamanho_bytes)} · enviado por ${esc(d.enviado_por || "—")} <button type="button" class="font-bold text-wine hover:underline ml-2" data-action="open-doc-url" data-id="${d.id}">Abrir</button>`;
+      $("dc-desc").value = d.descricao || ""; contar(); $("dc-setor").value = d.setor_id ? String(d.setor_id) : ""; $("dc-ativo").value = d.ativo ? "true" : "false";
+      document.querySelector(`input[name="dc-permissao"][value="${d.somente_visualizacao ? "visualizacao" : "download"}"]`).checked = true;
+      $("dc-atual").innerHTML = atualHtml(d);
       $("dc-salvar").disabled = false;
+      App.montarVersoes($("dc-versoes"), id, { gerir: true, aoMudar: () => recarregarAtual(id) });
     } catch (err) {
       App.toast(err.message || "Documento não encontrado."); App.go("#/admin/documentos");
     }
@@ -125,12 +159,14 @@
     const id = f.dataset.id;
     const titulo = $("dc-titulo").value.trim(), categoria = $("dc-categoria").value.trim(), versao = $("dc-versao").value.trim() || "1.0";
     const desc = $("dc-desc").value.trim(), setor = $("dc-setor").value, ativo = $("dc-ativo").value === "true";
+    const somenteVisualizacao = document.querySelector('input[name="dc-permissao"]:checked')?.value === "visualizacao";
     if (!titulo) { App.toast("Informe o título do documento"); $("dc-titulo").focus(); return; }
     if (!categoria) { App.toast("Informe a categoria"); $("dc-categoria").focus(); return; }
+    if (desc.length < MIN_DESC) { estado("erro", `Descrição obrigatória (mínimo ${MIN_DESC} caracteres).`); $("dc-desc").focus(); return; }
     if (id) {
       ocupado(true); estado("enviando", "Salvando alterações…");
       try {
-        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc || null, setor_id: setor ? Number(setor) : null, ativo });
+        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc, setor_id: setor ? Number(setor) : null, ativo, somente_visualizacao: somenteVisualizacao });
         estado("sucesso", "Alterações salvas."); App.toast("Documento atualizado");
         await App.loadApiData(); setTimeout(() => App.go("#/admin/documentos"), 400);
       } catch (err) { estado("erro", err.message || "Não foi possível salvar."); ocupado(false); }
@@ -139,11 +175,13 @@
     const file = $("dc-arquivo").files?.[0];
     const erro = validarArquivo(file);
     if (erro) { estado("erro", erro); App.toast(erro); return; }
+    const vigente = vigenteEscolhido("dc-vigente");
+    if (!vigente) { estado("erro", "Escolha se esta é a versão nova (vigente) ou uma versão antiga."); document.querySelector('input[name="dc-vigente"]').focus(); return; }
     const data = new FormData();
     data.append("arquivo", file); data.append("titulo", titulo); data.append("categoria", categoria); data.append("versao", versao);
-    data.append("ativo", String(ativo));
-    if (desc) data.append("descricao", desc);
+    data.append("ativo", String(ativo)); data.append("vigente", vigente); data.append("descricao", desc);
     if (setor) data.append("setor_id", setor);
+    data.append("somente_visualizacao", String(somenteVisualizacao));
     ocupado(true); estado("enviando", `Enviando ${file.name} (${bytes(file.size)}) para o armazenamento seguro…`);
     try {
       await Services.documentos.create(data);
@@ -152,23 +190,41 @@
     } catch (err) { estado("erro", err.message || "Falha no envio."); App.toast(err.message || "Falha no envio do documento."); ocupado(false); }
   }
 
+  const atualHtml = (d) => `<b>${esc(d.arquivo_nome)}</b> · versão ${esc(d.versao)} ${d.vigente ? badge("green", "Vigente") : badge("gray", "Sem versão vigente")} · ${bytes(d.tamanho_bytes)} · enviado por ${esc(d.enviado_por || "—")} <button type="button" class="font-bold text-wine hover:underline ml-2" data-action="open-doc-url" data-id="${d.id}">Abrir</button>`;
+
+  async function recarregarAtual(id) {
+    try {
+      const d = await Services.documentos.get(id);
+      if ($("dc-atual")) { $("dc-atual").innerHTML = atualHtml(d); $("dc-versao").value = d.versao; }
+      App.loadApiData();
+    } catch (_) { /* a tela segue com o que já mostrava */ }
+  }
+
   async function substituirDocumento() {
     const f = $("form-doc");
     const file = $("dc-arquivo")?.files?.[0];
     const erro = validarArquivo(file);
     if (erro) { estado("erro", erro); App.toast(erro); return; }
+    const rotulo = $("dc-nv-rotulo").value.trim();
+    if (!rotulo) { estado("erro", "Informe o rótulo da nova versão (ex.: 2.0)."); $("dc-nv-rotulo").focus(); return; }
+    const vigente = vigenteEscolhido("dc-nv-vigente");
+    if (!vigente) { estado("erro", "Escolha se esta é a versão nova (vigente) ou uma versão antiga."); document.querySelector('input[name="dc-nv-vigente"]').focus(); return; }
     const data = new FormData();
-    data.append("arquivo", file);
-    const versao = $("dc-versao").value.trim();
-    if (versao) data.append("versao", versao);
+    data.append("arquivo", file); data.append("rotulo", rotulo); data.append("vigente", vigente);
+    const obs = $("dc-nv-obs").value.trim();
+    if (obs) data.append("observacao", obs);
     ocupado(true); estado("enviando", `Enviando ${file.name} (${bytes(file.size)})… o arquivo atual continua disponível até terminar.`);
     try {
-      const d = await Services.documentos.substituirArquivo(f.dataset.id, data);
-      $("dc-atual").innerHTML = `<b>${esc(d.arquivo_nome)}</b> · ${bytes(d.tamanho_bytes)} · enviado por ${esc(d.enviado_por || "—")} <button type="button" class="font-bold text-wine hover:underline ml-2" data-action="open-doc-url" data-id="${d.id}">Abrir</button>`;
-      $("dc-versao").value = d.versao; $("dc-arquivo").value = ""; $("dc-arquivo-info").textContent = "";
-      estado("sucesso", "Arquivo substituído."); App.toast("Arquivo substituído com sucesso");
-      await App.loadApiData();
-    } catch (err) { estado("erro", err.message || "Falha ao substituir o arquivo."); App.toast(err.message || "Falha ao substituir o arquivo."); }
+      const d = await Services.documentos.enviarVersao(f.dataset.id, data);
+      $("dc-atual").innerHTML = atualHtml(d);
+      $("dc-versao").value = d.versao; $("dc-arquivo").value = ""; $("dc-arquivo-info").textContent = ""; $("dc-arquivo-label").textContent = "Nenhum arquivo escolhido";
+      $("dc-nv-rotulo").value = ""; $("dc-nv-obs").value = "";
+      document.querySelectorAll('input[name="dc-nv-vigente"]').forEach((r) => { r.checked = false; });
+      estado("sucesso", vigente === "true" ? `Versão ${rotulo} agora é a vigente.` : `Versão ${rotulo} adicionada ao histórico como antiga.`);
+      App.toast("Versão enviada");
+      await App.montarVersoes($("dc-versoes"), f.dataset.id, { gerir: true, aoMudar: () => recarregarAtual(f.dataset.id) });
+      App.loadApiData();
+    } catch (err) { estado("erro", err.message || "Falha ao enviar a versão."); App.toast(err.message || "Falha ao enviar a versão."); }
     ocupado(false);
   }
 

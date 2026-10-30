@@ -13,6 +13,7 @@
   const PERFIL_ROLE = { LEITURA: "leitura", COLABORADOR: "normal", RH: "rh", ADMIN: "admin" };
   const ROLE_PERFIL = Object.fromEntries(Object.entries(PERFIL_ROLE).map(([p, r]) => [r, p]));
   const THEMES = {
+    auto: { label: "Automático", icon: "monitor" },
     light: { label: "Claro", icon: "sun" },
     dark: { label: "Escuro", icon: "moon" },
     red: { label: "Vinho", icon: "wine" },
@@ -23,7 +24,7 @@
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
-    eventosProximos: [], minhasInscricoes: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0 });
+    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, atalhos: [], revisaoPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
@@ -46,20 +47,24 @@
   }
   save(); // regrava só a lista branca: descarta chaves legadas (token, user, role, api, noticias...)
 
-  /* ---------- papel e permissões (derivados do usuário real) ---------- */
-  // Simulação de visão (só ADMIN, só na memória): muda menu/telas, nunca a autorização do backend.
-  state.previewRole = null;
+  /* ---------- papel e permissões (vindos do servidor) ---------- */
+  // O perfil só muda pela tela Controle de acesso (ADMIN). As permissões efetivas
+  // (as do perfil) chegam prontas em GET /auth/me → user.permissoes.
+  // As telas usam nomes curtos (caps); este mapa é o único ponto de tradução.
+  const CAP_PERMISSAO = {
+    interact: "interagir", download: "baixar", edit_profile: "editar_perfil",
+    manage_news: "gerenciar_avisos", manage_docs: "gerenciar_documentos", manage_faq: "gerenciar_faq",
+    manage_events: "gerenciar_eventos", manage_tickets: "gerenciar_chamados", manage_reviews: "gerenciar_avaliacoes",
+    delete_forever: "excluir_definitivo", manage_users: "gerenciar_usuarios", audit_all: "auditoria",
+    approve: "aprovar_publicacoes", manage_vagas: "gerenciar_vagas",
+  };
   function realRole() { return PERFIL_ROLE[state.user?.perfil] || null; }
-  function role() {
-    if (state.previewRole && realRole() === "admin" && DB.roles[state.previewRole]) return state.previewRole;
-    return realRole();
-  }
-  state.previewAniversario = false; // simulação de "hoje é meu aniversário" (só ADMIN, só na memória)
-  function setPreviewAniversario(on) { state.previewAniversario = !!on; }
-  function setPreviewRole(r) { state.previewRole = r && r !== "admin" && DB.roles[r] ? r : null; }
-  // Somente leitura: não existe mais como "preferência" que alguém possa gravar.
+  const role = realRole;
   Object.defineProperty(state, "role", { get: role, enumerable: false });
-  function can(cap) { const r = role(); return !!r && (DB.roles[r]?.caps || []).includes(cap); }
+  function can(cap) {
+    const permissao = CAP_PERMISSAO[cap] || cap;
+    return !!state.user && (state.user.permissoes || []).includes(permissao);
+  }
   function roleInfo() { return DB.roles[role()] || DB.roles.normal; }
 
   /* ---------- sessão ---------- */
@@ -74,6 +79,7 @@
     state.auth = true;
     state.user = user;
     save();
+    App.carregarPreferencias?.(user); // tema e acessibilidade salvos na conta
   }
 
   // Remove JWT, usuário, papel e todo cache vindo do servidor. Preferências
@@ -83,8 +89,6 @@
     stopNotifPolling();
     state.auth = false;
     state.user = null;
-    state.previewRole = null;
-    state.previewAniversario = false;
     state.loadError = null;
     resetServerData();
     save();
@@ -97,9 +101,12 @@
     try {
       clearSession();
       App.closePanel?.(); App.closeModal?.();
-      App.toast?.(message || "Sessão expirada. Faça login novamente.");
-      if (location.hash !== "#/login") location.hash = "#/login"; // dispara render
-      else App.render();
+      App.toast?.(message || "Sua sessão expirou. Use “Entrar” para interagir de novo.");
+      // Continua como visitante: nada de jogar a pessoa na tela de login sem ela pedir.
+      carregarPublico().catch(() => {}).finally(() => {
+        const aberta = App.routes.find((r) => r.re.test(location.hash))?.publica;
+        if (aberta) App.render(); else App.go("#/dashboard");
+      });
     } finally { expiring = false; }
   }
 
@@ -120,30 +127,73 @@
     const token = App.API.getToken();
     if (!token) {
       clearSession();
-      App.API.wake(); // acorda o backend enquanto o usuário digita as credenciais
     } else {
       try {
         const user = await Services.auth.me();
         App.setSession(user);
         await loadApiData();
       } catch (err) {
-        if (err.status === 401) { clearSession(); }       // token inválido/expirado
+        if (err.status === 401) { clearSession(); }       // token inválido/expirado: vira visitante
         else { state.loadError = err.message; }           // API fora do ar: mantém o token
       }
     }
+    // Sem sessão: modo visitante (só conteúdo institucional, sem dado pessoal).
+    if (!state.auth && !state.loadError) {
+      try { await carregarPublico(); } catch (err) { state.loadError = err.message; }
+    }
     state.ready = true;
-    // Se o hash vai mudar, o evento hashchange já renderiza (evita renderizar duas vezes).
-    // O link do e-mail de recuperação abre direto na rota pública (sem sessão): não pode ser desviado.
-    const rotaPublica = location.hash.startsWith("#/redefinir-senha");
-    const alvo = state.loadError ? null : !state.auth ? (rotaPublica ? null : "#/login") : (!location.hash || location.hash === "#/login") ? "#/dashboard" : null;
-    if (alvo && location.hash !== alvo) { location.hash = alvo; return; }
+    if (state.auth && (!location.hash || location.hash === "#/login")) { location.hash = destinoAposLogin(); return; }
+    // Ao abrir o sistema ninguém começa pelo login: a tela de login só aparece pelo botão "Entrar".
+    if (!state.auth && location.hash === "#/login") { history.replaceState(null, "", "#/dashboard"); }
     App.render();
+  }
+
+  // Visitante: avisos publicados, documentos gerais, FAQ, próximos eventos e acessos rápidos.
+  async function carregarPublico() {
+    const [avisos, documentos, faqs, eventos, atalhos] = await Promise.allSettled([
+      Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),
+      Services.listAll(Services.documentos.list),
+      Services.listAll(Services.faq.list),
+      Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 20 }).then((r) => r.items),
+      Services.atalhos.list(),
+    ]);
+    if (avisos.status === "rejected" && avisos.reason?.status === 0) throw avisos.reason; // API fora do ar
+    if (avisos.status === "fulfilled") state.api.avisos = avisos.value.map(apiAvisoParaCard);
+    if (documentos.status === "fulfilled") state.api.documentos = documentos.value.map(apiDocumentoParaView);
+    if (faqs.status === "fulfilled") state.api.faqs = faqs.value.filter((f) => f.ativo !== false).map(apiFaqParaView);
+    if (eventos.status === "fulfilled") state.api.eventosProximos = eventos.value;
+    if (atalhos.status === "fulfilled") state.api.atalhos = atalhos.value;
+    state.api.loaded = true;
+  }
+
+  // Visitante tentou algo que exige login: guarda a tela de origem e vai para o login.
+  const VOLTAR = "decos_voltar";
+  function pedirLogin(voltarPara = location.hash, avisar = true) {
+    try {
+      // Da Inicial, mantém o destino que a pessoa tentou abrir antes (ex.: link do Diretório).
+      const jaGuardado = sessionStorage.getItem(VOLTAR);
+      if (voltarPara && voltarPara !== "#/login" && !(voltarPara === "#/dashboard" && jaGuardado)) sessionStorage.setItem(VOLTAR, voltarPara);
+    } catch (_) { /* sem armazenamento */ }
+    if (avisar) App.toast?.("Entre com sua conta para continuar.");
+    if (location.hash !== "#/login") location.hash = "#/login"; else App.render();
+  }
+  // Link para área restrita aberto sem login: mostra a Inicial e, se a pessoa entrar, leva até lá.
+  function guardarDestino(hash) {
+    try { if (hash && hash !== "#/login") sessionStorage.setItem(VOLTAR, hash); } catch (_) { /* sem armazenamento */ }
+    App.toast?.("Essa área é para colaboradores. Use “Entrar” no topo para acessar.");
+    location.hash = "#/dashboard";
+  }
+  function destinoAposLogin() {
+    let alvo = null;
+    try { alvo = sessionStorage.getItem(VOLTAR); sessionStorage.removeItem(VOLTAR); } catch (_) { alvo = null; }
+    return alvo && alvo.startsWith("#/") && alvo !== "#/login" ? alvo : (App.telaInicial?.() || "#/dashboard");
   }
 
   function logout() {
     clearSession();
     App.closePanel?.(); App.closeModal?.();
-    App.go("#/login");
+    // Depois de sair, continua como visitante no Início (conteúdo institucional).
+    carregarPublico().catch(() => {}).finally(() => App.go("#/dashboard"));
   }
 
   /* ---------- auditoria: gravada pelo backend (GET /auditoria, só ADMIN) ---------- */
@@ -175,9 +225,10 @@
     const categoria = DB.categorias[a.categoria] ? a.categoria : "comunicado";
     const conteudo = (a.conteudo || "").trim();
     // O backend só devolve autor_id: resolve pelo diretório; sem isso, texto neutro.
-    const autor = nomeDoUsuario(a.autor_id) || "Autor não identificado";
+    const autor = nomeDoUsuario(a.autor_id) || (state.auth ? "Autor não identificado" : "Comunicação Decós");
     return {
       id: String(a.id), apiId: a.id, source: "api", own: true, categoria, lido: !!a.lido,
+      emDestaque: a.em_destaque !== false, destaqueAte: a.destaque_ate || null,
       titulo: a.titulo, resumo: conteudo.length > 180 ? conteudo.slice(0, 180) + "…" : conteudo || "Sem conteúdo.",
       data: fmt(fmtLonga, a.data_publicacao), dataCurta: fmt(fmtCurta, a.data_publicacao),
       autor, autorSigla: nomeDoUsuario(a.autor_id) ? UI.iniciais(autor) : "?", imagem: "",
@@ -203,8 +254,10 @@
       titulo: d.titulo, desc: d.descricao || "", versao: d.versao, setorId: d.setor_id, setor: d.setor || "",
       arquivo: d.arquivo_nome, ext: extDoArquivo(d.arquivo_nome), mime: d.mime_type, tamanhoBytes: d.tamanho_bytes,
       tamanho: fmtBytes(d.tamanho_bytes), enviadoPor: d.enviado_por || "—", ativo: d.ativo !== false,
+      vigente: d.vigente !== false, totalVersoes: d.total_versoes || 1,
       data: fmt(fmtLonga, d.data_upload), atualizado: fmt(fmtLonga, d.atualizado_em), atualizadoHora: fmt(fmtHora, d.atualizado_em),
-      download: true,
+      somenteVisualizacao: !!d.somente_visualizacao,
+      download: !d.somente_visualizacao,
     };
   }
 
@@ -234,7 +287,7 @@
     avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
     aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
     solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
-    eventosProximos: "eventos", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes",
+    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes", revisaoPendentes: "fila de revisão",
   };
 
   // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
@@ -285,17 +338,20 @@
     const jobs = {
       // O mural/dashboard só recebem avisos EFETIVAMENTE publicados (inclusive para o ADMIN).
       avisos: () => Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),
-      documentos: () => Services.listAll(Services.documentos.list),
+      documentos: () => Services.listAll(Services.documentos.list, state.docsComAntigas ? { incluir_antigas: true } : {}),
       faqs: () => Services.listAll(Services.faq.list),
       // O ADMIN também recebe os desativados (para reativar); os demais só veem ativos.
       usuarios: () => Services.listAll(Services.usuarios.list, can("manage_users") ? { incluir_inativos: true } : {}),
       setores: () => Services.listAll(Services.setores.list),
+      atalhos: () => Services.atalhos.list(),
       // Próximos eventos publicados (dashboard) e as inscrições do usuário (perfil).
       eventosProximos: () => Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 20 }).then((r) => r.items),
       minhasInscricoes: () => Services.eventos.minhas(),
+      eventosHoje: () => Services.eventos.hoje(),
       chamados: () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items),
       avaliacoesPendentes: () => Services.avaliacoes.list({ status: "PENDENTE", avaliador_id: state.user.id, page_size: 1 }).then((r) => r.total),
       ...(can("manage_tickets") ? { chamadosPendentes: () => Services.chamados.resumo().then((r) => r.abertos + r.em_analise) } : {}),
+      ...(can("approve") ? { revisaoPendentes: () => Services.revisao.fila().then((f) => f.length) } : {}),
       me: () => Services.auth.me(), // dados cadastrais podem ter mudado (aprovação de solicitação, edição do ADMIN)
       aniversariantes: () => Services.aniversariantes.list(),
       aniversariantesHoje: () => Services.aniversariantes.hoje(),
@@ -324,12 +380,15 @@
       state.usuarios = can("manage_users") ? data.usuarios.map(apiUsuarioParaAdmin) : [];
     }
     if (data.setores) state.api.setores = data.setores;
+    if (data.atalhos) state.api.atalhos = data.atalhos;
     if (data.me && state.user && data.me.id === state.user.id) state.user = data.me;
     if (data.eventosProximos) state.api.eventosProximos = data.eventosProximos;
     if (data.minhasInscricoes) state.api.minhasInscricoes = data.minhasInscricoes;
+    if (data.eventosHoje) state.api.eventosHoje = data.eventosHoje;
     if (data.chamados) state.api.chamados = data.chamados;
     if (typeof data.avaliacoesPendentes === "number") state.api.avaliacoesPendentes = data.avaliacoesPendentes;
     if (typeof data.chamadosPendentes === "number") state.api.chamadosPendentes = data.chamadosPendentes;
+    if (typeof data.revisaoPendentes === "number") state.api.revisaoPendentes = data.revisaoPendentes;
     if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
     if (data.aniversariantesHoje) state.api.aniversariantesHoje = data.aniversariantesHoje;
     if (data.proximos) state.api.aniversariantesProximos = data.proximos;
@@ -344,6 +403,7 @@
     if (falhas.length) App.toast?.("Não foi possível carregar: " + falhas.join(", ") + ".");
     await loadNotificacoes();
     if (!pollTimer) startNotifPolling();
+    App.agendarLembretes?.(); // alertas do navegador para os lembretes de hoje (Minha agenda)
   }
 
   /* ---------- avisos: atualização leve, aviso avulso e leitura real ---------- */
@@ -376,6 +436,13 @@
     } catch (_) { return false; }
   }
 
+  // Central de documentos com (ou sem) os que só têm versões antigas. A busca padrão mostra só vigentes.
+  async function carregarDocumentos(incluirAntigas) {
+    const itens = await Services.listAll(Services.documentos.list, incluirAntigas ? { incluir_antigas: true } : {});
+    state.api.documentos = itens.map(apiDocumentoParaView);
+    state.docsComAntigas = !!incluirAntigas;
+  }
+
   /* ---------- coleções exibidas pelas telas (somente API) ---------- */
   function avisosAll() { return state.api.avisos; }
   function documentosAll() { return state.api.documentos; }
@@ -393,12 +460,12 @@
   function aniversariantesProximos() { return state.api.aniversariantesProximos.map(apiAniversariante); }
   function hoje() { const d = new Date(); return { dia: d.getDate(), mes: d.getMonth() + 1 }; }
   function souAniversariante() {
-    if (state.previewAniversario && realRole() === "admin") return true;
-    return !!state.user && state.api.aniversariantesHoje.some((a) => a.id === state.user.id); }
+    return !!state.user && state.api.aniversariantesHoje.some((a) => a.id === state.user.id);
+  }
 
   // Envia parabéns (persistido) e reflete o resultado nas listas em memória.
-  async function parabenizar(id) {
-    await Services.aniversariantes.parabenizar(id);
+  async function parabenizar(id, mensagem) {
+    await Services.aniversariantes.parabenizar(id, mensagem);
     marcarParabenizado(id);
   }
   function marcarParabenizado(id) {
@@ -492,10 +559,11 @@
   }
 
   Object.assign(App, {
-    ROLE_ORDER, realRole, setPreviewRole, setPreviewAniversario, PERFIL_ROLE, ROLE_PERFIL, THEMES, state, save, role, can, roleInfo,
-    setSession, clearSession, expireSession, startSession, restoreSession, logout, loadApiData, changePassword, requirePasswordChange, refreshPerfil, refreshEventos, refreshAvisos, carregarAviso, registrarLeitura, nomeDoUsuario,
+    ROLE_ORDER, realRole, PERFIL_ROLE, ROLE_PERFIL, CAP_PERMISSAO, THEMES, state, save, role, can, roleInfo,
+    setSession, clearSession, expireSession, startSession, restoreSession, logout, carregarPublico, pedirLogin, guardarDestino, destinoAposLogin, loadApiData, changePassword, requirePasswordChange, refreshPerfil, refreshEventos, refreshAvisos, carregarAviso, registrarLeitura, nomeDoUsuario,
     removeItem, findItem, deleteRemoteItem,
-    avisosAll, documentosAll, faqsAll, ramaisAll, setoresAll, aniversariantesAll, aniversariantesHoje, aniversariantesProximos, hoje, souAniversariante, parabenizar, marcarParabenizado,
+    avisosAll, documentosAll, carregarDocumentos, faqsAll, ramaisAll, setoresAll, aniversariantesAll, aniversariantesHoje, aniversariantesProximos, hoje, souAniversariante, parabenizar, marcarParabenizado,
     notificacoesAll, isLida, marcarLida, marcarTodasLidas, unreadCount, unreadUrgent, loadNotificacoes, atualizarSino, touchNotificacoes,
+    refreshNotificacoes,
   });
 })();

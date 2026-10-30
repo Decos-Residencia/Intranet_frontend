@@ -6,7 +6,7 @@
    NÃO existe (nem é simulado): imagem de destaque e prioridade "Relevante".
    ========================================================================= */
 (function () {
-  const { badge, breadcrumb, esc } = UI;
+  const { badge, breadcrumb, esc, icon } = UI;
   const { opts, TIPOS_NOTICIA } = AdminUI;
   const CATEGORIA_DE_TIPO = { "Comunicado": "comunicado", "Evento": "evento", "Promoção": "promocao", "Notícia": "noticia" };
   const TIPO_DE_CATEGORIA = { comunicado: "Comunicado", evento: "Evento", promocao: "Promoção", noticia: "Notícia", urgente: "Comunicado" };
@@ -21,11 +21,15 @@
   };
 
   // Modos de salvamento disponíveis conforme o estado atual (o backend valida as transições).
-  const MODOS = { publicar: "Publicar agora", agendar: "Agendar", rascunho: "Rascunho", salvar: "Salvar alterações" };
-  const BOTAO = { publicar: "Publicar Notícia", agendar: "Agendar publicação", rascunho: "Salvar rascunho", salvar: "Salvar alterações" };
-  const modosPara = (status) => ({
+  const MODOS = { publicar: "Publicar agora", agendar: "Agendar", rascunho: "Rascunho", salvar: "Salvar alterações", revisao: "Enviar para revisão", retirar: "Retirar da revisão" };
+  const BOTAO = { publicar: "Publicar Notícia", agendar: "Agendar publicação", rascunho: "Salvar rascunho", salvar: "Salvar alterações", revisao: "Enviar para revisão", retirar: "Retirar da revisão" };
+  // Quem aprova publica e agenda; os demais só salvam rascunho ou enviam para revisão (spec 003).
+  const modosPara = (status, aprova) => (aprova ? {
     NOVO: ["publicar", "agendar", "rascunho"], RASCUNHO: ["rascunho", "agendar", "publicar"],
-    AGENDADO: ["agendar", "rascunho", "publicar"], PUBLICADO: ["salvar"], ARQUIVADO: ["salvar"],
+    AGENDADO: ["agendar", "rascunho", "publicar"], PUBLICADO: ["salvar"], ARQUIVADO: ["salvar"], EM_REVISAO: ["salvar"],
+  } : {
+    NOVO: ["revisao", "rascunho"], RASCUNHO: ["revisao", "rascunho"], EM_REVISAO: ["salvar", "retirar"],
+    AGENDADO: ["salvar", "rascunho"], PUBLICADO: ["salvar"], ARQUIVADO: ["salvar"],
   })[status] || ["salvar"];
 
   function adminNoticiaNova(id) {
@@ -52,11 +56,15 @@
             <textarea class="field-input" id="nt-corpo" rows="8" placeholder="Escreva o comunicado. Cada linha em branco separa um parágrafo."></textarea>
             <div class="field-hint" id="nt-contador"></div>
           </div>
+          <div><label class="field-label" for="nt-destaque">EXIBIR EM DESTAQUE ATÉ</label>
+            <input type="datetime-local" id="nt-destaque" class="field-input max-w-xs">
+            <div class="field-hint">Opcional. Depois dessa data o aviso sai da Inicial e do topo do mural sozinho, mas continua no histórico e na busca.</div></div>
+          <div id="nt-revisao-aviso" class="hidden" role="status"></div>
           <div id="nt-publicacao" class="card p-4 hidden">
             <label class="field-label">PUBLICAÇÃO</label>
             <div class="flex gap-2 flex-wrap mb-3" id="nt-modos"></div>
             <div id="nt-quando-wrap" class="hidden">
-              <label class="field-label" for="nt-quando">DATA E HORA DA PUBLICAÇÃO *</label>
+              <label class="field-label" for="nt-quando" id="nt-quando-rotulo">DATA E HORA DA PUBLICAÇÃO *</label>
               <input type="datetime-local" id="nt-quando" class="field-input max-w-xs">
               <div class="field-hint">Horário do seu dispositivo. Ao chegar a hora o aviso passa a aparecer no mural automaticamente (sem ação do administrador).</div>
             </div>
@@ -101,12 +109,13 @@
       $("pv-badges").innerHTML = (prioAtual() === "urgente" ? badge("red", "🔥 URGENTE") + " " : "") + badge("blue", esc($("nt-tipo").value.toUpperCase()));
       $("nt-contador").textContent = `${c.length} caracteres`;
       const q = $("nt-quando").value;
-      $("pv-quando").textContent = modo === "agendar" ? (q ? `Agendado: ${fmtHora.format(new Date(q))}` : "Agendado") : modo === "rascunho" ? "Rascunho" : modo === "publicar" ? "Publicação imediata" : "";
+      $("pv-quando").textContent = modo === "agendar" ? (q ? `Agendado: ${fmtHora.format(new Date(q))}` : "Agendado") : modo === "rascunho" ? "Rascunho" : modo === "publicar" ? "Publicação imediata" : modo === "revisao" ? "Aguardando aprovação" : "";
     };
     const aplicarModo = (m) => {
       modo = m;
       document.querySelectorAll("#nt-modos [data-modo]").forEach((b) => b.classList.toggle("chip-active", b.dataset.modo === m));
-      $("nt-quando-wrap").classList.toggle("hidden", m !== "agendar");
+      $("nt-quando-wrap").classList.toggle("hidden", m !== "agendar" && m !== "revisao");
+      $("nt-quando-rotulo").textContent = m === "revisao" ? "DATA DESEJADA PARA PUBLICAR (OPCIONAL)" : "DATA E HORA DA PUBLICAÇÃO *";
       $("nt-salvar").textContent = BOTAO[m];
       preview();
     };
@@ -121,10 +130,19 @@
       $("nt-titulo").value = atual.titulo; $("nt-corpo").value = atual.conteudo;
       $("nt-tipo").value = TIPO_DE_CATEGORIA[atual.categoria] || "Comunicado";
       setPrio(atual.categoria === "urgente" ? "urgente" : "normal");
-      if (atual.publicar_em && atual.status === "AGENDADO") $("nt-quando").value = paraInputLocal(atual.publicar_em);
+      if (atual.publicar_em && ["AGENDADO", "EM_REVISAO"].includes(atual.status)) $("nt-quando").value = paraInputLocal(atual.publicar_em);
+      if (atual.destaque_ate) $("nt-destaque").value = paraInputLocal(atual.destaque_ate);
+      const faixa = $("nt-revisao-aviso");
+      if (atual.status === "EM_REVISAO") {
+        faixa.className = "revisao-faixa revisao-faixa-espera";
+        faixa.innerHTML = `${icon("clock", "w-5 h-5 shrink-0")}<span><b>Aguardando aprovação</b>${atual.revisao_enviada_em ? ` desde ${esc(UI.fmtDataHora(atual.revisao_enviada_em))}` : ""}. Você ainda pode corrigir o texto.</span>`;
+      } else if (atual.status === "RASCUNHO" && atual.revisao_motivo) {
+        faixa.className = "revisao-faixa revisao-faixa-devolvido";
+        faixa.innerHTML = `${icon("alert-triangle", "w-5 h-5 shrink-0")}<span><b>Devolvido para ajustes:</b> ${esc(atual.revisao_motivo)}</span>`;
+      }
     }
     const status = atual ? atual.status : "NOVO";
-    const modos = modosPara(status);
+    const modos = modosPara(status, App.can("approve"));
     const box = $("nt-publicacao");
     if (modos.length > 1) {
       box.classList.remove("hidden");
@@ -151,6 +169,11 @@
     const payload = { titulo, conteudo: corpo, categoria: urgente ? "urgente" : CATEGORIA_DE_TIPO[$("nt-tipo").value] || "comunicado" };
 
     let quandoIso = null;
+    if (modo === "revisao" && $("nt-quando").value) {
+      const d = new Date($("nt-quando").value);
+      if (Number.isNaN(d.getTime()) || d.getTime() <= Date.now()) { App.toast("A data desejada deve estar no futuro"); $("nt-quando").focus(); return; }
+      quandoIso = d.toISOString();
+    }
     if (modo === "agendar") {
       const v = $("nt-quando").value;
       const d = v ? new Date(v) : null;
@@ -158,10 +181,16 @@
       if (d.getTime() <= Date.now()) { App.toast("A data de publicação deve estar no futuro"); $("nt-quando").focus(); return; }
       quandoIso = d.toISOString();
     }
-    const alvoStatus = { publicar: "PUBLICADO", agendar: "AGENDADO", rascunho: "RASCUNHO", salvar: null }[modo];
+    const destaqueTxt = $("nt-destaque").value;
+    const destaque = destaqueTxt ? new Date(destaqueTxt) : null;
+    if (destaque && Number.isNaN(destaque.getTime())) { App.toast("Data de destaque inválida"); $("nt-destaque").focus(); return; }
+    const inicioPub = quandoIso ? new Date(quandoIso) : new Date();
+    if (destaque && !f.dataset.id && destaque <= inicioPub) { App.toast("O destaque precisa terminar depois da publicação"); $("nt-destaque").focus(); return; }
+    payload.destaque_ate = destaque ? destaque.toISOString() : null;
+    const alvoStatus = { publicar: "PUBLICADO", agendar: "AGENDADO", rascunho: "RASCUNHO", salvar: null, revisao: "EM_REVISAO", retirar: "RASCUNHO" }[modo];
     if (f.dataset.id) {
       if (alvoStatus && (alvoStatus !== atualStatus || alvoStatus === "AGENDADO")) payload.status = alvoStatus;
-      if (alvoStatus === "AGENDADO") payload.publicar_em = quandoIso;
+      if (alvoStatus === "AGENDADO" || (alvoStatus === "EM_REVISAO" && quandoIso)) payload.publicar_em = quandoIso;
     } else {
       payload.status = alvoStatus;
       if (quandoIso) payload.publicar_em = quandoIso;
@@ -173,7 +202,7 @@
       if (f.dataset.id) await Services.avisos.update(f.dataset.id, payload);
       else await Services.avisos.create(payload);
       await App.loadApiData();
-      App.toast({ publicar: "Notícia publicada no mural!", agendar: `Notícia agendada para ${fmtHora.format(new Date(quandoIso || Date.now()))}`, rascunho: "Rascunho salvo", salvar: "Alterações salvas" }[modo]);
+      App.toast({ publicar: "Notícia publicada no mural!", agendar: `Notícia agendada para ${fmtHora.format(new Date(quandoIso || Date.now()))}`, rascunho: "Rascunho salvo", salvar: "Alterações salvas", revisao: "Enviado para revisão: você será avisado da decisão", retirar: "Retirado da revisão (voltou a rascunho)" }[modo]);
       setTimeout(() => App.go("#/admin/noticias"), 500);
     } finally {
       botoes.forEach((b) => { b.disabled = false; });

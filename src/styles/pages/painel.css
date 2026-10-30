@@ -1,0 +1,30 @@
+/* Meu painel: blocos de pendências */
+.painel-grade{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:1.25rem; align-items:start; }
+.painel-bloco{ display:flex; flex-direction:column; min-height:12rem; }
+.painel-esqueleto{ min-height:14rem; background:linear-gradient(90deg, var(--surface-strong) 0%, var(--card) 50%, var(--surface-strong) 100%); background-size:200% 100%; }
+@media (prefers-reduced-motion:no-preference){ .painel-esqueleto{ animation:painel-brilho 1.4s ease-in-out infinite; } }
+@keyframes painel-brilho{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
+.painel-conta{ min-width:2rem; height:2rem; padding:0 .55rem; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:.9rem; background:var(--surface-strong); color:var(--muted); border:1px solid var(--border); }
+.painel-conta-on{ background:var(--wine); color:#fff; border-color:var(--wine); }
+.painel-lista{ display:flex; flex-direction:column; gap:.35rem; }
+.painel-item{ display:flex; align-items:center; gap:.65rem; padding:.55rem .65rem; border-radius:.75rem; color:var(--text); font-size:.9rem; }
+a.painel-item:hover{ background:var(--surface-strong); }
+.painel-item-col{ flex-direction:column; align-items:stretch; gap:.3rem; border:1px solid var(--border); }
+.painel-ponto{ width:.55rem; height:.55rem; border-radius:999px; background:var(--wine); flex-shrink:0; }
+.painel-data{ width:2.6rem; flex-shrink:0; display:flex; flex-direction:column; align-items:center; line-height:1.05; font-size:.68rem;
+  text-transform:uppercase; font-weight:700; color:var(--wine); background:var(--wine-50, #fbeaec); border-radius:.6rem; padding:.3rem 0; }
+.dark .painel-data{ background:rgba(142,27,46,.22); color:#f7b8c2; }
+.painel-data b{ font-size:1.05rem; }
+.painel-check{ width:1.25rem; height:1.25rem; border-radius:.4rem; border:2px solid var(--border-strong); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.painel-feito .painel-check{ background:#15803d; border-color:#15803d; color:#fff; }
+.painel-feito{ color:var(--muted); text-decoration:line-through; }
+.painel-progresso{ height:.5rem; border-radius:999px; background:var(--surface-strong); overflow:hidden; margin-bottom:.35rem; }
+.painel-progresso span{ display:block; height:100%; background:#15803d; border-radius:inherit; }
+.painel-ok{ display:inline-flex; align-items:center; gap:.25rem; font-size:.75rem; font-weight:700; color:#15803d; }
+.dark .painel-ok{ color:#86efac; }
+.painel-vazio{ display:flex; align-items:center; gap:.45rem; color:#166534; font-weight:600; font-size:.9rem; padding:.75rem; border-radius:.75rem; background:rgba(22,163,74,.08); }
+.dark .painel-vazio{ color:#86efac; background:rgba(22,163,74,.14); }
+.painel-ver{ margin-top:auto; padding-top:.85rem; display:inline-flex; align-items:center; gap:.25rem; font-size:.85rem; font-weight:700; color:var(--wine); align-self:flex-start; }
+.dark .painel-ver{ color:#f7b8c2; }
+.painel-ver:hover{ text-decoration:underline; }

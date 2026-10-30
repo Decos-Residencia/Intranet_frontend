@@ -130,7 +130,11 @@
     const type = response.headers.get("content-type") || "";
     let payload = null;
     if (response.status !== 204) {
-      try { payload = type.includes("application/json") ? await response.json() : await response.text(); }
+      try {
+        // `blob: true` (ex.: PDF de evidências): o arquivo volta como Blob; erros continuam em JSON.
+        payload = type.includes("application/json") ? await response.json()
+          : options.blob && response.ok ? await response.blob() : await response.text();
+      }
       catch (_) { payload = null; }
     }
 

@@ -14,7 +14,10 @@ window.DB = (function () {
     relevante:  { label: "Relevante", tone: "blue" },
   };
 
+  // Site institucional do hospital (aparece no menu e nos acessos rápidos; abre em nova aba).
+  const SITE_HOSPITAL = "https://decosdh.com.br/paciente/";
   const acessosRapidos = [
+    { icon: "external-link", titulo: "Site do Hospital Decós", url: SITE_HOSPITAL },
     { icon: "megaphone", titulo: "Mural de Avisos", route: "#/avisos" },
     { icon: "gift", titulo: "Aniversariante do Dia", route: "#/aniversariantes/hoje" },
     { icon: "calendar", titulo: "Eventos", route: "#/eventos" },
@@ -27,19 +30,18 @@ window.DB = (function () {
     { icon: "bell", titulo: "Notificações", route: "#/notificacoes" },
   ];
 
-  // ---- Papéis (roles) e matriz de permissão ----
+  // ---- Papéis (roles): só rótulo e ícone ----
   // Os 4 papéis vêm de GET /auth/me (user.perfil): LEITURA -> "leitura" · COLABORADOR -> "normal" ·
-  // RH -> "rh" · ADMIN -> "admin". Isto é só UX: o backend é quem autoriza.
-  // caps: interact, download, edit_profile, manage_news, manage_docs, manage_faq, manage_events,
-  //       manage_users, manage_tickets, manage_reviews, audit_all
+  // RH -> "rh" · ADMIN -> "admin". O que cada pessoa pode fazer vem de user.permissoes
+  // (as do perfil, definidas no Controle de acesso), calculado pelo backend — ver App.can().
   const roles = {
-    leitura: { label: "Leitura", curto: "LEITURA", icon: "eye", desc: "Somente consulta", caps: ["download"] },
-    normal:  { label: "Colaborador", curto: "COLABORADOR", icon: "user", desc: "Colaborador padrão", caps: ["interact", "download", "edit_profile"] },
-    rh:      { label: "RH · Editor-Gestor", curto: "RH", icon: "user-cog", desc: "Cria e gerencia conteúdo", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_faq", "manage_events"] },
-    admin:   { label: "Administrador", curto: "ADMIN", icon: "shield", desc: "Acesso total + gestão", caps: ["interact", "download", "edit_profile", "manage_news", "manage_docs", "manage_faq", "manage_events", "manage_users", "manage_tickets", "manage_reviews", "audit_all"] },
+    leitura: { label: "Leitura", curto: "LEITURA", icon: "eye", desc: "Somente consulta" },
+    normal:  { label: "Colaborador", curto: "COLABORADOR", icon: "user", desc: "Colaborador padrão" },
+    rh:      { label: "RH · Editor-Gestor", curto: "RH", icon: "user-cog", desc: "Cria e gerencia conteúdo" },
+    admin:   { label: "Administrador", curto: "ADMIN", icon: "shield", desc: "Acesso total + gestão" },
   };
 
   return {
-    categorias, acessosRapidos, roles,
+    categorias, acessosRapidos, roles, SITE_HOSPITAL,
   };
 })();

@@ -2,7 +2,7 @@
 /* ---------- Admin ---------- */
 .stat-danger{ background:var(--crimson) !important; border-color:var(--crimson) !important; }
 .act-btn{ width:32px; height:32px; border-radius:.45rem; display:inline-flex; align-items:center; justify-content:center; color:var(--muted); background:var(--bg); border:1px solid var(--border); }
-.dark .act-btn{ background:#0e1420; }
+.dark .act-btn{ background:var(--card); }
 .act-btn:hover{ color:var(--wine); }
 .act-btn-danger:hover{ color:var(--crimson); border-color:var(--crimson); }
 .perm-badge{ display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700; padding:.25rem .6rem; border-radius:.45rem; }
@@ -14,7 +14,7 @@
 .prio-danger.prio-active{ border-color:var(--crimson); color:var(--crimson); background:rgba(245,51,77,.1); }
 .editor{ border:1px solid var(--border); border-radius:.7rem; overflow:hidden; }
 .editor-toolbar{ display:flex; align-items:center; gap:.8rem; padding:.55rem .9rem; border-bottom:1px solid var(--border); font-size:.82rem; color:var(--muted); background:var(--bg); }
-.dark .editor-toolbar{ background:#0e1420; }
+.dark .editor-toolbar{ background:var(--card); }
 .editor-area{ width:100%; padding:.9rem; font-size:.9rem; color:var(--text); background:var(--card); outline:none; border:0; resize:vertical; }
 .dropzone{ border:2px dashed var(--border); border-radius:.8rem; padding:2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; cursor:pointer; transition:.15s; }
 .dropzone:hover{ border-color:var(--wine); }
@@ -26,3 +26,55 @@
 .radio{ width:18px; height:18px; border-radius:999px; border:2px solid var(--border); flex-shrink:0; }
 .radio-on{ border-color:var(--crimson); background:var(--crimson); box-shadow:inset 0 0 0 3px var(--card); }
 .restrito-icon{ width:40px; height:40px; border-radius:999px; background:var(--crimson); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* ---------- Controle de acesso (#/admin/acessos) ---------- */
+.acc-perm{ border:1px solid var(--border); border-radius:.8rem; padding:.8rem .9rem; background:var(--card); }
+.acc-perm-on{ border-color:color-mix(in srgb, var(--wine) 45%, var(--border)); }
+.acc-opts{ display:flex; gap:.4rem; flex-wrap:wrap; }
+.acc-opt{ position:relative; display:inline-flex; }
+.acc-opt input{ position:absolute; opacity:0; inset:0; cursor:pointer; }
+.acc-opt span{ display:inline-flex; align-items:center; min-height:2.25rem; padding:.35rem .8rem; border:1px solid var(--border); border-radius:999px;
+  font-size:.8rem; font-weight:600; color:var(--text); background:var(--bg); }
+.acc-opt input:checked + span{ background:var(--wine); border-color:var(--wine); color:#fff; }
+.acc-opt input:focus-visible + span{ outline:3px solid var(--wine); outline-offset:2px; }
+.acc-opt input:disabled + span{ opacity:.5; cursor:not-allowed; }
+
+/* Contagem de leituras clicável (abre "Quem leu") */
+.leitores-btn{ display:inline-flex; align-items:center; gap:.3rem; min-height:2rem; padding:.2rem .6rem; border-radius:999px; font-weight:700; font-size:.82rem;
+  color:var(--accent); border:1px solid var(--border-strong); background:var(--surface-strong); }
+.leitores-btn:hover{ border-color:var(--accent); }
+
+/* Cartão de alerta (fundo vermelho): texto sempre branco pleno para manter o contraste. */
+.stat-danger :is(.text-white\/80, .text-white\/90){ color:#fff; }
+
+/* ---------- Chamados: quem abriu e linha do tempo ---------- */
+.ch-quem{ display:flex; gap:.8rem; align-items:flex-start; padding:.85rem 1rem; border-radius:.9rem; border:1px solid var(--border); background:var(--surface-strong); }
+.ch-quem-anonimo{ color:var(--muted); align-items:center; }
+.ch-contato{ display:flex; gap:.5rem; font-size:.85rem; }
+.ch-contato dt{ min-width:3.6rem; color:var(--muted); }
+.ch-contato dd{ color:var(--text); word-break:break-all; }
+.ch-marcos{ display:flex; flex-direction:column; gap:.7rem; padding-left:.2rem; font-size:.88rem; }
+.ch-marcos li{ display:flex; gap:.65rem; align-items:flex-start; position:relative; }
+.ch-marcos li + li::before{ content:""; position:absolute; left:4px; top:-.75rem; height:.85rem; border-left:2px solid var(--border-strong); }
+.ch-marco-ponto{ width:10px; height:10px; border-radius:999px; background:var(--wine); margin-top:.35rem; flex-shrink:0; }
+
+/* ---------- Treinamentos obrigatórios e presença ---------- */
+.tema-opcoes{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); gap:.35rem .75rem; max-height:15rem; overflow:auto; padding:.25rem; }
+.tema-opcoes label{ display:flex; align-items:center; gap:.5rem; font-size:.88rem; color:var(--text); min-height:1.75rem; }
+.tema-opcoes input, .presenca-opt input{ width:1.1rem; height:1.1rem; accent-color:var(--wine); flex-shrink:0; }
+.presenca-opt{ display:inline-flex; align-items:center; gap:.4rem; font-size:.8rem; font-weight:700; color:var(--text); flex-shrink:0; min-height:1.75rem; }
+
+/* ---------- Revisão de publicações ---------- */
+.revisao-faixa{ display:flex; gap:.6rem; align-items:flex-start; padding:.8rem 1rem; border-radius:.8rem; font-size:.9rem; }
+.revisao-faixa-espera{ background:#eff6ff; color:#1e3a8a; border:1px solid #93c5fd; }
+.dark .revisao-faixa-espera{ background:rgba(59,130,246,.14); color:#bfdbfe; border-color:rgba(147,197,253,.4); }
+.revisao-faixa-devolvido{ background:#fef3c7; color:#78350f; border:1px solid #f59e0b; }
+.dark .revisao-faixa-devolvido{ background:rgba(245,158,11,.14); color:#fde68a; border-color:rgba(245,158,11,.5); }
+.revisao-item{ display:flex; flex-direction:column; gap:.5rem; padding:1.1rem 1.25rem; }
+.revisao-previa{ font-size:.9rem; color:var(--text); background:var(--surface-strong); border-radius:.7rem; padding:.7rem .85rem; white-space:pre-line; }
+
+/* Controle de acesso: matriz de permissões por perfil */
+.acc-matriz tbody tr:hover{ background:color-mix(in srgb, var(--wine, #8b1538) 4%, transparent); }
+.acc-check{ width:1.15rem; height:1.15rem; accent-color:var(--wine, #8b1538); cursor:pointer; }
+.acc-check:disabled{ cursor:not-allowed; opacity:.55; }
+.acc-check:focus-visible{ outline:3px solid var(--wine, #8b1538); outline-offset:2px; }
