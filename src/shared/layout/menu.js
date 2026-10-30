@@ -46,6 +46,7 @@
     if (logado) items.push({ icon: "settings", label: "Configurações", route: "#/configuracoes" });
 
     const adminChildren = [];
+    if (can("view_indicators")) adminChildren.push({ icon: "trending-up", label: "Indicadores", route: "#/admin/indicadores" });
     if (can("manage_users")) adminChildren.push({ icon: "user-cog", label: "Usuários & Setores", route: "#/admin/usuarios" });
     if (can("manage_users")) adminChildren.push({ icon: "key", label: "Controle de acesso", route: "#/admin/acessos" });
     if (can("approve")) adminChildren.push({ icon: "check-check", label: "Revisão de publicações", route: "#/admin/revisao", count: App.state.api.revisaoPendentes || 0 });

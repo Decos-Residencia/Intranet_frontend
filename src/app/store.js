@@ -56,6 +56,7 @@
     manage_news: "gerenciar_avisos", manage_docs: "gerenciar_documentos", manage_faq: "gerenciar_faq",
     manage_events: "gerenciar_eventos", manage_tickets: "gerenciar_chamados", manage_reviews: "gerenciar_avaliacoes",
     delete_forever: "excluir_definitivo", manage_users: "gerenciar_usuarios", audit_all: "auditoria",
+    view_indicators: "ver_indicadores",
     approve: "aprovar_publicacoes", manage_vagas: "gerenciar_vagas",
   };
   function realRole() { return PERFIL_ROLE[state.user?.perfil] || null; }
