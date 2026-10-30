@@ -18,9 +18,9 @@
     const total = slides.length;
     let atual = 0, timer = 0, pausadoPeloUsuario = movimentoReduzido(), pausadoPorInteracao = false;
 
-    if (pontos) {
-      pontos.innerHTML = slides.map((_, i) => `<button type="button" class="carrossel-ponto" data-ir="${i}" aria-label="Ir para o slide ${i + 1} de ${total}"></button>`).join("");
-    }
+    if (pontos) pontos.innerHTML = total > 10
+      ? '<span class="carrossel-contador" aria-live="off"></span>'
+      : slides.map((_, i) => `<button type="button" class="carrossel-ponto" data-ir="${i}" aria-label="Ir para o slide ${i + 1} de ${total}"></button>`).join("");
 
     function mostrar(n, foco = false) {
       atual = (n + total) % total;
@@ -31,6 +31,8 @@
         s.querySelectorAll("a, button").forEach((el) => { el.tabIndex = ativo ? 0 : -1; });
       });
       pontos?.querySelectorAll("[data-ir]").forEach((p, i) => p.setAttribute("aria-current", i === atual ? "true" : "false"));
+      const contador = pontos?.querySelector(".carrossel-contador");
+      if (contador) contador.textContent = `${atual + 1} de ${total}`;
       if (foco) slides[atual].focus({ preventScroll: true });
       aoMostrar?.(slides[atual], atual);
     }
