@@ -15,6 +15,7 @@
       <button data-action="cancelar-inscricao" data-id="${e.id}" class="btn-outline w-full mt-2 py-2.5">Cancelar inscrição</button>`;
     if (e.inscrito) return `<div class="mt-4 p-3 rounded-xl bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-sm font-bold flex items-center gap-2">${icon("check", "w-4 h-4")} Você estava inscrito</div>`;
     if (e.encerrado || e.ini <= new Date()) return `<button class="btn-outline w-full mt-4 py-3 opacity-60 cursor-not-allowed" disabled>Inscrições encerradas</button>`;
+    if (!App.state.auth) return `<button type="button" data-action="entrar" class="btn-wine w-full mt-4 py-3 flex items-center justify-center gap-2">${icon("lock", "w-4 h-4")} Entrar para se inscrever</button>`;
     if (!App.can("interact")) return `<button class="btn-outline w-full mt-4 py-3 opacity-60 cursor-not-allowed flex items-center justify-center gap-2" disabled>${icon("lock", "w-4 h-4")} Inscrição indisponível</button>`;
     if (!e.aberto) return `<button class="btn-outline w-full mt-4 py-3 opacity-60 cursor-not-allowed" disabled>Vagas esgotadas</button>`;
     return `<button data-action="inscrever-evento" data-id="${e.id}" class="btn-wine w-full mt-4 py-3">${e.vagas ? "Inscrever-se" : "Confirmar presença"}</button>`;
@@ -35,7 +36,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="lg:col-span-2 space-y-6">
           <div class="card overflow-hidden">
-            <div class="event-photo h-56"></div>
+            <div class="event-photo h-56 relative overflow-hidden">${e.temImagem ? `<img data-foto-evento="${e.id}" alt="Foto do evento ${esc(e.titulo)}" class="ev-slide-img">` : ""}</div>
             <div class="p-6 flex gap-4">
               <div class="date-chip-lg"><span class="text-2xl font-extrabold leading-none">${e.dia}</span><span class="text-[11px] font-bold">${e.mes}</span></div>
               <div><div class="flex items-center gap-2 mb-1 flex-wrap"><span class="tag-outline">${esc(e.tag)}</span><span class="text-sm text-slate-400">${esc(e.dataLonga)}</span>
@@ -70,12 +71,18 @@
         const alvo = () => document.getElementById("ev-detalhe");
         try {
           const e = App.eventoView(await Services.eventos.get(id));
+          if (!e.visto && App.state.auth) {
+            // Abrir o evento tira o selo "Novo" (na Inicial e na lista), sem bloquear a tela.
+            Services.eventos.visualizar(e.id).then(() => {
+              App.state.api.eventosProximos.forEach((x) => { if (x.id === e.id) x.visto = true; });
+            }).catch(() => {});
+          }
           let outros = [];
           try {
             const r = await Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 4 });
             outros = r.items.filter((x) => x.id !== e.id).slice(0, 3).map(App.eventoView);
           } catch (_) { /* a lista de outros eventos é opcional */ }
-          if (alvo()) alvo().innerHTML = corpo(e, outros);
+          if (alvo()) { alvo().innerHTML = corpo(e, outros); App.carregarFotosEventos(alvo()); }
         } catch (err) {
           if (alvo()) alvo().innerHTML = `<div class="min-h-[50vh] flex flex-col items-center justify-center text-center p-8"><div class="text-5xl mb-3">🗂️</div>
             <h2 class="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">Evento não encontrado</h2><p class="text-slate-500 dark:text-slate-400 mb-6">${esc(err.status === 404 ? "Este evento não existe ou ainda não foi publicado." : err.message || "")}</p><a href="#/eventos" class="btn-wine px-6 py-2.5">Voltar aos eventos</a></div>`;

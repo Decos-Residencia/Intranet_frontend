@@ -17,3 +17,79 @@
 .month-cell-num{ font-size:.78rem; font-weight:700; color:var(--text); }
 .month-cell-tag{ font-size:.6rem; font-weight:700; color:var(--wine); background:var(--card); border-radius:.3rem;
   padding:.05rem .3rem; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Mini calendário: dia com evento é botão; os eventos do dia aparecem abaixo (hover, foco ou toque). */
+button.cal-day{ width:100%; border:0; cursor:pointer; font:inherit; }
+.ev-dia{ border-top:1px solid var(--border); padding-top:.9rem; min-height:3rem; }
+.ev-dia-item{ display:block; padding:.55rem .7rem; border-radius:.7rem; border:1px solid var(--border); background:var(--surface-strong); }
+.ev-dia-item:hover{ border-color:var(--accent); }
+
+/* Foto de capa no formulário de evento */
+.ev-foto-previa{ position:relative; aspect-ratio:16/7; border-radius:1rem; overflow:hidden; border:1px dashed var(--border-strong);
+  background:linear-gradient(135deg, #3d0a14, var(--wine) 60%, #a3162f); display:flex; align-items:center; justify-content:center; }
+.ev-foto-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.ev-foto-vazia{ display:flex; flex-direction:column; align-items:center; gap:.4rem; color:#fff; font-size:.85rem; font-weight:600; }
+/* Foto no topo do detalhe do evento (cobre o fundo padrão quando carrega) */
+.event-photo .ev-slide-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .4s; }
+.event-photo .ev-slide-img.is-loaded{ opacity:1; }
+
+/* ---------- Minha agenda ---------- */
+.agenda-form{ display:flex; gap:.5rem; flex-wrap:wrap; }
+.agenda-item{ display:flex; align-items:center; gap:.75rem; padding:.7rem .8rem; border-radius:.9rem; border:1px solid var(--border); background:var(--surface-strong); }
+.agenda-texto{ font-weight:600; color:var(--text); overflow-wrap:anywhere; }
+.agenda-feito .agenda-texto{ text-decoration:line-through; color:var(--muted); }
+.agenda-check{ position:relative; display:inline-flex; flex-shrink:0; }
+.agenda-check input{ position:absolute; inset:0; opacity:0; cursor:pointer; margin:0; }
+.agenda-check span{ width:1.6rem; height:1.6rem; border-radius:.5rem; border:2px solid var(--border-strong); display:inline-flex; align-items:center; justify-content:center; color:transparent; }
+.agenda-check input:checked + span{ background:#15803d; border-color:#15803d; color:#fff; }
+.agenda-check input:focus-visible + span{ outline:3px solid var(--focus); outline-offset:2px; }
+.agenda-vazia{ display:flex; flex-direction:column; align-items:center; gap:.5rem; text-align:center; padding:2rem 1rem; color:var(--muted); font-size:.9rem; }
+
+/* Evento do dia no calendário: foto + tipo, horário, local e resumo */
+.ev-dia-card{ display:block; border-radius:.9rem; overflow:hidden; border:1px solid var(--border); background:var(--surface-strong); }
+.ev-dia-card:hover{ border-color:var(--accent); }
+.ev-dia-foto{ position:relative; display:flex; align-items:center; justify-content:center; aspect-ratio:16/8; color:rgba(255,255,255,.35);
+  background:linear-gradient(135deg, #3d0a14, var(--wine) 60%, #a3162f); }
+.ev-dia-corpo{ display:block; padding:.7rem .8rem; }
+.ev-dia-tipo{ display:inline-block; margin-bottom:.25rem; font-size:.68rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); }
+
+/* Fotos de evento: preenchem o espaço priorizando a parte de cima (rostos); se a proporção for muito
+   diferente, aparecem inteiras sobre a mesma foto desfocada (ver ajustarFoto em features/eventos.js). */
+.ev-slide-img, .ev-foto-img{ object-position:center 30%; }
+img.foto-inteira{ object-fit:contain !important; object-position:center !important; }
+.foto-fundo{ position:absolute; inset:-24px; width:calc(100% + 48px); height:calc(100% + 48px); object-fit:cover;
+  filter:blur(22px) saturate(1.1) brightness(.8); pointer-events:none; }
+
+/* Mini calendário compacto: dias de tamanho fixo (não crescem com a coluna) e o cartão acompanha a rolagem da lista. */
+.ev-mini-grade{ display:grid; grid-template-columns:repeat(7, 2rem); justify-content:space-between; gap:.15rem 0; text-align:center; }
+#ev-mini .cal-day{ width:2rem; height:2rem; aspect-ratio:auto; font-size:.8rem; }
+#ev-mini .cal-day-foco{ box-shadow:0 0 0 3px var(--card), 0 0 0 5px var(--wine); transform:scale(1.08); }
+@media (prefers-reduced-motion:no-preference){ #ev-mini .cal-day{ transition:transform .15s ease, box-shadow .15s ease; } }
+@media (min-width:1024px){ .ev-mini-card{ position:sticky; top:5.5rem; } }
+.agenda-lembrete{ color:var(--wine); font-weight:600; }
+.dark .agenda-lembrete{ color:#f7b8c2; }
+
+/* ---------- Camada institucional (feriados, campanhas, datas do hospital) ---------- */
+:root{ --inst:#0f766e; --inst-50:#ccfbf1; }
+.dark{ --inst:#5eead4; --inst-50:rgba(20,184,166,.16); }
+.cal-day-inst{ box-shadow:inset 0 0 0 2px var(--inst); color:var(--text); font-weight:700; background:var(--inst-50); }
+.cal-day-ambos{ box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--inst); }
+.month-cell.has-inst{ border-color:var(--inst); }
+.month-cell-inst{ font-size:.6rem; font-weight:800; color:var(--inst); background:var(--inst-50); border-radius:.3rem; padding:.05rem .3rem;
+  line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.inst-faixa{ display:inline-flex; align-items:baseline; gap:.35rem; padding:.2rem .6rem; border-radius:999px; font-size:.75rem; font-weight:800;
+  color:var(--inst); background:var(--inst-50); border:1px solid color-mix(in srgb, var(--inst) 35%, transparent); }
+.inst-faixa small{ font-weight:600; }
+.inst-card{ padding:.65rem .8rem; border-radius:.8rem; background:var(--inst-50); border-left:4px solid var(--inst); }
+.inst-card .ev-dia-tipo{ color:var(--inst); }
+.ev-legenda{ display:flex; gap:1rem; margin-top:.75rem; font-size:.75rem; color:var(--muted); }
+.ev-legenda i{ display:inline-block; width:.7rem; height:.7rem; border-radius:999px; vertical-align:-.05rem; margin-right:.25rem; }
+.leg-evento{ background:var(--wine); }
+.leg-inst{ background:var(--inst-50); box-shadow:inset 0 0 0 2px var(--inst); }
+.ev-camada{ display:flex; align-items:center; gap:.6rem; margin-top:.6rem; font-size:.85rem; font-weight:600; color:var(--text); cursor:pointer; }
+.ev-camada small{ font-weight:500; color:var(--muted); }
+.ev-camada .switch span{ width:2.5rem; height:1.5rem; }
+.ev-camada .switch span::after{ width:calc(1.5rem - 6px); height:calc(1.5rem - 6px); }
+.ev-camada .switch input:checked + span::after{ transform:translateX(1rem); }
+.ev-foto-bloco + .ev-foto-bloco{ padding-top:1.25rem; border-top:1px solid var(--border); }
+.ev-foto-previa-capa{ max-width:24rem; }
