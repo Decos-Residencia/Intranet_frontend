@@ -257,3 +257,20 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
 - **Inicial**: cabeçalho enxuto com a foto da fachada (`assets/img/fachada-decos.jpg`); avisos com abas
   "Não lidos (N)" / "Todos" e comunicado que se abre ao passar o mouse (ou focar); carrossel só com a foto,
   com título, data, local, ações e controles numa faixa abaixo dela.
+
+### Administração: indicadores, importação, desligamento e validade
+
+- **Indicadores** (`#/admin/indicadores`, permissão `ver_indicadores`, padrão só Admin):
+  - período de 30 dias, 90 dias, 12 meses ou datas livres;
+  - cinco blocos de resumo: leitura de avisos, obrigatórios em dia, tempo de atendimento, chamados em aberto e revisão de documentos;
+  - tabelas com barra e valor escrito ao lado (leitura por setor, avisos menos lidos, adesão por tema e por setor, chamados por categoria);
+  - **Exportar CSV**;
+  - barras em cor única validada no claro (`#B4233A`) e no escuro (`#E0566C`); a tabela é a própria visão acessível.
+- **Importar planilha** (`#/admin/usuarios`):
+  - botão "Baixar modelo";
+  - "Conferir planilha" mostra cada linha como Criar, Atualizar, Sem mudança ou Erro, com o motivo;
+  - "Importar N pessoas" só aparece sem erro;
+  - quem é criado recebe senha temporária por e-mail.
+- **Data de desligamento** no formulário de usuário e selo "Desliga em dd/mm/aaaa" na lista; nesse dia o acesso é desativado sozinho.
+- **Validade de documentos:** no formulário entram "Revisar até" e "Responsável pela revisão". A lista do admin ganha selo de prazo e a seção **Revisões a vencer** (vencidas e próximos 60 dias). O responsável recebe alerta faltando 30 e 7 dias e no vencimento.
+- Os rótulos dos formulários do painel lateral agora são ligados aos campos (`for`/`id`), para leitor de tela.

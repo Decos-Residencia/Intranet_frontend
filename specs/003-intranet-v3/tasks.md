@@ -167,3 +167,12 @@ Caminhos relativos a `residencia qa/`. **Sem commit até o usuário liberar.**
 - [X] T046 Limite de vagas em todas as telas de evento (lista, calendário, carrossel e detalhe) e no formulário: valor inválido não vira mais "sem limite" e o resumo mostra o número que será gravado
 - [X] T047 Controle de acesso por perfil (substitui a decisão "perfil + permissões individuais" da spec 001): matriz editável em `#/admin/acessos`, `perfil_permissoes` (migração `0029_permissoes_por_perfil`), fim de `usuario_permissoes`; roteiro `check-perfis-vagas` 19/19
 
+
+
+## Administração (pedido depois dos PRs #5/#6)
+
+- [X] T048 Painel de indicadores: `GET /indicadores` (permissão `ver_indicadores`) e `#/admin/indicadores` com leitura por setor, adesão aos obrigatórios, tempo de atendimento dos chamados, revisões vencendo e exportação CSV
+- [X] T049 Importação de usuários por CSV com prévia e tudo ou nada (`POST /usuarios/importacao`), senha temporária por e-mail; painel "Importar planilha" em `#/admin/usuarios`
+- [X] T050 Data de desligamento (migração `0030_desligamento_validade_doc`): login/token recusados no dia, desativação automática pela rotina do sino, proteção do último Admin e da reativação
+- [X] T051 Validade de documentos: "Revisar até" e responsável, alertas de 30 dias, 7 dias e vencido (notificação e e-mail), `GET /documentos/validades` e seção "Revisões a vencer"
+- [X] T052 Conferência: pytest 514 passaram; roteiro `check-admin-v4` 24/24 com axe; regressão dos demais roteiros
