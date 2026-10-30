@@ -15,9 +15,38 @@
   const bytes = (n) => (n < 1024 ? `${n} B` : n < 1048576 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1048576).toFixed(1).replace(".", ",")} MB`);
   const ext = (nome) => (String(nome).split(".").pop() || "").toLowerCase();
 
+  // Validade (revisão do POP): o texto diz o prazo; a cor só reforça.
+  function diasAte(iso) {
+    const [a, m, dd] = iso.split("-").map(Number);
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    return Math.round((new Date(a, m - 1, dd) - hoje) / 86400000);
+  }
+  function seloValidade(iso, dias = diasAte(iso)) {
+    if (dias <= 0) return badge("red", dias === 0 ? "Revisão vence hoje" : `Revisão vencida há ${-dias} ${dias === -1 ? "dia" : "dias"}`);
+    if (dias <= 30) return badge("amber", `Revisar em ${dias} ${dias === 1 ? "dia" : "dias"}`);
+    return badge("gray", `Revisar até ${iso.split("-").reverse().join("/")}`);
+  }
+
+  async function carregarValidades() {
+    const box = document.getElementById("doc-validades");
+    if (!box) return;
+    try {
+      const itens = await Services.documentos.validades(60);
+      if (!document.contains(box)) return;
+      if (!itens.length) { box.innerHTML = ""; return; }
+      box.innerHTML = `<section class="card p-5 mb-6" aria-labelledby="doc-validades-h">
+        <h3 id="doc-validades-h" class="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">${icon("clock", "w-5 h-5 text-wine")} Revisões a vencer</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Vencidas e as que vencem nos próximos 60 dias. O responsável recebe alerta faltando 30 e 7 dias e no vencimento.</p>
+        <ul class="space-y-2">${itens.map((d) => `<li class="flex items-center gap-3 flex-wrap">
+          ${seloValidade(d.revisar_em, d.dias_restantes)}
+          <a href="#/admin/documentos/${d.id}/editar" class="font-semibold text-slate-800 dark:text-slate-100 hover:underline min-w-0 truncate">${esc(d.titulo)}</a>
+          <span class="text-xs text-slate-500 dark:text-slate-400">${esc(d.categoria)} · v${esc(d.versao)} · responsável: ${esc(d.responsavel || "quem gerencia documentos")}</span></li>`).join("")}</ul></section>`;
+    } catch (_) { box.innerHTML = ""; }
+  }
+
   function linha(d) {
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${d.ativo ? "" : "opacity-70"}" data-id="${d.id}">
-      <td class="py-3.5 pl-4"><div class="flex items-center gap-2 mb-1">${badge("blue", esc(d.categoria))}${d.vigente ? "" : badge("gray", "Sem versão vigente")}<span class="text-xs text-slate-500 dark:text-slate-400">v${esc(d.versao)}${d.total_versoes > 1 ? ` (${d.total_versoes} versões)` : ""} • atualizado em ${esc(quando(d.atualizado_em))}</span></div>
+      <td class="py-3.5 pl-4"><div class="flex items-center gap-2 mb-1 flex-wrap">${badge("blue", esc(d.categoria))}${d.vigente ? "" : badge("gray", "Sem versão vigente")}<span class="text-xs text-slate-500 dark:text-slate-400">v${esc(d.versao)}${d.total_versoes > 1 ? ` (${d.total_versoes} versões)` : ""} • atualizado em ${esc(quando(d.atualizado_em))}</span>${d.revisar_em ? seloValidade(d.revisar_em) : ""}</div>
         <div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-sm">${esc(d.titulo)}</div>
         <div class="text-xs text-slate-400 truncate max-w-sm">${esc(d.arquivo_nome)}</div></td>
       <td class="text-sm text-slate-500 dark:text-slate-400">${esc(d.enviado_por || "—")}</td>
@@ -88,6 +117,7 @@
         </div>
       </div>
       <div id="doc-stats" class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
+      <div id="doc-validades"></div>
       <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
         <div class="flex gap-2 flex-wrap" data-filter-group="doc-adm">
           ${STATUS.map(([k, l], i) => `<button class="chip ${i === 0 ? "chip-active" : ""}" data-filter="${k}">${l}</button>`).join("")}
@@ -120,7 +150,7 @@
         document.getElementById("doc-busca").addEventListener("input", (e) => {
           clearTimeout(t); t = setTimeout(() => { estado.q = e.target.value.trim(); estado.page = 1; carregar(); }, 300);
         });
-        carregarResumo(); carregar();
+        carregarResumo(); carregarValidades(); carregar();
       },
     };
   }

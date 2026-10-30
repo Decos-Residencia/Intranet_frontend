@@ -55,6 +55,7 @@
 
   function adminDocumentoNovo(id) {
     const setores = App.setoresAll();
+    const pessoas = [...(App.state.api.usuariosRaw || [])].filter((u) => u.ativo !== false).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     const categorias = [...new Set([...TIPOS_DOC.map((t) => t.value), ...App.documentosAll().map((d) => d.tipo)].filter(Boolean))];
     return {
       title: id ? "Editar Documento" : "Adicionar Documento",
@@ -76,6 +77,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${fld("QUEM PODE VER", `<select id="dc-setor" class="field-input"><option value="">Geral — todos os colaboradores</option>${setores.map((s) => `<option value="${s.id}">Somente o setor ${esc(s.nome)}</option>`).join("")}</select>`, "Documentos restritos só aparecem para o setor escolhido e para administradores.")}
               ${fld("STATUS", `<select id="dc-ativo" class="field-input"><option value="true">Ativo (visível)</option><option value="false">Inativo (escondido)</option></select>`)}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${fld("REVISAR ATÉ (VALIDADE)", `<input id="dc-revisar" type="date" class="field-input">`, "Opcional. Ex.: POP revisado a cada 2 anos. Alertas faltando 30 e 7 dias e no vencimento.")}
+              ${fld("RESPONSÁVEL PELA REVISÃO", `<select id="dc-responsavel" class="field-input"><option value="">Quem gerencia documentos</option>${pessoas.map((u) => `<option value="${u.id}">${esc(u.nome)}${u.setor?.nome ? ` · ${esc(u.setor.nome)}` : ""}</option>`).join("")}</select>`, "Recebe os alertas por notificação e e-mail.")}
             </div>
             <fieldset><legend class="field-label">PERMISSÃO DO ARQUIVO</legend>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -143,6 +148,7 @@
       const d = await Services.documentos.get(id);
       if (!$("form-doc")) return;
       $("dc-titulo").value = d.titulo; $("dc-categoria").value = d.categoria; $("dc-versao").value = d.versao;
+      $("dc-revisar").value = d.revisar_em || ""; $("dc-responsavel").value = d.responsavel_id ? String(d.responsavel_id) : "";
       $("dc-desc").value = d.descricao || ""; contar(); $("dc-setor").value = d.setor_id ? String(d.setor_id) : ""; $("dc-ativo").value = d.ativo ? "true" : "false";
       document.querySelector(`input[name="dc-permissao"][value="${d.somente_visualizacao ? "visualizacao" : "download"}"]`).checked = true;
       $("dc-atual").innerHTML = atualHtml(d);
@@ -160,13 +166,15 @@
     const titulo = $("dc-titulo").value.trim(), categoria = $("dc-categoria").value.trim(), versao = $("dc-versao").value.trim() || "1.0";
     const desc = $("dc-desc").value.trim(), setor = $("dc-setor").value, ativo = $("dc-ativo").value === "true";
     const somenteVisualizacao = document.querySelector('input[name="dc-permissao"]:checked')?.value === "visualizacao";
+    const revisar = $("dc-revisar").value, responsavel = $("dc-responsavel").value;
     if (!titulo) { App.toast("Informe o título do documento"); $("dc-titulo").focus(); return; }
     if (!categoria) { App.toast("Informe a categoria"); $("dc-categoria").focus(); return; }
     if (desc.length < MIN_DESC) { estado("erro", `Descrição obrigatória (mínimo ${MIN_DESC} caracteres).`); $("dc-desc").focus(); return; }
     if (id) {
       ocupado(true); estado("enviando", "Salvando alterações…");
       try {
-        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc, setor_id: setor ? Number(setor) : null, ativo, somente_visualizacao: somenteVisualizacao });
+        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc, setor_id: setor ? Number(setor) : null, ativo, somente_visualizacao: somenteVisualizacao,
+          revisar_em: revisar || null, responsavel_id: responsavel ? Number(responsavel) : null });
         estado("sucesso", "Alterações salvas."); App.toast("Documento atualizado");
         await App.loadApiData(); setTimeout(() => App.go("#/admin/documentos"), 400);
       } catch (err) { estado("erro", err.message || "Não foi possível salvar."); ocupado(false); }
@@ -182,6 +190,8 @@
     data.append("ativo", String(ativo)); data.append("vigente", vigente); data.append("descricao", desc);
     if (setor) data.append("setor_id", setor);
     data.append("somente_visualizacao", String(somenteVisualizacao));
+    if (revisar) data.append("revisar_em", revisar);
+    if (responsavel) data.append("responsavel_id", responsavel);
     ocupado(true); estado("enviando", `Enviando ${file.name} (${bytes(file.size)}) para o armazenamento seguro…`);
     try {
       await Services.documentos.create(data);

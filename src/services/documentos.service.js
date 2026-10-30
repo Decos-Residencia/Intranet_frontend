@@ -23,6 +23,10 @@
     create(formData) {
       return App.API.request("/documentos", { method: "POST", body: formData, timeout: 120000 });
     },
+    // Vencidos e que vencem a revisão nos próximos `dias` (ADMIN/RH).
+    validades(dias = 60) {
+      return App.API.request(`/documentos/validades?dias=${encodeURIComponent(dias)}`);
+    },
     update(id, data) {
       return App.API.request(`/documentos/${encodeURIComponent(id)}`, { method: "PUT", body: data });
     },
