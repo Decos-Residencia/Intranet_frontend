@@ -73,8 +73,3 @@
 .revisao-item{ display:flex; flex-direction:column; gap:.5rem; padding:1.1rem 1.25rem; }
 .revisao-previa{ font-size:.9rem; color:var(--text); background:var(--surface-strong); border-radius:.7rem; padding:.7rem .85rem; white-space:pre-line; }
 
-/* Controle de acesso: matriz de permissões por perfil */
-.acc-matriz tbody tr:hover{ background:color-mix(in srgb, var(--wine, #8b1538) 4%, transparent); }
-.acc-check{ width:1.15rem; height:1.15rem; accent-color:var(--wine, #8b1538); cursor:pointer; }
-.acc-check:disabled{ cursor:not-allowed; opacity:.55; }
-.acc-check:focus-visible{ outline:3px solid var(--wine, #8b1538); outline-offset:2px; }
