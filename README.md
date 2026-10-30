@@ -24,8 +24,8 @@ Entre com um usuário **real** do backend. Não há mais login de demonstração
 ### Configuração da API
 
 `src/app/config.js` define `apiBaseUrl`: em `localhost`/`127.0.0.1` usa
-`http://localhost:8000`; em outros hosts usa `PRODUCTION_API_URL` (preencha com a URL
-pública do backend antes do deploy). Também é possível definir
+`http://localhost:8000`; em outros hosts usa `/api`, encaminhado pela Vercel ao Render.
+Também é possível definir
 `window.__DECOS_CONFIG__ = { apiBaseUrl: "..." }` antes de carregar `config.js`.
 `apiBaseUrl` **não é segredo**; nunca coloque senhas, tokens ou chaves nesse arquivo.
 
@@ -35,14 +35,10 @@ Site estático, sem build. Na Vercel: **Framework Preset = Other**, **Build Comm
 **Output Directory** vazio (raiz do repositório). O `vercel.json` já aplica cabeçalhos de
 segurança (CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`).
 
-Antes de publicar:
-
-1. Preencha `PRODUCTION_API_URL` em `src/app/config.js` com a URL pública do backend no
-   Render (ex.: `https://intranet-decos-api.onrender.com`). Se ficar vazio, o login mostra
-   "API não configurada para este ambiente".
-2. Se a URL do backend **não** terminar em `.onrender.com`, ajuste `connect-src` no CSP do
-   `vercel.json` (hoje permite `https://*.onrender.com`; o ideal é a URL exata).
-3. No backend (Render), coloque o domínio da Vercel em `CORS_ORIGINS`, sem barra final.
+Antes de publicar, confira a URL do backend na regra `/api/:path*` de `vercel.json`.
+O navegador acessa a API pelo domínio do frontend, e a Vercel encaminha a chamada ao
+Render. Se usar `window.__DECOS_CONFIG__.apiBaseUrl` para acessar o Render diretamente,
+inclua o domínio do frontend em `CORS_ORIGINS` no backend e ajuste `connect-src` no CSP.
 
 Comportamento em produção: o timeout de API sobe para 60 s e o login "acorda" o backend
 gratuito do Render ao abrir. Nada de segredo fica no frontend; `apiBaseUrl` é público.

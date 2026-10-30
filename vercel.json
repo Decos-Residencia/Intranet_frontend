@@ -15,6 +15,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://intranet-backend-dzhs.onrender.com/:path*" },
     { "source": "/((?!src/|assets/|.*\\.[A-Za-z0-9]+$).*)", "destination": "/index.html" }
   ]
 }
