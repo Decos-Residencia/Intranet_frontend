@@ -1,5 +1,9 @@
 (function () {
   const avisosService = {
+    // Quem leu (ADMIN/RH): nome, setor e data da leitura, paginado.
+    leitores(id, params = {}) {
+      return App.API.request(`/avisos/${encodeURIComponent(id)}/leitores${Services.toQuery(params)}`);
+    },
     list(params = {}) {
       return App.API.request(`/avisos${Services.toQuery(params)}`);
     },

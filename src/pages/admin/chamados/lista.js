@@ -14,16 +14,31 @@
   const POR_PAGINA = 20;
 
   const quando = (iso) => UI.fmtDataHora(iso);
+  // "há 5 min", "há 3 h", "há 2 dias": ajuda a ver de relance o que está esperando há mais tempo.
+  function haQuanto(iso) {
+    const min = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+    if (min < 1) return "agora";
+    if (min < 60) return `há ${min} min`;
+    const h = Math.round(min / 60);
+    if (h < 24) return `há ${h} h`;
+    const d = Math.round(h / 24);
+    return `há ${d} dia${d > 1 ? "s" : ""}`;
+  }
+  const avatar = (nome, cls) => `<span class="avatar-soft ${cls}">${UI.foto(nome)}${esc(UI.iniciais(nome))}</span>`;
 
   function linha(c) {
     const [ts, ns] = ROT_STATUS[c.status], [tp, np] = ROT_PRIO[c.prioridade];
-    const quem = c.anonimo ? `<span class="text-slate-400 italic">Anônimo</span>` : esc(c.solicitante_nome || "—");
+    const quem = c.anonimo ? `<span class="text-slate-400 italic">Anônimo</span>`
+      : !c.solicitante_nome ? "—"
+      : `<div class="flex items-center gap-2.5">${avatar(c.solicitante_nome, "w-8 h-8 text-[11px] shrink-0")}<div class="min-w-0">
+          <div class="font-semibold text-slate-700 dark:text-slate-200 truncate">${esc(c.solicitante_nome)}</div>
+          <div class="text-xs text-slate-400 truncate">${esc(c.solicitante_setor || "Sem setor")}${c.solicitante_ramal ? ` · ramal ${esc(c.solicitante_ramal)}` : ""}</div></div></div>`;
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40" data-id="${c.id}">
       <td class="py-3.5 pl-4"><div class="font-bold text-slate-800 dark:text-slate-100">${esc(c.protocolo)} <span class="font-normal text-slate-400">· ${esc(ROT_TIPO[c.tipo])}</span></div>
         <div class="text-xs text-slate-400 truncate max-w-sm">${esc(c.categoria)} · ${esc(c.local)}</div></td>
       <td class="text-sm text-slate-600 dark:text-slate-300">${quem}</td>
       <td>${badge(tp, np)}</td><td>${badge(ts, ns)}</td>
-      <td class="text-xs text-slate-400">${esc(quando(c.criado_em))}</td>
+      <td class="text-xs"><div class="text-slate-600 dark:text-slate-300">${esc(quando(c.criado_em))}</div><div class="text-slate-400">${haQuanto(c.criado_em)}</div></td>
       <td class="text-right pr-4"><button class="btn-outline text-xs px-3 py-1.5" data-action="chamado-abrir" data-id="${c.id}">Abrir</button></td></tr>`;
   }
 
@@ -64,7 +79,7 @@
     }
     PagesAdmin.recarregarChamados = () => { resumo(); carregar(); };
 
-    const sel = (id, rotulo, opcoes) => `<select id="${id}" class="select-field"><option value="">${rotulo}</option>${opcoes.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>`;
+    const sel = (id, rotulo, opcoes) => `<select id="${id}" class="select-field" aria-label="${rotulo.split(":")[0]}"><option value="">${rotulo}</option>${opcoes.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>`;
     return {
       title: "Chamados",
       html: `
@@ -104,16 +119,28 @@
     let c;
     try { c = await Services.chamados.get(id); } catch (err) { App.toast(err.message || "Não foi possível abrir o chamado."); return; }
     const opts = (obj, atual) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${k === atual ? "selected" : ""}>${Array.isArray(v) ? v[1] : v}</option>`).join("");
-    const quem = c.anonimo ? "Anônimo (o servidor não registrou quem enviou)" : esc(c.solicitante_nome || "—");
+    const [ts, ns] = ROT_STATUS[c.status], [tp, np] = ROT_PRIO[c.prioridade];
+    const contato = (rotulo, valor, href) => valor ? `<div class="ch-contato"><dt>${rotulo}</dt><dd>${href ? `<a href="${href}" class="text-wine dark:text-pink-300 underline">${esc(valor)}</a>` : esc(valor)}</dd></div>` : "";
+    const solicitante = c.anonimo
+      ? `<div class="ch-quem ch-quem-anonimo">${icon("lock", "w-5 h-5")}<div><div class="font-bold">Relato anônimo</div><div class="text-xs">O sistema não registrou quem enviou. A resposta fica só como registro interno.</div></div></div>`
+      : `<div class="ch-quem">${avatar(c.solicitante_nome || "?", "w-11 h-11 text-sm shrink-0")}<div class="min-w-0 flex-1">
+          <div class="font-bold text-slate-800 dark:text-slate-100">${esc(c.solicitante_nome || "—")}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">${esc([c.solicitante_cargo, c.solicitante_setor].filter(Boolean).join(" · ") || "Sem setor")}</div>
+          <dl class="mt-2 space-y-1">${contato("E-mail", c.solicitante_email, c.solicitante_email ? `mailto:${encodeURIComponent(c.solicitante_email)}?subject=${encodeURIComponent(`Chamado ${c.protocolo}`)}` : "")}${contato("Ramal", c.solicitante_ramal)}</dl></div></div>`;
+    const marco = (rotulo, iso, extra = "") => iso ? `<li><span class="ch-marco-ponto" aria-hidden="true"></span><div><div class="font-semibold text-slate-700 dark:text-slate-200">${rotulo}${extra}</div><div class="text-xs text-slate-500 dark:text-slate-400">${esc(quando(iso))} · ${haQuanto(iso)}</div></div></li>` : "";
     App.openPanel(`${c.protocolo} · ${ROT_TIPO[c.tipo]}`, `<form data-form="chamado-admin" data-id="${c.id}" class="space-y-4">
+      <div class="flex gap-2 flex-wrap">${badge(ts, ns)} ${badge(tp, `Prioridade ${np.toLowerCase()}`)}</div>
+      <section aria-label="Quem abriu"><div class="field-label">QUEM ABRIU</div>${solicitante}</section>
       <div class="text-sm space-y-1 text-slate-600 dark:text-slate-300">
-        <div><b>Solicitante:</b> ${quem}</div><div><b>Categoria:</b> ${esc(c.categoria)}</div>
-        <div><b>Local:</b> ${esc(c.local)}</div><div><b>Aberto em:</b> ${esc(quando(c.criado_em))}</div>
-        ${c.responsavel_nome ? `<div><b>Atendido por:</b> ${esc(c.responsavel_nome)}</div>` : ""}</div>
+        <div><b>Categoria:</b> ${esc(c.categoria)}</div><div><b>Local:</b> ${esc(c.local)}</div></div>
+      <section aria-label="Linha do tempo"><div class="field-label">LINHA DO TEMPO</div><ol class="ch-marcos">
+        ${marco("Aberto", c.criado_em)}
+        ${c.atualizado_em && c.atualizado_em !== c.criado_em ? marco("Última atualização", c.atualizado_em, c.responsavel_nome ? ` por ${esc(c.responsavel_nome)}` : "") : ""}
+        ${marco("Concluído", c.concluido_em)}</ol></section>
       <div><label class="field-label">DESCRIÇÃO</label><div class="card p-3 text-sm whitespace-pre-line text-slate-700 dark:text-slate-200">${esc(c.descricao)}</div></div>
       <div class="grid grid-cols-2 gap-3">
-        <div><label class="field-label">STATUS</label><select name="status" class="field-input">${opts(ROT_STATUS, c.status)}</select></div>
-        <div><label class="field-label">PRIORIDADE</label><select name="prioridade" class="field-input">${opts(ROT_PRIO, c.prioridade)}</select></div></div>
+        <div><label class="field-label" for="ch-f-status">STATUS</label><select id="ch-f-status" name="status" class="field-input">${opts(ROT_STATUS, c.status)}</select></div>
+        <div><label class="field-label" for="ch-f-prio">PRIORIDADE</label><select id="ch-f-prio" name="prioridade" class="field-input">${opts(ROT_PRIO, c.prioridade)}</select></div></div>
       <div><label class="field-label">RESPOSTA ${c.anonimo ? "(interna: o relato é anônimo)" : "AO SOLICITANTE"}</label>
         <textarea name="resposta_admin" class="field-input" rows="4" maxlength="5000" placeholder="Opcional">${esc(c.resposta_admin || "")}</textarea></div>
       <button type="submit" class="btn-wine w-full py-3">Salvar atendimento</button></form>`);

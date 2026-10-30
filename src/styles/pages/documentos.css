@@ -17,4 +17,58 @@ a.month-cell-tag:hover{ text-decoration:underline; }
   .doc-viewer .pdf-page, .doc-viewer .pdf-page *{ visibility:visible !important; }
   .doc-viewer .pdf-page{ position:absolute; left:0; top:0; width:100%; zoom:1; box-shadow:none; margin:0; }
   .quick-fab, .toast{ display:none !important; }
+  /* Documento restrito não imprime: a folha some e só fica o aviso. */
+  body.doc-restrito-aberto .doc-viewer .pdf-page, body.doc-restrito-aberto .doc-viewer .pdf-page *{ visibility:hidden !important; }
+  body.doc-restrito-aberto .doc-print-aviso{ display:block !important; visibility:visible !important; position:absolute; left:0; top:0; }
 }
+
+/* ---------- Documento restrito: prévia protegida ---------- */
+.doc-restrito-topo{ display:flex; gap:1rem; align-items:flex-start; box-shadow:inset 4px 0 0 var(--crimson); }
+.doc-protegido{ position:relative; min-height:480px; }
+.doc-folha{ position:relative; transition:filter .25s ease; }
+.doc-borrado .doc-folha{ filter:blur(9px) saturate(.6); pointer-events:none; }
+.doc-marca{ position:absolute; inset:0; overflow:hidden; pointer-events:none; display:flex; flex-wrap:wrap; align-content:flex-start;
+  gap:3.2rem 2.5rem; padding:2rem; transform:rotate(-24deg) scale(1.4); opacity:.16; }
+.doc-marca span{ font-size:.8rem; font-weight:800; letter-spacing:.04em; color:#7a1022; white-space:nowrap; }
+.doc-veu{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.6rem;
+  text-align:center; padding:1.5rem; background:color-mix(in srgb, var(--card) 55%, transparent); }
+.doc-borrado .doc-veu{ display:flex; }
+.doc-veu-icone{ width:52px; height:52px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+  background:var(--wine-50, #fbeaec); color:var(--wine, #8E1B2E); }
+.doc-protecoes{ display:flex; flex-direction:column; gap:.6rem; font-size:.88rem; color:var(--text); }
+.doc-protecoes li{ display:flex; align-items:center; gap:.55rem; }
+.doc-protecoes svg{ color:var(--crimson); flex-shrink:0; }
+.doc-print-aviso{ display:none; padding:2rem; font-weight:700; }
+
+/* ---------- Versões (vigente x antiga) ---------- */
+.versao-opt{ display:flex; gap:.7rem; align-items:flex-start; padding:.75rem .9rem; border-radius:.8rem; border:1px solid var(--border-strong);
+  background:var(--surface-strong); cursor:pointer; }
+.versao-opt input{ margin-top:.2rem; accent-color:var(--wine); width:1.05rem; height:1.05rem; flex-shrink:0; }
+.versao-opt span{ display:flex; flex-direction:column; gap:.1rem; font-size:.88rem; color:var(--text); }
+.versao-opt small{ font-size:.78rem; color:var(--muted); }
+.versao-opt:has(input:checked){ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent) inset; }
+.versao-item{ padding:.75rem .9rem; border-radius:.8rem; border:1px solid var(--border); background:var(--surface-strong); }
+.versao-vigente{ border-left:4px solid #15803d; }
+.doc-antiga-aviso{ display:flex; gap:.6rem; align-items:flex-start; padding:.8rem 1rem; border-radius:.8rem;
+  background:#fef3c7; color:#78350f; border:1px solid #f59e0b; }
+.dark .doc-antiga-aviso{ background:rgba(245,158,11,.14); color:#fde68a; border-color:rgba(245,158,11,.5); }
+
+/* A "folha" do visualizador é papel branco em qualquer tema: o texto dela segue as cores do papel. */
+html.dark .pdf-page{ color:#111827; }
+html.dark .pdf-page .text-wine{ color:var(--wine-dark); }
+html.dark .pdf-page :is(.text-slate-400, .text-slate-500, .dark\:text-slate-400, .dark\:text-slate-300){ color:#4b5563; }
+html.dark .pdf-page :is(.text-slate-800, .dark\:text-slate-100, .dark\:text-slate-200){ color:#111827; }
+
+/* ---------- PDF real na tela (leitor-pdf.js) e legendas de segurança ---------- */
+.pdf-paginas{ display:flex; flex-direction:column; align-items:center; gap:1rem; padding:1.25rem 1rem; min-height:12rem; }
+.pdf-paginas[aria-busy="true"]{ background:linear-gradient(90deg, var(--surface-strong), var(--card), var(--surface-strong)); background-size:200% 100%; }
+.doc-viewer .pdf-canvas{ zoom:var(--zoom,1); max-width:none; background:#fff; border-radius:.35rem; box-shadow:0 1px 4px rgba(0,0,0,.18); }
+.doc-protegido .pdf-paginas{ pointer-events:none; }
+.legenda-seg{ padding:.7rem .8rem; border-radius:.8rem; border:1px solid var(--border); background:var(--surface-strong); }
+.legenda-seg-on{ border-color:var(--crimson); box-shadow:inset 3px 0 0 var(--crimson); }
+@media print{
+  body.doc-restrito-aberto .pdf-canvas{ visibility:hidden !important; }
+}
+/* A área de leitura rola sozinha (o contador "Pág. X de N" acompanha a rolagem). */
+.pdf-scroll-leitor{ max-height:min(78vh, 56rem); overflow:auto; }
+.pdf-scroll-leitor:focus-visible{ outline:3px solid var(--focus); outline-offset:-3px; }

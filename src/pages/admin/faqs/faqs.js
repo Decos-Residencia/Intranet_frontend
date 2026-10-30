@@ -82,7 +82,7 @@
         <div class="flex gap-2 items-center flex-wrap">
           <div class="search-box w-60"><span>${icon("search", "w-4 h-4 text-slate-400")}</span>
             <input id="faq-adm-busca" placeholder="Buscar pergunta ou resposta..." maxlength="200" class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
-          <select id="faq-adm-cat" class="select-field"><option value="">Categoria: todas</option></select>
+          <select id="faq-adm-cat" class="select-field" aria-label="Filtrar por categoria"><option value="">Categoria: todas</option></select>
         </div>
       </div>
       <div id="faq-adm-list"><div class="card p-10 text-center text-slate-400">Carregando…</div></div>
