@@ -31,8 +31,8 @@
     items.push({ icon: "file-text", label: "Documentos & FAQ", children: [
       { icon: "file-text", label: gereDocs ? "Gerenciar Documentos" : "Documentos & POPs", route: gereDocs ? "#/admin/documentos" : "#/documentos" },
       ...(gereFaq ? [{ icon: "edit", label: "Gerenciar FAQ", route: "#/admin/faqs" }] : []),
-      ...(can("interact") ? [{ icon: "check-check", label: "Minhas Avaliações", route: "#/avaliacoes", count: App.state.api.avaliacoesPendentes || 0 }] : []),
-      ...(can("manage_reviews") ? [{ icon: "check-check", label: "Gerenciar Avaliações", route: "#/admin/avaliacoes" }] : []),
+      // Quem é responsável por algum documento (ou tem avaliação pendente) revisa aqui.
+      ...(App.state.api.minhasRevisoes || App.state.api.avaliacoesPendentes ? [{ icon: "check-check", label: "Minhas revisões", route: "#/revisoes", count: App.state.api.avaliacoesPendentes || 0 }] : []),
       { icon: "help-circle", label: "FAQ", route: "#/faq" },
     ]});
 
@@ -42,7 +42,6 @@
           { icon: "trending-up", label: "Mural de vagas", route: "#/vagas" },
           { icon: "edit", label: "Gerenciar vagas", route: "#/admin/vagas" }] }
       : { icon: "trending-up", label: "Vagas internas", route: "#/vagas" });
-    if (can("interact")) items.push({ icon: "help-circle", label: "Meus chamados", route: "#/chamados" });
     if (logado) items.push({ icon: "settings", label: "Configurações", route: "#/configuracoes" });
 
     const adminChildren = [];

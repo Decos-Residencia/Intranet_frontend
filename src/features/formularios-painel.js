@@ -196,8 +196,8 @@
       tipo: TIPO_API[f.dataset.tipo] || "GERAL", categoria: v.categoria, local: v.local.trim(),
       prioridade: PRIO_API[v.prioridade] || "MEDIA", descricao: v.descricao.trim(), anonimo,
     });
-    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece em Meus chamados)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
-    if (!anonimo && location.hash === "#/chamados") setTimeout(() => App.render(), 0); // lista recarrega da API
+    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece no Meu painel)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
+    if (!anonimo && ["#/painel", "#/chamados"].includes(location.hash)) setTimeout(() => App.render(), 0); // lista recarrega da API
     return true;
   }
 
@@ -208,7 +208,6 @@
     const handlers = {
       usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq, chamado: submitChamado,
       "chamado-admin": (form, vals) => PagesAdmin.submitChamadoAdmin(form, vals),
-      avaliacao: (form, vals) => PagesAdmin.submitAvaliacao(form, vals),
       "avaliacao-resposta": (form, vals) => PagesAvaliacoes.submitResposta(form, vals),
       pedido: (form, vals) => App.submitPedido(form, vals), rejeitar: (form, vals) => App.submitRejeicao(form, vals),
     };

@@ -102,11 +102,9 @@
       const ch = a.chamados.abertos + a.chamados.em_analise;
       if (ch) itens.push(["help-circle", plural(ch, "chamado em aberto", "chamados em aberto"), a.chamados.alta_prioridade_pendentes ? `${a.chamados.alta_prioridade_pendentes} de alta prioridade` : "", "#/admin/chamados", a.chamados.alta_prioridade_pendentes > 0]);
       if (a.solicitacoes_pendentes) itens.push(["user-cog", plural(a.solicitacoes_pendentes, "solicitação cadastral", "solicitações cadastrais"), "aguardando análise", "#/admin/solicitacoes", false]);
-      const av = a.avaliacoes.pendentes + a.avaliacoes.em_analise;
-      if (av) itens.push(["check-check", plural(av, "avaliação de documento", "avaliações de documento"), "em andamento", "#/admin/avaliacoes", false]);
       if (a.avisos.rascunhos) itens.push(["edit", plural(a.avisos.rascunhos, "aviso em rascunho", "avisos em rascunho"), "não publicados", "#/admin/noticias", false]);
     }
-    if (p.avaliacoes_pendentes) itens.push(["check-check", plural(p.avaliacoes_pendentes, "avaliação sua pendente", "avaliações suas pendentes"), "para responder", "#/avaliacoes", true]);
+    if (p.avaliacoes_pendentes) itens.push(["check-check", plural(p.avaliacoes_pendentes, "avaliação sua pendente", "avaliações suas pendentes"), "para responder", "#/revisoes", true]);
     if (!itens.length) return `<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 py-2">${icon("check", "w-4 h-4 text-green-700 dark:text-green-400")} Tudo em dia. Nenhuma pendência agora.</li>`;
     return itens.map(([ic, titulo, sub, rota, alerta]) => `<li><a href="${rota}" class="attn-item ${alerta ? "attn-alerta" : ""}">
       <span class="stat-ic">${icon(ic, "w-4 h-4")}</span>

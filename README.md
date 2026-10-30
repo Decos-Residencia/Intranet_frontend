@@ -179,8 +179,8 @@ src/
 `#/documentos/:id/restrito` · `#/admin/chamados` · `#/painel` · `#/vagas` · `#/vagas/:id` ·
 `#/admin/revisao` · `#/admin/treinamentos` · `#/admin/calendario` · `#/admin/vagas` · `#/admin/noticias` ·
 `#/admin/noticias/nova` · `#/admin/documentos` · `#/admin/documentos/novo` ·
-`#/admin/usuarios` · `#/admin/auditoria` · `#/configuracoes` (todos) · `#/chamados`
-(Meus chamados, quem interage) · `#/admin/acessos` (Controle de acesso e acessos rápidos
+`#/admin/usuarios` · `#/admin/auditoria` · `#/configuracoes` (todos) · `#/revisoes`
+(Minhas revisões: documentos sob minha responsabilidade e avaliações pedidas a mim) · `#/admin/acessos` (Controle de acesso e acessos rápidos
 globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `src/app/routes.js`).
 
 ### Modernização (feature 001, `specs/001-modernizacao-intranet/`)
@@ -272,4 +272,8 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
   - quem é criado recebe senha temporária por e-mail.
 - **Data de desligamento** no formulário de usuário e selo "Desliga em dd/mm/aaaa" na lista; nesse dia o acesso é desativado sozinho.
 - **Validade de documentos** (tela `#/admin/validades`, filtro de 30 dias a 12 meses): no formulário entram "Revisar até" e "Responsável pela revisão". A lista do admin ganha selo de prazo e a seção **Revisões a vencer** (vencidas e próximos 60 dias). O responsável recebe alerta faltando 30 e 7 dias e no vencimento.
+- **Minhas revisões** (`#/revisoes`, no menu para quem é responsável por algum documento ou tem avaliação pendente):
+  documentos com o prazo, "Enviar nova versão" (com a próxima revisão) e as avaliações pedidas à pessoa. Os alertas
+  de validade e de avaliação apontam para cá. Saíram as telas "Minhas avaliações" e "Gerenciar avaliações".
+- **Meus chamados** agora é uma seção do **Meu painel** (lista completa com filtros e "Abrir chamado"); `#/chamados` abre o painel.
 - Os rótulos dos formulários do painel lateral agora são ligados aos campos (`for`/`id`), para leitor de tela.

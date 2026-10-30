@@ -178,3 +178,4 @@ Caminhos relativos a `residencia qa/`. **Sem commit até o usuário liberar.**
 - [X] T052 Conferência: pytest 514 passaram; roteiro `check-admin-v4` 24/24 com axe; regressão dos demais roteiros
 - [X] T053 Telas próprias de Importar usuários (`#/admin/importacao`) e Validade de documentos (`#/admin/validades`) no menu de Administração
 - [X] T054 Controle de acesso volta a ser por pessoa (perfil + ajustes individuais), migração `0031_permissoes_por_pessoa`; pytest 512, `check-v5` 11/11, `check-admin-v4` 24/24
+- [X] T055 Minhas revisões (`#/revisoes`, `GET /documentos/minhas-revisoes`, responsável envia a nova versão); sem as telas de avaliações; Meus chamados dentro do Meu painel; pytest 513, `check-v6` 11/11

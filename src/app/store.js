@@ -24,7 +24,7 @@
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
-    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, atalhos: [], revisaoPendentes: 0 });
+    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
@@ -288,7 +288,7 @@
     avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
     aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
     solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
-    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes", revisaoPendentes: "fila de revisão",
+    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes", minhasRevisoes: "minhas revisões", revisaoPendentes: "fila de revisão",
   };
 
   // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
@@ -351,6 +351,7 @@
       eventosHoje: () => Services.eventos.hoje(),
       chamados: () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items),
       avaliacoesPendentes: () => Services.avaliacoes.list({ status: "PENDENTE", avaliador_id: state.user.id, page_size: 1 }).then((r) => r.total),
+      minhasRevisoes: () => Services.documentos.minhasRevisoes().then((r) => r.length),
       ...(can("manage_tickets") ? { chamadosPendentes: () => Services.chamados.resumo().then((r) => r.abertos + r.em_analise) } : {}),
       ...(can("approve") ? { revisaoPendentes: () => Services.revisao.fila().then((f) => f.length) } : {}),
       me: () => Services.auth.me(), // dados cadastrais podem ter mudado (aprovação de solicitação, edição do ADMIN)
@@ -388,6 +389,7 @@
     if (data.eventosHoje) state.api.eventosHoje = data.eventosHoje;
     if (data.chamados) state.api.chamados = data.chamados;
     if (typeof data.avaliacoesPendentes === "number") state.api.avaliacoesPendentes = data.avaliacoesPendentes;
+    if (typeof data.minhasRevisoes === "number") state.api.minhasRevisoes = data.minhasRevisoes;
     if (typeof data.chamadosPendentes === "number") state.api.chamadosPendentes = data.chamadosPendentes;
     if (typeof data.revisaoPendentes === "number") state.api.revisaoPendentes = data.revisaoPendentes;
     if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
