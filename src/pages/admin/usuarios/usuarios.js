@@ -24,7 +24,7 @@
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.setor)}</td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.cargo)}</td>
         <td>${roleBadge(u.role)}</td>
-        <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}${u.senhaTemporaria ? `<div class="mt-1">${badge("amber", "Senha temporária")}</div>` : ""}</td>
+        <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}${u.senhaTemporaria ? `<div class="mt-1">${badge("amber", "Senha temporária")}</div>` : ""}${u.desligamento && u.status === "Ativo" ? `<div class="mt-1">${badge("amber", `Desliga em ${esc(u.desligamento.split("-").reverse().join("/"))}`)}</div>` : ""}</td>
         <td><div class="flex items-center gap-1.5 justify-end pr-4">
           <button class="act-btn" data-action="open-usuario" data-id="${esc(u.id)}" title="Editar">${icon("edit","w-4 h-4")}</button>
           <button class="act-btn" data-action="open-senha" data-id="${esc(u.id)}" title="Redefinir senha">${icon("key","w-4 h-4")}</button>
@@ -51,7 +51,9 @@
       <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div><div class="text-sm text-slate-400">Hospital Decós Intranet • Administração</div>
         <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Usuários & Setores</h2></div>
-        <button data-action="open-usuario" class="btn-crimson px-5 py-2.5 flex items-center gap-2">${icon("plus","w-4 h-4")} Novo Usuário</button>
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" id="us-importar" class="btn-outline px-5 py-2.5 flex items-center gap-2">${icon("upload","w-4 h-4")} Importar planilha</button>
+          <button data-action="open-usuario" class="btn-crimson px-5 py-2.5 flex items-center gap-2">${icon("plus","w-4 h-4")} Novo Usuário</button></div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
         ${statCard("USUÁRIOS ATIVOS", conta((u) => u.status === "Ativo"), lista.length + " cadastrados (" + conta((u) => u.status === "Inativo") + " inativos)", "users")}
@@ -84,6 +86,7 @@
         </div>
       </div>`,
       init() {
+        document.getElementById("us-importar").addEventListener("click", () => PagesAdmin.abrirImportacaoUsuarios());
         wireList({ containerId: "us-rows", itemSel: ".user-row", size: 8, pagerId: "us-pager", infoId: "us-info", label: "usuários", crimson: true,
           controls: ["#us-busca", "#us-role", "#us-status"], onEmpty: "Nenhum usuário encontrado.",
           filterFn: (el) => { const q = sel("us-busca").trim().toLowerCase(), r = sel("us-role"), st = sel("us-status");
