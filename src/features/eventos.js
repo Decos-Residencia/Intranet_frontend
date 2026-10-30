@@ -9,6 +9,11 @@
   const dataLonga = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" });
   const dataHora = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
   const mesAno = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" });
+  const fotosDemo = {
+    "Oficina de Biossegurança e NR-32": "assets/img/evento-demo-biosseguranca.png",
+    "Campanha de Vacinação dos Colaboradores": "assets/img/evento-demo-vacinacao.png",
+    "Encontro de Qualidade e Segurança do Paciente": "assets/img/evento-demo-qualidade.png",
+  };
   const mesmoDia = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
   // Evento da API -> formato usado pelas telas.
@@ -22,6 +27,7 @@
       vagas: e.vagas, inscritos: e.inscritos, livres: e.vagas_disponiveis, status: e.status, encerrado: e.encerrado,
       aberto: e.inscricoes_abertas, inscrito: e.inscrito, cancelado: e.status === "CANCELADO",
       tipo: e.tipo || "EVENTO", treinamento: e.tipo === "TREINAMENTO", visto: !!e.visto, temImagem: !!e.tem_imagem, temBanner: !!e.tem_banner,
+      fotoDemo: e.categoria === "Demonstração" ? fotosDemo[e.titulo] || null : null,
       vagasTxt: textoVagas(e.vagas, e.vagas_disponiveis, e.inscritos),
     };
   }

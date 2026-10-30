@@ -39,26 +39,16 @@
     </a></li>`;
   }
 
-  /* ---------- comunicados urgentes: abre ao passar o mouse; clique/teclado fixa ---------- */
+  /* ---------- comunicados urgentes: compactos até o usuário abrir ---------- */
   function ligarUrgentes(box) {
     const botao = box.querySelector(".dash-urgente"), corpo = box.querySelector(".dash-urg-corpo");
-    let fixo = box.dataset.fixo === "1", espera = 0;
     const abrir = (sim) => {
       box.classList.toggle("is-open", sim);
       botao.setAttribute("aria-expanded", String(sim));
       corpo.inert = !sim; // fechado: os links de dentro saem da ordem do Tab
     };
-    abrir(fixo);
-    // Só em aparelhos com mouse: no toque, o clique decide.
-    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      box.addEventListener("mouseenter", () => { clearTimeout(espera); espera = setTimeout(() => abrir(true), 120); });
-      box.addEventListener("mouseleave", () => { clearTimeout(espera); if (!fixo) espera = setTimeout(() => abrir(false), 350); });
-    }
-    botao.addEventListener("click", () => {
-      clearTimeout(espera);
-      const abrirAgora = !box.classList.contains("is-open") || !fixo;
-      fixo = abrirAgora; abrir(abrirAgora);
-    });
+    abrir(false);
+    botao.addEventListener("click", () => abrir(!box.classList.contains("is-open")));
   }
 
   /* ---------- carrossel de próximos eventos (com a foto de capa) ---------- */
@@ -74,7 +64,9 @@
     if (!lista.length) return "";
     const slides = lista.map((e, i) => `
       <article class="ev-slide" data-slide role="group" aria-roledescription="slide" aria-label="${i + 1} de ${lista.length}: ${esc(e.titulo)}" tabindex="-1">
-        <div class="ev-slide-foto" aria-hidden="true"><span class="ev-slide-sem-foto">${icon("calendar", "w-12 h-12")}</span>${e.temBanner || e.temImagem
+        <div class="ev-slide-foto" aria-hidden="true"><span class="ev-slide-sem-foto">${icon("calendar", "w-12 h-12")}</span>${e.fotoDemo
+          ? `<img src="${e.fotoDemo}" alt="" class="ev-slide-img is-loaded" decoding="async">`
+          : e.temBanner || e.temImagem
           ? `<img data-foto-evento="${e.id}" data-foto-tipo="${e.temBanner ? "banner" : "capa"}" data-preencher="1" alt="" class="ev-slide-img" decoding="async">`
           : ""}<span class="ev-slide-data">${esc(e.dia)} ${esc(e.mes)}</span></div>
         <div class="ev-slide-legenda">
@@ -200,7 +192,7 @@
           <a href="#/avisos/${a.id}" class="dash-urg-ler">Ler comunicado ${icon("chevron-right", "w-4 h-4 inline")}</a>
         </div></li>`;
     const alertaUrgente = urgentes.length ? `
-      <section class="dash-urgente-box mb-6" data-urgentes data-fixo="${urgentesNaoLidos ? 1 : 0}" aria-label="Comunicados urgentes">
+      <section class="dash-urgente-box mb-6" data-urgentes aria-label="Comunicados urgentes">
         <button type="button" class="dash-urgente" aria-expanded="false" aria-controls="dash-urg-corpo">
           <span class="dash-urgente-ic">${icon("alert-triangle", "w-5 h-5")}</span>
           <span class="min-w-0 flex-1"><span class="block text-xs font-extrabold tracking-wide">${urgentes.length === 1 ? "COMUNICADO URGENTE" : `${urgentes.length} COMUNICADOS URGENTES`}${urgentesNaoLidos ? ` · ${urgentesNaoLidos} NÃO ${urgentesNaoLidos === 1 ? "LIDO" : "LIDOS"}` : ""}</span>

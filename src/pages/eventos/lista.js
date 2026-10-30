@@ -143,7 +143,7 @@
               <span class="block font-bold text-slate-800 dark:text-slate-100">${esc(i.titulo)}</span>
               ${i.descricao ? `<span class="block text-xs text-slate-600 dark:text-slate-300 mt-0.5">${esc(i.descricao)}</span>` : ""}</div>`).join("")}
             <ul class="space-y-3 ${datas.length ? "mt-3" : ""}">${lista.map((e) => `<li><a href="#/eventos/${e.id}" class="ev-dia-card">
-              <span class="ev-dia-foto" aria-hidden="true">${e.temImagem ? `<img data-foto-evento="${e.id}" alt="" class="ev-slide-img">` : ""}${icon("calendar", "w-8 h-8")}</span>
+              <span class="ev-dia-foto" aria-hidden="true">${e.fotoDemo ? `<img src="${e.fotoDemo}" alt="" class="ev-slide-img is-loaded">` : e.temImagem ? `<img data-foto-evento="${e.id}" alt="" class="ev-slide-img">` : ""}${icon("calendar", "w-8 h-8")}</span>
               <span class="ev-dia-corpo">
                 <span class="ev-dia-tipo">${e.treinamento ? "Treinamento" : "Evento"}${e.cancelado ? " · Cancelado" : ""}</span>
                 <span class="block font-bold text-slate-800 dark:text-slate-100 leading-snug">${esc(e.titulo)}</span>
