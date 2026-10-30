@@ -55,15 +55,22 @@ para produção; trocar exigiria uma etapa de build.
   `localStorage` (`decos_intranet_token`). Senhas nunca são guardadas.
 - Ao recarregar, a sessão só vale depois de `GET /auth/me` responder 200. Um `401` limpa a
   sessão e volta ao login; erro de rede mantém o token e oferece "Tentar novamente".
-- O papel da interface vem **exclusivamente** de `user.perfil` (não existe mais troca manual):
+- O perfil vem de `user.perfil` e **só muda pela tela Controle de acesso** (`#/admin/acessos`, ADMIN).
+  Não existe troca nem simulação de perfil pelo topo ou pelo menu.
+- O que cada pessoa pode fazer vem de `user.permissoes`, que são **as do perfil dela** (não há
+  permissão por pessoa). O ADMIN escolhe o que cada perfil pode fazer na matriz "Permissões por
+  perfil" da mesma tela; Administrador tem tudo. `App.can()` em `src/app/store.js` traduz os nomes curtos
+  usados pelas telas (`manage_events`…) para as permissões do servidor (`gerenciar_eventos`…).
 
-| Perfil (API) | Papel na UI | Pode |
-|---|---|---|
-| `COLABORADOR` | Colaborador | Somente leitura: avisos, documentos, FAQ, diretório, setores. |
-| `ADMIN` | Administrador | Leitura + criar/editar/excluir avisos, documentos, setores e FAQ (criar), cadastrar/editar/desativar usuários. |
+| Perfil (API) | Padrão |
+|---|---|
+| `LEITURA` | Consulta e baixa documentos; não interage. |
+| `COLABORADOR` | Interage (chamados, inscrições, parabéns) e edita o próprio perfil. |
+| `RH` | Colaborador + gerencia avisos, documentos, FAQ e eventos. |
+| `ADMIN` | Tudo, inclusive usuários, acessos, chamados, avaliações e auditoria. |
 
-Isso é só UX: a autorização real é do backend (um colaborador que force uma chamada
-administrativa recebe `403`).
+Isso é só UX: a autorização real é do backend (quem forçar uma chamada sem a permissão
+recebe `403`).
 
 ### O que vem da API × o que continua local
 
@@ -79,7 +86,14 @@ senha pelo próprio usuário.
 ## Recursos interativos
 
 - **Navegação** completa entre todas as telas (menu, cards, breadcrumbs, "ver detalhe").
-- **Tema claro/escuro** — botão de lua/sol na barra superior (persistido em `localStorage`).
+- **Aparência**: seletor de tema (Automático, Claro, Escuro, Vinho) com prévia, salvo na conta
+  (`PUT /auth/me/preferencias`) e aplicado antes da primeira pintura pelo script do `<head>`.
+  Visual "vidro fosco" (`styles/components/glass.css`) que vira sólido com "Reduzir transparência",
+  alto contraste ou navegador sem `backdrop-filter`.
+- **Acessibilidade** (`#/configuracoes`, todos os perfis): texto de 100% a 200%, botões maiores,
+  alto contraste, reduzir movimento e transparência, sublinhar links, foco reforçado e fonte
+  Atkinson Hyperlegible; "Pular para o conteúdo", `<main>`, painel lateral como diálogo
+  (foco, Esc), títulos de aba por tela. Meta: zero violações axe WCAG 2.2 AA.
 - **Painéis laterais (slide-over)**: Notificações (abre pelo sino) e Busca global (avisos/documentos/ramais).
 - **Menu hambúrguer** no mobile (drawer deslizante com backdrop).
 - **Filtros funcionais** no Mural (por categoria) e na Central de Documentos (por tipo); FAQ e Notificações também filtram.
@@ -162,9 +176,84 @@ src/
 
 `#/login` · `#/dashboard` · `#/avisos` · `#/avisos/:id` · `#/aniversariantes` ·
 `#/eventos` · `#/eventos/:id` · `#/documentos` · `#/documentos/:id` · `#/faq` ·
-`#/diretorio` · `#/perfil` · `#/notificacoes` · `#/admin/noticias` ·
+`#/diretorio` · `#/perfil` · `#/notificacoes` · `#/agenda` · `#/agenda/AAAA-MM-DD` ·
+`#/documentos/:id/restrito` · `#/admin/chamados` · `#/painel` · `#/vagas` · `#/vagas/:id` ·
+`#/admin/revisao` · `#/admin/treinamentos` · `#/admin/calendario` · `#/admin/vagas` · `#/admin/noticias` ·
 `#/admin/noticias/nova` · `#/admin/documentos` · `#/admin/documentos/novo` ·
-`#/admin/usuarios` · `#/admin/auditoria` (rotas `#/admin/*` exigem ADMIN)
+`#/admin/usuarios` · `#/admin/auditoria` · `#/configuracoes` (todos) · `#/chamados`
+(Meus chamados, quem interage) · `#/admin/acessos` (Controle de acesso e acessos rápidos
+globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `src/app/routes.js`).
 
-> Eventos, notificações demonstrativas, estatísticas e auditoria ainda são dados locais de
-> demonstração (sem backend).
+### Modernização (feature 001, `specs/001-modernizacao-intranet/`)
+
+- **Inicial por perfil**: colaborador vê avisos não lidos primeiro (selo "Lido"/"Não lido"),
+  eventos e treinamentos com inscrição no próprio cartão e selo "Novo", acessos rápidos e
+  aniversariantes do mês; gestor vê também até 4 números e "Precisa da sua atenção".
+- **Documentos**: descrição obrigatória, versão vigente x antiga no upload, histórico com
+  "Tornar vigente"; a central mostra só vigentes por padrão.
+- **Diretório**: busca única (nome, cargo, setor, ramal), copiar ramal, visão por setor; o
+  colaborador edita o próprio ramal no Perfil.
+- **Carrossel de eventos na Inicial** com a foto de capa (ou fundo da marca), setas, pontos, teclado,
+  pausa com mouse/foco e sem troca automática com movimento reduzido. O gestor envia a foto no
+  formulário do evento. O CSP do `vercel.json` libera imagens de `https://*.supabase.co` e `blob:`.
+- **Eventos**: filtro por tipo e mini calendário que mostra os eventos do dia ao passar o mouse,
+  focar ou tocar. Gestão: exportar inscritos em CSV ou enviar por e-mail.
+- **Avisos**: "Quem leu" na gestão; quem não tem `excluir_definitivo` (RH) arquiva em vez de excluir.
+- **Acessos rápidos**: globais (ADMIN) e pessoais (cada usuário, até 12); externos abrem em nova aba.
+
+### Intranet v2 (feature 002, `specs/002-intranet-v2/`)
+
+- **Sem login para ler**: Inicial, avisos, eventos, documentos gerais e FAQ abrem para qualquer pessoa
+  (rotas com `publica: true`). O sistema **sempre abre na Inicial**: a tela de login só aparece pelo botão
+  "Entrar" (topo, menu ou Inicial) ou ao tentar uma interação (inscrever-se, abrir chamado, baixar). Endereço
+  `#/login` aberto direto, link de área restrita (ex.: `#/diretorio`) e sessão expirada levam à Inicial como
+  visitante; depois de entrar, a pessoa vai para a área que tentou abrir.
+- **Menu**: alça com seta no meio da borda para recolher/expandir; link "Site do Hospital Decós"
+  (`https://decosdh.com.br/paciente/`) no rodapé do menu e nos acessos rápidos. O botão flutuante ficou só com o ícone.
+- **Tema instantâneo**: o botão de tema abre um menu pequeno junto dele (Automático, Claro, Escuro, Vinho);
+  a troca vale no clique, sem painel lateral. Esc fecha e devolve o foco.
+- **Inicial mais leve**: saudação ilustrada por período do dia e frase do dia, "Hoje você tem" (eventos de hoje
+  em que a pessoa se inscreveu, com notificação "É hoje"), aniversariantes do dia com "Dar parabéns", carrossel
+  de eventos com inscrição e cancelamento no próprio slide.
+- **Minha agenda** (`#/agenda`, em Comunicação): tarefas do dia com horário, concluir, editar, reordenar e
+  excluir; navegação entre dias e os eventos inscritos do dia ao lado.
+- **Calendário de eventos**: passar o mouse (ou focar/tocar) num dia mostra cartões com foto, tipo, horário,
+  local e resumo.
+- **Documento restrito (prévia protegida)**: o conteúdo abre desfocado até "Mostrar conteúdo" e volta a se
+  esconder ao sair da aba; marca d'água com nome, data e hora de quem vê; sem download, sem cópia e sem
+  impressão (Ctrl+P bloqueado e a folha some na impressão). O detalhe comum de um documento restrito usa essa tela.
+- **Chamados (gestor)**: lista com foto, nome, setor e ramal de quem abriu e "há quanto tempo"; o painel mostra
+  cargo, e-mail (link com o protocolo no assunto), ramal e a linha do tempo (aberto, última atualização e por quem,
+  concluído). Relato anônimo continua sem nenhum dado de quem enviou.
+- **Configurações**: espaçamento entre linhas (normal/amplo), tela ao entrar (Início, Avisos, Eventos, Minha
+  agenda, Documentos, Diretório) e menu recolhido — tudo salvo na conta e aplicado em qualquer aparelho.
+
+### Intranet v3 (feature 003, `specs/003-intranet-v3/`)
+
+- **Meu painel** (`#/painel`, no menu e como "Tela ao entrar"): avisos para ler, treinamentos obrigatórios
+  pendentes (com "Inscrever-se" na próxima turma), agenda de hoje, chamados abertos e próximos eventos.
+- **Revisão de publicações**: quem não aprova vê "Enviar para revisão" e "Rascunho" nos formulários de aviso e
+  evento, com faixa "Aguardando aprovação" ou "Devolvido para ajustes" (motivo). Quem aprova tem
+  **Administração → Revisão de publicações** (`#/admin/revisao`, com contador no menu): aprovar ou devolver com motivo.
+- **Prazo de destaque**: "Exibir em destaque até" no formulário; vencido, o aviso sai da Inicial e do painel e
+  fica no mural com o selo "Fora do destaque".
+- **Lembretes na Minha agenda**: na hora, 10 ou 30 min antes (só com horário). O sino avisa; com
+  "Ativar alertas do navegador" (permissão pedida só no clique), o sistema também mostra o alerta (`features/lembretes.js`).
+- **Calendário institucional**: camada própria no calendário de Eventos (cor verde-petróleo, legenda e
+  interruptor lembrado) — feriados nacionais automáticos, campanhas longas como faixa do mês e datas curtas
+  marcando os dias. Gestão em `#/admin/calendario`.
+- **Treinamentos obrigatórios** (`#/admin/treinamentos`): temas por setor/perfil; no formulário do evento a turma
+  é ligada ao tema; na lista de inscritos, a partir do início, "Presente"/"Marcar todos presentes".
+- **Vagas internas** (`#/vagas`, `#/vagas/:id`): filtros por setor e turno, "Tenho interesse" com mensagem e
+  "Desistir". Gestão (RH) em `#/admin/vagas`, com interessados e exportação CSV.
+- **Evidências para auditoria**: botão "Exportar evidências (PDF)" em `#/admin/auditoria` (período e setor);
+  o arquivo é baixado na hora (`App.API.request(..., { blob: true })`).
+- **Documento "somente visualização"** (escolha no upload/edição: "Download disponível" ou "Somente visualização"):
+  faixa "Somente leitura", selo "LEITURA APENAS", legendas de segurança; sem baixar, abrir original, imprimir nem
+  copiar (Ctrl+P/S/C bloqueados; impressão sai em branco). O **PDF real** é desenhado na tela com PDF.js 3.11.174
+  (cdnjs, carregado sob demanda em `shared/lib/leitor-pdf.js`), com "Pág. X de N" e zoom — também nos documentos
+  comuns e dentro da prévia protegida dos restritos. Outros formatos mostram o resumo. CSP: `script-src` inclui
+  `https://cdnjs.cloudflare.com` e `worker-src 'self' blob:`.
+- **Inicial**: cabeçalho enxuto com a foto da fachada (`assets/img/fachada-decos.jpg`); avisos com abas
+  "Não lidos (N)" / "Todos" e comunicado que se abre ao passar o mouse (ou focar); carrossel só com a foto,
+  com título, data, local, ações e controles numa faixa abaixo dela.

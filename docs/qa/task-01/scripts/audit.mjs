@@ -31,7 +31,7 @@ const COMMON = ["#/dashboard", "#/avisos", "#/avisos/1", "#/aniversariantes", "#
   "#/eventos", "#/eventos/1", "#/documentos", "#/faq", "#/diretorio", "#/perfil", "#/notificacoes", "#/trocar-senha", "#/rota-inexistente"];
 const GESTAO = ["#/admin/noticias", "#/admin/noticias/nova", "#/admin/noticias/1/editar", "#/admin/documentos", "#/admin/documentos/novo",
   "#/admin/eventos", "#/admin/eventos/novo", "#/admin/eventos/1/editar", "#/admin/faqs"];
-const ADMIN = ["#/admin/usuarios", "#/admin/chamados", "#/admin/solicitacoes", "#/admin/auditoria", "#/admin/avaliacoes"];
+const ADMIN = ["#/admin/usuarios", "#/admin/acessos", "#/admin/chamados", "#/admin/solicitacoes", "#/admin/auditoria", "#/admin/avaliacoes"];
 
 const results = { pages: [], functional: [], meta: { started: new Date().toISOString() } };
 
@@ -285,7 +285,7 @@ async function functional(browser) {
   }
 
   // RBAC por perfil (UI)
-  for (const [role, forbidden] of [["leitura", ["#/admin/noticias", "#/admin/usuarios"]], ["colaborador", ["#/admin/eventos", "#/admin/auditoria"]], ["rh", ["#/admin/usuarios", "#/admin/auditoria"]]]) {
+  for (const [role, forbidden] of [["leitura", ["#/admin/noticias", "#/admin/usuarios", "#/admin/acessos"]], ["colaborador", ["#/admin/eventos", "#/admin/auditoria", "#/admin/acessos"]], ["rh", ["#/admin/usuarios", "#/admin/auditoria", "#/admin/acessos"]]]) {
     const tk2 = await token(browser, USERS[role]);
     const c = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await c.addInitScript((t) => localStorage.setItem("decos_intranet_token", t), tk2);
