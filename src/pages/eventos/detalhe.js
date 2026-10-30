@@ -36,7 +36,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div class="lg:col-span-2 space-y-6">
           <div class="card overflow-hidden">
-            <div class="event-photo h-56 relative overflow-hidden">${e.temImagem ? `<img data-foto-evento="${e.id}" alt="Foto do evento ${esc(e.titulo)}" class="ev-slide-img">` : ""}</div>
+            <div class="event-photo h-56 relative overflow-hidden">${e.fotoDemo ? `<img src="${e.fotoDemo}" alt="Foto do evento ${esc(e.titulo)}" class="ev-slide-img is-loaded">` : e.temImagem ? `<img data-foto-evento="${e.id}" alt="Foto do evento ${esc(e.titulo)}" class="ev-slide-img">` : ""}</div>
             <div class="p-6 flex gap-4">
               <div class="date-chip-lg"><span class="text-2xl font-extrabold leading-none">${e.dia}</span><span class="text-[11px] font-bold">${e.mes}</span></div>
               <div><div class="flex items-center gap-2 mb-1 flex-wrap"><span class="tag-outline">${esc(e.tag)}</span><span class="text-sm text-slate-400">${esc(e.dataLonga)}</span>
