@@ -24,7 +24,7 @@
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
-    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, atalhos: [], revisaoPendentes: 0 });
+    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
@@ -56,6 +56,7 @@
     manage_news: "gerenciar_avisos", manage_docs: "gerenciar_documentos", manage_faq: "gerenciar_faq",
     manage_events: "gerenciar_eventos", manage_tickets: "gerenciar_chamados", manage_reviews: "gerenciar_avaliacoes",
     delete_forever: "excluir_definitivo", manage_users: "gerenciar_usuarios", audit_all: "auditoria",
+    view_indicators: "ver_indicadores",
     approve: "aprovar_publicacoes", manage_vagas: "gerenciar_vagas",
   };
   function realRole() { return PERFIL_ROLE[state.user?.perfil] || null; }
@@ -228,7 +229,7 @@
     const autor = nomeDoUsuario(a.autor_id) || (state.auth ? "Autor não identificado" : "Comunicação Decós");
     return {
       id: String(a.id), apiId: a.id, source: "api", own: true, categoria, lido: !!a.lido,
-      emDestaque: a.em_destaque !== false, destaqueAte: a.destaque_ate || null,
+      emDestaque: a.em_destaque !== false, destaqueAte: a.destaque_ate || null, temImagem: !!a.tem_imagem,
       titulo: a.titulo, resumo: conteudo.length > 180 ? conteudo.slice(0, 180) + "…" : conteudo || "Sem conteúdo.",
       data: fmt(fmtLonga, a.data_publicacao), dataCurta: fmt(fmtCurta, a.data_publicacao),
       autor, autorSigla: nomeDoUsuario(a.autor_id) ? UI.iniciais(autor) : "?", imagem: "",
@@ -279,7 +280,7 @@
       id: String(u.id), apiId: u.id, source: "api", nome: u.nome, email: u.email, setor: u.setor?.nome || "—", setorId: u.setor_id,
       cargo: u.cargo || "—", ramal: u.ramal || "", matricula: u.matricula || "", unidade: u.unidade || "", andar: u.andar || "",
       admissao: u.data_admissao || "", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
-      senhaTemporaria: !!u.must_change_password,
+      senhaTemporaria: !!u.must_change_password, desligamento: u.data_desligamento || "",
     };
   }
 
@@ -287,7 +288,7 @@
     avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
     aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
     solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
-    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes", revisaoPendentes: "fila de revisão",
+    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes", minhasRevisoes: "minhas revisões", revisaoPendentes: "fila de revisão",
   };
 
   // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
@@ -350,6 +351,7 @@
       eventosHoje: () => Services.eventos.hoje(),
       chamados: () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items),
       avaliacoesPendentes: () => Services.avaliacoes.list({ status: "PENDENTE", avaliador_id: state.user.id, page_size: 1 }).then((r) => r.total),
+      minhasRevisoes: () => Services.documentos.minhasRevisoes().then((r) => r.length),
       ...(can("manage_tickets") ? { chamadosPendentes: () => Services.chamados.resumo().then((r) => r.abertos + r.em_analise) } : {}),
       ...(can("approve") ? { revisaoPendentes: () => Services.revisao.fila().then((f) => f.length) } : {}),
       me: () => Services.auth.me(), // dados cadastrais podem ter mudado (aprovação de solicitação, edição do ADMIN)
@@ -387,6 +389,7 @@
     if (data.eventosHoje) state.api.eventosHoje = data.eventosHoje;
     if (data.chamados) state.api.chamados = data.chamados;
     if (typeof data.avaliacoesPendentes === "number") state.api.avaliacoesPendentes = data.avaliacoesPendentes;
+    if (typeof data.minhasRevisoes === "number") state.api.minhasRevisoes = data.minhasRevisoes;
     if (typeof data.chamadosPendentes === "number") state.api.chamadosPendentes = data.chamadosPendentes;
     if (typeof data.revisaoPendentes === "number") state.api.revisaoPendentes = data.revisaoPendentes;
     if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
@@ -453,7 +456,7 @@
   // Aniversariantes reais (GET /aniversariantes*): só usuários ativos, só dia e mês.
   const apiAniversariante = (a) => ({
     id: a.id, nome: a.nome, cargo: a.cargo || "—", setor: a.setor || "—", dia: a.dia, mes: a.mes,
-    hoje: a.hoje, diasRestantes: a.dias_restantes, jaParabenizado: a.ja_parabenizado, podeParabenizar: a.pode_parabenizar,
+    hoje: a.hoje, diasRestantes: a.dias_restantes, jaParabenizado: a.ja_parabenizado, podeParabenizar: a.pode_parabenizar, totalParabens: a.total_parabens || 0,
   });
   function aniversariantesAll() { return state.api.aniversariantes.map(apiAniversariante); }
   function aniversariantesHoje() { return state.api.aniversariantesHoje.map(apiAniversariante); }
@@ -470,7 +473,7 @@
   }
   function marcarParabenizado(id) {
     ["aniversariantes", "aniversariantesHoje", "aniversariantesProximos"].forEach((k) => {
-      state.api[k].forEach((a) => { if (a.id === id) { a.ja_parabenizado = true; a.pode_parabenizar = false; } });
+      state.api[k].forEach((a) => { if (a.id === id) { if (!a.ja_parabenizado && a.hoje) a.total_parabens = (a.total_parabens || 0) + 1; a.ja_parabenizado = true; a.pode_parabenizar = false; } });
     });
   }
 

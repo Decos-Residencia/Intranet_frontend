@@ -15,7 +15,14 @@
       cats: ["Recursos Humanos", "Tecnologia da Informação", "Qualidade", "Administrativo", "Outro"] },
   };
   const opts = (arr, sel) => arr.map((v) => `<option ${v === sel ? "selected" : ""}>${UI.esc(v)}</option>`).join("");
-  const fld = (label, html) => `<div><label class="field-label">${label}</label>${html}</div>`;
+  // Liga o rótulo ao primeiro campo (for/id) para leitores de tela e clique no rótulo.
+  let seqCampo = 0;
+  const fld = (label, html) => {
+    const campo = html.match(/<(input|select|textarea)\b(?![^>]*\bid=)/);
+    if (!campo) return `<div><label class="field-label">${label}</label>${html}</div>`;
+    const id = `fp-campo-${++seqCampo}`;
+    return `<div><label class="field-label" for="${id}">${label}</label>${html.replace(campo[0], `${campo[0]} id="${id}"`)}</div>`;
+  };
   function openChamadoPanel(tipo) {
     const c = CHAMADOS[tipo] || CHAMADOS.geral;
     App.openPanel(c.titulo, `<form data-form="chamado" data-tipo="${tipo}" class="space-y-4">
@@ -50,6 +57,7 @@
       ${fld("ANDAR / ALA", `<input name="andar" class="field-input" maxlength="40" value="${UI.esc(u?.andar || "")}" placeholder="Ex: 3º andar">`)}
       ${fld("DATA DE ADMISSÃO", `<input name="admissao" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.admissao || "")}">`)}
       ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
+      ${fld("DATA DE DESLIGAMENTO", `<input name="desligamento" type="date" class="field-input" value="${UI.esc(u?.desligamento || "")}"><div class="field-hint">Opcional. A partir desse dia o acesso é desativado sozinho (e registrado na auditoria).</div>`)}
       ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">A senha é temporária: o novo usuário precisará criar a própria senha no primeiro acesso.</div>`)}
       ${fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : `<div class="field-hint">Leitura: somente consulta · Colaborador: padrão · RH: cria e gerencia conteúdo · Administrador: acesso total.</div>`}`)}
       ${u ? fld("STATUS", `<select name="status" class="field-input" ${proprio ? "disabled" : ""}>${opts(["Ativo", "Inativo"], u.status)}</select>${proprio ? `<div class="field-hint">Você não pode desativar a própria conta.</div>` : ""}`) : ""}
@@ -71,6 +79,7 @@
       const body = { nome, email, senha, setor_id, cargo, ramal: ramal || null };
       Object.entries(extras).forEach(([k, val]) => { if (val) body[k] = val; });
       if (v.nascimento) body.data_nascimento = v.nascimento;
+      if (v.desligamento) body.data_desligamento = v.desligamento;
       const criado = await Services.auth.register(body);
       const perfil = App.ROLE_PERFIL[v.role] || "COLABORADOR"; // o cadastro nasce COLABORADOR; o papel escolhido é aplicado em seguida
       if (perfil !== "COLABORADOR") {
@@ -82,7 +91,7 @@
     } else {
       const u = App.findItem("usuarios", f.dataset.id);
       if (!u) { App.toast("Usuário não encontrado"); return false; }
-      const payload = { nome, email, setor_id, cargo, ramal: ramal || null, ...extras, data_nascimento: v.nascimento || null };
+      const payload = { nome, email, setor_id, cargo, ramal: ramal || null, ...extras, data_nascimento: v.nascimento || null, data_desligamento: v.desligamento || null };
       if (u.apiId !== state.user.id) { // próprio papel/status ficam bloqueados na tela
         payload.perfil = App.ROLE_PERFIL[v.role] || "COLABORADOR";
         payload.ativo = v.status === "Ativo";
@@ -187,8 +196,8 @@
       tipo: TIPO_API[f.dataset.tipo] || "GERAL", categoria: v.categoria, local: v.local.trim(),
       prioridade: PRIO_API[v.prioridade] || "MEDIA", descricao: v.descricao.trim(), anonimo,
     });
-    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece em Meus chamados)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
-    if (!anonimo && location.hash === "#/chamados") setTimeout(() => App.render(), 0); // lista recarrega da API
+    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece no Meu painel)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
+    if (!anonimo && ["#/painel", "#/chamados"].includes(location.hash)) setTimeout(() => App.render(), 0); // lista recarrega da API
     return true;
   }
 
@@ -199,7 +208,6 @@
     const handlers = {
       usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq, chamado: submitChamado,
       "chamado-admin": (form, vals) => PagesAdmin.submitChamadoAdmin(form, vals),
-      avaliacao: (form, vals) => PagesAdmin.submitAvaliacao(form, vals),
       "avaliacao-resposta": (form, vals) => PagesAvaliacoes.submitResposta(form, vals),
       pedido: (form, vals) => App.submitPedido(form, vals), rejeitar: (form, vals) => App.submitRejeicao(form, vals),
     };

@@ -167,3 +167,18 @@ Caminhos relativos a `residencia qa/`. **Sem commit até o usuário liberar.**
 - [X] T046 Limite de vagas em todas as telas de evento (lista, calendário, carrossel e detalhe) e no formulário: valor inválido não vira mais "sem limite" e o resumo mostra o número que será gravado
 - [X] T047 Controle de acesso por perfil (substitui a decisão "perfil + permissões individuais" da spec 001): matriz editável em `#/admin/acessos`, `perfil_permissoes` (migração `0029_permissoes_por_perfil`), fim de `usuario_permissoes`; roteiro `check-perfis-vagas` 19/19
 
+
+
+## Administração (pedido depois dos PRs #5/#6)
+
+- [X] T048 Painel de indicadores: `GET /indicadores` (permissão `ver_indicadores`) e `#/admin/indicadores` com leitura por setor, adesão aos obrigatórios, tempo de atendimento dos chamados, revisões vencendo e exportação CSV
+- [X] T049 Importação de usuários por CSV com prévia e tudo ou nada (`POST /usuarios/importacao`), senha temporária por e-mail; painel "Importar planilha" em `#/admin/usuarios`
+- [X] T050 Data de desligamento (migração `0030_desligamento_validade_doc`): login/token recusados no dia, desativação automática pela rotina do sino, proteção do último Admin e da reativação
+- [X] T051 Validade de documentos: "Revisar até" e responsável, alertas de 30 dias, 7 dias e vencido (notificação e e-mail), `GET /documentos/validades` e seção "Revisões a vencer"
+- [X] T052 Conferência: pytest 514 passaram; roteiro `check-admin-v4` 24/24 com axe; regressão dos demais roteiros
+- [X] T053 Telas próprias de Importar usuários (`#/admin/importacao`) e Validade de documentos (`#/admin/validades`) no menu de Administração
+- [X] T054 Controle de acesso volta a ser por pessoa (perfil + ajustes individuais), migração `0031_permissoes_por_pessoa`; pytest 512, `check-v5` 11/11, `check-admin-v4` 24/24
+- [X] T055 Minhas revisões (`#/revisoes`, `GET /documentos/minhas-revisoes`, responsável envia a nova versão); sem as telas de avaliações; Meus chamados dentro do Meu painel; pytest 513, `check-v6` 11/11
+- [X] T056 "Pedir avaliação" no formulário do documento, com as avaliações do documento e o status; `check-v7` 12/12
+- [X] T057 Bloco de comunicados urgentes que abre e fecha na Inicial e foto opcional no aviso (migração `0032_avisos_imagem`); pytest 515, `check-v8` 19/19
+- [X] T058 Urgentes da Inicial com animação suave e abertura ao passar o mouse; recados de aniversário só para o aniversariante (migração `0033_parabens_mensagem`); pytest 516, `check-v8` 23/23, `check-v9` 7/7

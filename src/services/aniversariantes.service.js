@@ -10,6 +10,10 @@
     proximos(dias = 30) {
       return App.API.request(`/aniversariantes/proximos${Services.toQuery({ dias })}`);
     },
+    // Recados que eu recebi hoje (só no dia do meu aniversário; ninguém mais vê).
+    recebidosHoje() {
+      return App.API.request("/parabens/recebidos-hoje");
+    },
     parabenizar(aniversarianteId, mensagem) {
       return App.API.request("/parabens", { method: "POST", body: { aniversariante_id: aniversarianteId, mensagem: mensagem || null } });
     },

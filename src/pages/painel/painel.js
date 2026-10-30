@@ -4,6 +4,7 @@
    Tudo o que depende da pessoa, num lugar só (GET /painel): avisos não lidos, treinamentos
    obrigatórios pendentes (com inscrição na próxima turma), chamados em aberto, tarefas de hoje
    e próximos eventos inscritos. Cada bloco mostra a contagem, até 5 itens e o atalho.
+   Abaixo, "Meus chamados" completo (GET /chamados/meus), que antes era uma tela própria.
    ========================================================================= */
 (function () {
   const { icon, esc, badge } = UI;
@@ -60,11 +61,11 @@
   function blocoChamados(b) {
     const corpo = b.itens.length ? `<ul class="painel-lista">${b.itens.map((c) => {
       const [tom, rot] = ROT_CHAMADO[c.status] || ["gray", c.status];
-      return `<li><a href="#/chamados" class="painel-item abre-mouse">
+      return `<li><a href="#painel-chamados-h" class="painel-item abre-mouse" data-ir-chamados>
         <span class="min-w-0 flex-1"><span class="block font-semibold abre-linha">${esc(c.protocolo)} · ${esc(c.categoria)}</span>
           <span class="block text-xs text-slate-500 dark:text-slate-400">Atualizado em ${esc(quando(c.atualizado_em))}</span></span>${badge(tom, rot)}</a></li>`;
     }).join("")}</ul>` : emDia("Nenhum chamado em aberto.");
-    return bloco("chamados", "help-circle", "Meus chamados abertos", b.total, corpo, ["#/chamados", "Ver meus chamados"]);
+    return bloco("chamados", "help-circle", "Meus chamados abertos", b.total, corpo, null);
   }
 
   function blocoAgenda(b) {
@@ -91,6 +92,62 @@
     return bloco("eventos", "calendar", "Meus próximos eventos", b.total, corpo, ["#/eventos", "Ver calendário"]);
   }
 
+  /* ---------- Meus chamados (lista completa) ---------- */
+  const STATUS_CH = { ABERTO: ["blue", "Aberto"], EM_ANALISE: ["amber", "Em análise"], CONCLUIDO: ["green", "Concluído"] };
+  const TIPO_CH = { TI: "Chamado de TI", EVENTO_ADVERSO: "Evento adverso", GERAL: "Chamado geral" };
+  const PRIO_CH = { BAIXA: "Baixa", MEDIA: "Média", ALTA: "Alta" };
+  const FILTROS_CH = [["", "Todos"], ["ABERTO", "Abertos"], ["EM_ANALISE", "Em análise"], ["CONCLUIDO", "Concluídos"]];
+
+  function chamadoItem(c) {
+    const [tom, rotulo] = STATUS_CH[c.status] || ["gray", c.status];
+    return `<li class="card p-5">
+      <div class="flex items-start justify-between gap-3 flex-wrap mb-2">
+        <div class="min-w-0"><div class="text-xs font-bold text-slate-500 dark:text-slate-400">${esc(TIPO_CH[c.tipo] || c.tipo)} · ${esc(c.protocolo)}</div>
+          <h4 class="font-bold text-slate-800 dark:text-slate-100">${esc(c.categoria)}</h4></div>${badge(tom, rotulo)}</div>
+      <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">${esc(c.descricao)}</p>
+      <dl class="flex gap-x-5 gap-y-1 flex-wrap text-xs text-slate-500 dark:text-slate-400 mt-3">
+        <div><dt class="inline font-bold">Local:</dt> <dd class="inline">${esc(c.local)}</dd></div>
+        <div><dt class="inline font-bold">Prioridade:</dt> <dd class="inline">${esc(PRIO_CH[c.prioridade] || c.prioridade)}</dd></div>
+        <div><dt class="inline font-bold">Aberto em:</dt> <dd class="inline">${esc(quando(c.criado_em))}</dd></div>
+        ${c.concluido_em ? `<div><dt class="inline font-bold">Concluído em:</dt> <dd class="inline">${esc(quando(c.concluido_em))}</dd></div>` : ""}
+      </dl>
+      ${c.resposta_admin ? `<div class="ch-resposta mt-3"><div class="text-xs font-extrabold text-slate-700 dark:text-slate-200 mb-1">${icon("check-check", "w-4 h-4 inline")} Resposta da equipe</div>
+        <p class="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line">${esc(c.resposta_admin)}</p></div>` : ""}
+    </li>`;
+  }
+
+  async function carregarChamados() {
+    const lista = document.getElementById("painel-ch-lista");
+    if (!lista) return;
+    let itens;
+    try { itens = await Services.listAll(Services.chamados.meus); App.state.api.chamados = itens; }
+    catch (err) { lista.innerHTML = `<li class="card p-6 text-sm text-slate-500 dark:text-slate-400">Não foi possível carregar seus chamados. ${esc(err.message || "")}</li>`; return; }
+    if (!document.contains(lista)) return;
+    const pinta = (status) => {
+      const vis = status ? itens.filter((c) => c.status === status) : itens;
+      lista.innerHTML = vis.length ? vis.map(chamadoItem).join("")
+        : `<li class="card p-6 text-sm text-slate-500 dark:text-slate-400">${itens.length ? "Nenhum chamado com este status." : "Você ainda não abriu chamados. Precisa de ajuda da TI ou quer relatar algo? Use “Abrir chamado”."}</li>`;
+    };
+    pinta("");
+    Lib.wireFilters("painel-ch", (f) => {
+      document.querySelectorAll('[data-filter-group="painel-ch"] [data-filter]').forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === f)));
+      pinta(f);
+    });
+  }
+
+  function secaoChamados() {
+    if (!App.can("interact")) return "";
+    return `<section class="mt-8" aria-labelledby="painel-chamados-h">
+      <div class="flex items-end justify-between gap-3 mb-3 flex-wrap">
+        <div><h3 id="painel-chamados-h" class="text-lg font-extrabold text-slate-800 dark:text-slate-100" tabindex="-1">Meus chamados</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Todos os chamados que você abriu. Relatos anônimos não aparecem aqui, para preservar o anonimato.</p></div>
+        <button type="button" data-action="open-chamado" data-tipo="geral" class="btn-wine px-5">${icon("plus", "w-4 h-4")} Abrir chamado</button></div>
+      <div class="flex gap-2 flex-wrap mb-4" role="group" aria-label="Filtrar chamados por status" data-filter-group="painel-ch">
+        ${FILTROS_CH.map(([v, l], i) => `<button type="button" class="chip ${i === 0 ? "chip-active" : ""}" data-filter="${v}" aria-pressed="${i === 0}">${l}</button>`).join("")}</div>
+      <ul id="painel-ch-lista" class="space-y-3" aria-live="polite"><li class="text-sm text-slate-500 dark:text-slate-400 py-6">Carregando…</li></ul>
+    </section>`;
+  }
+
   function painel() {
     const nome = esc((App.state.user?.nome || "").split(" ")[0]);
     return {
@@ -101,10 +158,18 @@
         <p id="painel-resumo" class="text-slate-600 dark:text-slate-300 mt-1" aria-live="polite">Carregando suas pendências, ${nome}…</p></div>
       <div id="painel-grade" class="painel-grade" aria-busy="true">
         ${[1, 2, 3, 4, 5].map(() => `<div class="card p-5 painel-bloco painel-esqueleto" aria-hidden="true"></div>`).join("")}
-      </div>`,
+      </div>
+      ${secaoChamados()}`,
       async init() {
         const grade = document.getElementById("painel-grade");
         const resumo = document.getElementById("painel-resumo");
+        carregarChamados();
+        grade.addEventListener("click", (e) => {
+          if (!e.target.closest("[data-ir-chamados]")) return;
+          e.preventDefault(); document.getElementById("painel-chamados-h")?.focus();
+          document.getElementById("painel-chamados-h")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        if (location.hash === "#/chamados") setTimeout(() => document.getElementById("painel-chamados-h")?.scrollIntoView({ block: "start" }), 300);
         try {
           const p = await Services.painel.resumo();
           if (!document.contains(grade)) return;

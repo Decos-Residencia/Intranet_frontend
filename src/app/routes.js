@@ -13,8 +13,7 @@
     { re: /^#\/avisos\/([\w-]+)$/, page: (m) => Pages.avisoDetalhe(m[1]), publica: true },
     { re: /^#\/aniversariantes$/, page: () => Pages.aniversariantes() },
     { re: /^#\/aniversariantes\/hoje$/, page: () => Pages.aniversarianteDoDia() },
-    { re: /^#\/avaliacoes$/, page: () => PagesAvaliacoes.avaliacoes() },
-    { re: /^#\/admin\/avaliacoes$/, page: () => PagesAdmin.adminAvaliacoes(), need: "manage_reviews" },
+    { re: /^#\/revisoes$/, page: () => PagesAvaliacoes.minhasRevisoes() },
     { re: /^#\/eventos$/, page: () => Pages.eventos(), publica: true },
     { re: /^#\/eventos\/(\d+)$/, page: (m) => Pages.eventoDetalhe(m[1]), publica: true },
     { re: /^#\/documentos$/, page: () => Pages.documentos(), publica: true },
@@ -29,7 +28,8 @@
     { re: /^#\/vagas$/, page: () => Pages.vagas() },
     { re: /^#\/vagas\/(\d+)$/, page: (m) => Pages.vagaDetalhe(m[1]) },
     { re: /^#\/admin\/vagas$/, page: () => PagesAdmin.adminVagas(), need: "manage_vagas" },
-    { re: /^#\/chamados$/, page: () => Pages.meusChamados(), need: "interact" },
+    // "Meus chamados" fica no Meu painel; o endereço antigo continua abrindo lá.
+    { re: /^#\/chamados$/, page: () => Pages.painel() },
     { re: /^#\/notificacoes$/, page: () => Pages.notificacoes() },
     // gestão de conteúdo (RH / Admin)
     { re: /^#\/admin\/noticias$/, page: () => PagesAdmin.adminNoticias(), need: "manage_news" },
@@ -40,6 +40,9 @@
     { re: /^#\/admin\/documentos\/([\w-]+)\/editar$/, page: (m) => PagesAdmin.adminDocumentoNovo(m[1]), need: "manage_docs" },
     // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
+    { re: /^#\/admin\/importacao$/, page: () => PagesAdmin.adminImportacao(), need: "manage_users" },
+    { re: /^#\/admin\/validades$/, page: () => PagesAdmin.adminValidades(), need: "manage_docs" },
+    { re: /^#\/admin\/indicadores$/, page: () => PagesAdmin.adminIndicadores(), need: "view_indicators" },
     { re: /^#\/admin\/acessos$/, page: () => PagesAdmin.adminAcessos(), need: "manage_users" },
     { re: /^#\/admin\/chamados$/, page: () => PagesAdmin.adminChamados(), need: "manage_tickets" },
     { re: /^#\/admin\/eventos$/, page: () => PagesAdmin.adminEventos(), need: "manage_events" },

@@ -57,9 +57,8 @@ para produção; trocar exigiria uma etapa de build.
   sessão e volta ao login; erro de rede mantém o token e oferece "Tentar novamente".
 - O perfil vem de `user.perfil` e **só muda pela tela Controle de acesso** (`#/admin/acessos`, ADMIN).
   Não existe troca nem simulação de perfil pelo topo ou pelo menu.
-- O que cada pessoa pode fazer vem de `user.permissoes`, que são **as do perfil dela** (não há
-  permissão por pessoa). O ADMIN escolhe o que cada perfil pode fazer na matriz "Permissões por
-  perfil" da mesma tela; Administrador tem tudo. `App.can()` em `src/app/store.js` traduz os nomes curtos
+- O que cada pessoa pode fazer vem de `user.permissoes` (perfil + permissões concedidas ou
+  retiradas individualmente pelo ADMIN). `App.can()` em `src/app/store.js` traduz os nomes curtos
   usados pelas telas (`manage_events`…) para as permissões do servidor (`gerenciar_eventos`…).
 
 | Perfil (API) | Padrão |
@@ -180,8 +179,8 @@ src/
 `#/documentos/:id/restrito` · `#/admin/chamados` · `#/painel` · `#/vagas` · `#/vagas/:id` ·
 `#/admin/revisao` · `#/admin/treinamentos` · `#/admin/calendario` · `#/admin/vagas` · `#/admin/noticias` ·
 `#/admin/noticias/nova` · `#/admin/documentos` · `#/admin/documentos/novo` ·
-`#/admin/usuarios` · `#/admin/auditoria` · `#/configuracoes` (todos) · `#/chamados`
-(Meus chamados, quem interage) · `#/admin/acessos` (Controle de acesso e acessos rápidos
+`#/admin/usuarios` · `#/admin/auditoria` · `#/configuracoes` (todos) · `#/revisoes`
+(Minhas revisões: documentos sob minha responsabilidade e avaliações pedidas a mim) · `#/admin/acessos` (Controle de acesso e acessos rápidos
 globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `src/app/routes.js`).
 
 ### Modernização (feature 001, `specs/001-modernizacao-intranet/`)
@@ -257,3 +256,36 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
 - **Inicial**: cabeçalho enxuto com a foto da fachada (`assets/img/fachada-decos.jpg`); avisos com abas
   "Não lidos (N)" / "Todos" e comunicado que se abre ao passar o mouse (ou focar); carrossel só com a foto,
   com título, data, local, ações e controles numa faixa abaixo dela.
+
+### Administração: indicadores, importação, desligamento e validade
+
+- **Indicadores** (`#/admin/indicadores`, permissão `ver_indicadores`, padrão só Admin):
+  - período de 30 dias, 90 dias, 12 meses ou datas livres;
+  - cinco blocos de resumo: leitura de avisos, obrigatórios em dia, tempo de atendimento, chamados em aberto e revisão de documentos;
+  - tabelas com barra e valor escrito ao lado (leitura por setor, avisos menos lidos, adesão por tema e por setor, chamados por categoria);
+  - **Exportar CSV**;
+  - barras em cor única validada no claro (`#B4233A`) e no escuro (`#E0566C`); a tabela é a própria visão acessível.
+- **Importar usuários** (tela `#/admin/importacao`, também pelo botão em `#/admin/usuarios`, com os desligamentos agendados):
+  - botão "Baixar modelo";
+  - "Conferir planilha" mostra cada linha como Criar, Atualizar, Sem mudança ou Erro, com o motivo;
+  - "Importar N pessoas" só aparece sem erro;
+  - quem é criado recebe senha temporária por e-mail.
+- **Data de desligamento** no formulário de usuário e selo "Desliga em dd/mm/aaaa" na lista; nesse dia o acesso é desativado sozinho.
+- **Validade de documentos** (tela `#/admin/validades`, filtro de 30 dias a 12 meses): no formulário entram "Revisar até" e "Responsável pela revisão". A lista do admin ganha selo de prazo e a seção **Revisões a vencer** (vencidas e próximos 60 dias). O responsável recebe alerta faltando 30 e 7 dias e no vencimento.
+- **Minhas revisões** (`#/revisoes`, no menu para quem é responsável por algum documento ou tem avaliação pendente):
+  documentos com o prazo, "Enviar nova versão" (com a próxima revisão) e as avaliações pedidas à pessoa. Os alertas
+  de validade e de avaliação apontam para cá. Saíram as telas "Minhas avaliações" e "Gerenciar avaliações".
+- **Pedir avaliação** no formulário de edição do documento (quem tem `gerenciar_avaliacoes`): escolhe a pessoa e o que
+  verificar; a seção lista as avaliações do documento com o status (e o motivo, se rejeitada).
+- **Comunicados urgentes na Inicial**: um bloco que abre e fecha (`<details>`, teclado incluído) com todos os urgentes
+  em destaque dentro, não lidos primeiro, cada um com resumo, foto (se tiver) e "Ler comunicado"; abre sozinho quando há
+  urgente não lido.
+- **Comunicados urgentes (animação)**: o bloco abre ao passar o mouse e fecha ao sair (com atraso curto); clique ou
+  teclado fixam aberto/fechado; abre e fecha com altura animada e os comunicados entram em sequência (sem animação
+  com "menos movimento"). Fechado, os links de dentro ficam fora do Tab (`inert`).
+- **Aniversariante do Dia**: cada cartão mostra quantas pessoas já deram parabéns; o aniversariante vê o mural
+  "Seus recados de hoje" (quem mandou, setor, hora e texto), que só ele lê e que some no dia seguinte.
+- **Foto opcional no aviso**: campo no formulário (prévia, trocar e remover); aparece no detalhe, como miniatura no mural
+  e no bloco de urgentes.
+- **Meus chamados** agora é uma seção do **Meu painel** (lista completa com filtros e "Abrir chamado"); `#/chamados` abre o painel.
+- Os rótulos dos formulários do painel lateral agora são ligados aos campos (`for`/`id`), para leitor de tela.

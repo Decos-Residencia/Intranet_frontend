@@ -26,6 +26,7 @@
         <article class="lg:col-span-2 card p-8">
           <div class="flex items-center justify-between mb-4"><span class="flex items-center gap-2 flex-wrap">${badge(tone(a.categoria),catLabel(a.categoria).toUpperCase())}${a.emDestaque === false ? badge("gray", "Fora do destaque") : ""}</span><span class="flex items-center gap-3"><span id="aviso-lido" class="${a.lido ? "" : "hidden"} text-xs font-bold text-green-600 dark:text-green-400">✓ Lido</span><span class="text-sm text-slate-400">${esc(a.data)}</span></span></div>
           <h1 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mb-5">${esc(a.titulo)}</h1>
+          ${a.temImagem ? `<figure class="aviso-foto mb-5" data-foto-caixa><img data-foto-aviso="${a.id}" alt="Foto do comunicado ${esc(a.titulo)}" decoding="async"></figure>` : ""}
           <div class="flex items-center gap-3 pb-5 mb-5 border-b border-slate-100 dark:border-slate-800">
             <div class="avatar-soft w-10 h-10 text-sm">${foto(a.autor)}${esc(a.autorSigla)}</div>
             <div><div class="font-bold text-sm text-slate-800 dark:text-slate-100">${esc(a.autor)}</div><div class="text-xs text-slate-400">Hospital Decós Corporativo</div></div>
@@ -38,6 +39,7 @@
         </aside>
       </div>`,
       init() {
+        App.carregarFotos(document.getElementById("conteudo") || document);
         // Leitura real: uma por usuário no servidor (a resposta não depende do navegador).
         if (App.state.auth) App.registrarLeitura(a.id).then((ok) => { if (ok) document.getElementById("aviso-lido")?.classList.remove("hidden"); });
       },

@@ -97,7 +97,21 @@
     }
   }
   // Preenche <img data-foto-evento="id"> dentro de `raiz`; sem foto (ou erro) fica o fundo da marca.
+  // Foto opcional do aviso: mesmo cache curto (o link assinado vale 60 s).
+  async function fotoAviso(id) {
+    const chave = `aviso:${id}`, c = fotos.get(chave);
+    if (c && c.ate > Date.now()) return c.url;
+    const r = await Services.avisos.imagem(id);
+    if (!/^https?:\/\//.test(r.url)) throw new Error("Endereço de imagem inválido.");
+    fotos.set(chave, { url: r.url, ate: Date.now() + 45000 });
+    return r.url;
+  }
   function carregarFotosEventos(raiz = document) {
+    raiz.querySelectorAll("img[data-foto-aviso]").forEach((img) => {
+      fotoAviso(Number(img.dataset.fotoAviso))
+        .then((url) => { img.addEventListener("load", () => img.classList.add("is-loaded"), { once: true }); img.src = url; })
+        .catch(() => img.closest("[data-foto-caixa]")?.remove() ?? img.remove());
+    });
     raiz.querySelectorAll("img[data-foto-evento]").forEach((img) => {
       fotoEvento(Number(img.dataset.fotoEvento), img.dataset.fotoTipo || "capa")
         .then((url) => { img.addEventListener("load", () => { ajustarFoto(img, url); img.classList.add("is-loaded"); }, { once: true }); img.src = url; })
@@ -105,7 +119,8 @@
     });
   }
   function esquecerFoto(id) { ["capa", "banner"].forEach((t) => fotos.delete(`${Number(id)}:${t}`)); }
+  function esquecerFotoAviso(id) { fotos.delete(`aviso:${Number(id)}`); }
 
-  Object.assign(App, { fotoEvento, carregarFotosEventos, esquecerFoto, eventoView, eventosProximos, minhasInscricoes, inscreverEvento: inscrever, cancelarInscricaoEvento: cancelarInscricao, baixarIcs, adicionarAgenda });
+  Object.assign(App, { fotoEvento, fotoAviso, carregarFotos: carregarFotosEventos, carregarFotosEventos, esquecerFoto, esquecerFotoAviso, eventoView, eventosProximos, minhasInscricoes, inscreverEvento: inscrever, cancelarInscricaoEvento: cancelarInscricao, baixarIcs, adicionarAgenda });
   Object.assign(UI, { fmtMesAno: (d) => { const t = mesAno.format(d); return t.charAt(0).toUpperCase() + t.slice(1); }, fmtDataHora: (iso) => dataHora.format(new Date(iso)) });
 })();

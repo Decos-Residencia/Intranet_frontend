@@ -73,8 +73,6 @@
 .revisao-item{ display:flex; flex-direction:column; gap:.5rem; padding:1.1rem 1.25rem; }
 .revisao-previa{ font-size:.9rem; color:var(--text); background:var(--surface-strong); border-radius:.7rem; padding:.7rem .85rem; white-space:pre-line; }
 
-/* Controle de acesso: matriz de permissões por perfil */
-.acc-matriz tbody tr:hover{ background:color-mix(in srgb, var(--wine, #8b1538) 4%, transparent); }
-.acc-check{ width:1.15rem; height:1.15rem; accent-color:var(--wine, #8b1538); cursor:pointer; }
-.acc-check:disabled{ cursor:not-allowed; opacity:.55; }
-.acc-check:focus-visible{ outline:3px solid var(--wine, #8b1538); outline-offset:2px; }
+/* Formulário de notícia: prévia da foto opcional */
+.nt-foto-previa{ width:160px; aspect-ratio:16/10; border-radius:10px; overflow:hidden; border:1px solid var(--border, #e2e8f0); }
+.nt-foto-previa img{ width:100%; height:100%; object-fit:cover; display:block; }

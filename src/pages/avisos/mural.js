@@ -46,8 +46,12 @@
     const outros = rest.filter((a) => a !== noticia).map((a) => `
       <a href="#/avisos/${a.id}" class="card block p-6 aviso-item abre-mouse" data-cat="${a.categoria}" style="--abre-altura:4.4em">
         <div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2 flex-wrap">${badge(tone(a.categoria),catLabel(a.categoria))} ${a.extra?badge("red-soft","★ "+catLabel(a.extra).toUpperCase()):""} ${UI.estadoLeitura(a.lido)} ${foraDestaque(a)}</div><span class="text-xs text-slate-400">${esc(a.data)}</span></div>
+        <div class="flex gap-4 items-start">
+        ${a.temImagem ? `<span class="aviso-miniatura" data-foto-caixa><img data-foto-aviso="${a.id}" alt="" decoding="async"></span>` : ""}
+        <div class="min-w-0 flex-1">
         <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-2">${esc(a.titulo)}</h3>
         <p class="abre-texto text-sm text-slate-500 dark:text-slate-400 mb-3 whitespace-pre-line">${esc((a.conteudo || [a.resumo]).join("\n\n"))}</p>
+        </div></div>
         <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between"><span class="flex items-center gap-2 text-xs text-slate-500"><span class="avatar-mini">${foto(a.autor)}${esc(a.autorSigla)}</span> Publicado por: ${esc(a.autor)}</span>
         <span class="text-sm font-bold text-wine flex items-center gap-1">${a.cta} ${icon("chevron-right","w-4 h-4")}</span></div>
       </a>`).join('<div class="h-4"></div>');
@@ -71,6 +75,7 @@
         <div class="flex gap-1.5" id="avisos-pager"></div>
       </div>`,
       init() {
+        App.carregarFotos(document.getElementById("avisos-list"));
         const map = CAT_FILTRO;
         wireList({
           containerId: "avisos-list", itemSel: ".aviso-item", size: 6,
