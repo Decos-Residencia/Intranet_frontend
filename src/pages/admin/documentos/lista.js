@@ -155,5 +155,5 @@
     };
   }
 
-  Object.assign(PagesAdmin, { adminDocumentos });
+  Object.assign(PagesAdmin, { adminDocumentos, seloValidade });
 })();

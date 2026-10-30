@@ -41,8 +41,7 @@
         <tbody>${linhas}</tbody></table></div>`;
   }
 
-  function abrirImportacaoUsuarios() {
-    App.openPanel("Importar usuários por planilha", `<div class="space-y-4">
+  const formHtml = () => `<div class="space-y-4">
       <p class="text-sm text-slate-600 dark:text-slate-300">Envie um arquivo <b>.csv</b> (no Excel: <i>Salvar como → CSV</i>). Colunas obrigatórias: <b>nome, email e setor</b> (o nome do setor como está cadastrado). Opcionais: cargo, perfil (Leitura, Colaborador ou RH), matricula, ramal, data_nascimento, data_admissao e data_desligamento (dd/mm/aaaa). Até 500 pessoas.</p>
       <ul class="text-xs text-slate-500 dark:text-slate-400 list-disc pl-5 space-y-1">
         <li>O e-mail identifica a pessoa: quem é novo é criado; quem já existe tem atualizadas só as células preenchidas.</li>
@@ -55,7 +54,10 @@
       <div id="imp-resultado"></div>
       <p id="imp-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></p>
       <button type="button" id="imp-aplicar" class="btn-crimson w-full py-3 hidden">Importar</button>
-    </div>`);
+    </div>`;
+
+  // Liga o fluxo (conferir → importar). `aoConcluir` fecha o painel ou recarrega a página.
+  function ligar(aoConcluir) {
     const $ = (id) => document.getElementById(id);
     const campo = $("imp-arquivo"), conferir = $("imp-conferir"), aplicar = $("imp-aplicar"), erro = $("imp-erro"), saida = $("imp-resultado");
     const falha = (msg) => { erro.textContent = msg; erro.classList.remove("hidden"); };
@@ -82,7 +84,7 @@
       try {
         const r = await Services.usuarios.importar(campo.files[0], false);
         if (!r.aplicado) { saida.innerHTML = previa(r); falha("A planilha mudou e tem erro: nada foi gravado."); return; }
-        App.closePanel();
+        aoConcluir();
         App.toast(`Importação concluída: ${r.criar} criados e ${r.atualizar} atualizados${r.criar ? " (senhas temporárias enviadas por e-mail)" : ""}`);
         await App.loadApiData();
         App.render();
@@ -91,5 +93,31 @@
     });
   }
 
-  Object.assign(PagesAdmin, { abrirImportacaoUsuarios });
+  function abrirImportacaoUsuarios() {
+    App.openPanel("Importar usuários por planilha", formHtml());
+    ligar(() => App.closePanel());
+  }
+
+  // Tela própria: o mesmo fluxo e os desligamentos já agendados.
+  function adminImportacao() {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const previstos = (App.state.usuarios || []).filter((u) => u.desligamento && u.status === "Ativo" && u.desligamento >= hoje)
+      .sort((a, b) => a.desligamento.localeCompare(b.desligamento));
+    const lista = previstos.length ? `<ul class="space-y-2">${previstos.map((u) => `<li class="flex items-center gap-3 flex-wrap">${badge("amber", `Desliga em ${esc(u.desligamento.split("-").reverse().join("/"))}`)}
+        <span class="font-semibold text-slate-800 dark:text-slate-100">${esc(u.nome)}</span><span class="text-xs text-slate-500 dark:text-slate-400">${esc(u.setor)} · ${esc(u.cargo)}</span></li>`).join("")}</ul>`
+      : `<p class="text-sm text-slate-500 dark:text-slate-400">Nenhum desligamento agendado.</p>`;
+    return {
+      title: "Importar usuários",
+      html: `<div class="mb-6"><div class="text-sm text-slate-500 dark:text-slate-400">Hospital Decós Intranet • Administração</div>
+        <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Importar usuários e desligamentos</h2></div>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+          <section class="card p-6 xl:col-span-2" aria-labelledby="imp-h"><h3 id="imp-h" class="font-extrabold text-lg text-slate-800 dark:text-slate-100 mb-3">Importar planilha</h3>${formHtml()}</section>
+          <section class="card p-6" aria-labelledby="desl-h"><h3 id="desl-h" class="font-extrabold text-lg text-slate-800 dark:text-slate-100 mb-1">Desligamentos agendados</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">No dia, o acesso é desativado sozinho. Para mudar a data, edite a pessoa em <a href="#/admin/usuarios" class="underline">Usuários &amp; Setores</a>.</p>${lista}</section>
+        </div>`,
+      init() { ligar(() => App.render()); },
+    };
+  }
+
+  Object.assign(PagesAdmin, { abrirImportacaoUsuarios, adminImportacao });
 })();

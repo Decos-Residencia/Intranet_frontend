@@ -57,9 +57,8 @@ para produção; trocar exigiria uma etapa de build.
   sessão e volta ao login; erro de rede mantém o token e oferece "Tentar novamente".
 - O perfil vem de `user.perfil` e **só muda pela tela Controle de acesso** (`#/admin/acessos`, ADMIN).
   Não existe troca nem simulação de perfil pelo topo ou pelo menu.
-- O que cada pessoa pode fazer vem de `user.permissoes`, que são **as do perfil dela** (não há
-  permissão por pessoa). O ADMIN escolhe o que cada perfil pode fazer na matriz "Permissões por
-  perfil" da mesma tela; Administrador tem tudo. `App.can()` em `src/app/store.js` traduz os nomes curtos
+- O que cada pessoa pode fazer vem de `user.permissoes` (perfil + permissões concedidas ou
+  retiradas individualmente pelo ADMIN). `App.can()` em `src/app/store.js` traduz os nomes curtos
   usados pelas telas (`manage_events`…) para as permissões do servidor (`gerenciar_eventos`…).
 
 | Perfil (API) | Padrão |
@@ -266,11 +265,11 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
   - tabelas com barra e valor escrito ao lado (leitura por setor, avisos menos lidos, adesão por tema e por setor, chamados por categoria);
   - **Exportar CSV**;
   - barras em cor única validada no claro (`#B4233A`) e no escuro (`#E0566C`); a tabela é a própria visão acessível.
-- **Importar planilha** (`#/admin/usuarios`):
+- **Importar usuários** (tela `#/admin/importacao`, também pelo botão em `#/admin/usuarios`, com os desligamentos agendados):
   - botão "Baixar modelo";
   - "Conferir planilha" mostra cada linha como Criar, Atualizar, Sem mudança ou Erro, com o motivo;
   - "Importar N pessoas" só aparece sem erro;
   - quem é criado recebe senha temporária por e-mail.
 - **Data de desligamento** no formulário de usuário e selo "Desliga em dd/mm/aaaa" na lista; nesse dia o acesso é desativado sozinho.
-- **Validade de documentos:** no formulário entram "Revisar até" e "Responsável pela revisão". A lista do admin ganha selo de prazo e a seção **Revisões a vencer** (vencidas e próximos 60 dias). O responsável recebe alerta faltando 30 e 7 dias e no vencimento.
+- **Validade de documentos** (tela `#/admin/validades`, filtro de 30 dias a 12 meses): no formulário entram "Revisar até" e "Responsável pela revisão". A lista do admin ganha selo de prazo e a seção **Revisões a vencer** (vencidas e próximos 60 dias). O responsável recebe alerta faltando 30 e 7 dias e no vencimento.
 - Os rótulos dos formulários do painel lateral agora são ligados aos campos (`for`/`id`), para leitor de tela.

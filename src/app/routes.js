@@ -40,6 +40,8 @@
     { re: /^#\/admin\/documentos\/([\w-]+)\/editar$/, page: (m) => PagesAdmin.adminDocumentoNovo(m[1]), need: "manage_docs" },
     // gestão administrativa e auditoria (somente ADMIN)
     { re: /^#\/admin\/usuarios$/, page: () => PagesAdmin.adminUsuarios(), need: "manage_users" },
+    { re: /^#\/admin\/importacao$/, page: () => PagesAdmin.adminImportacao(), need: "manage_users" },
+    { re: /^#\/admin\/validades$/, page: () => PagesAdmin.adminValidades(), need: "manage_docs" },
     { re: /^#\/admin\/indicadores$/, page: () => PagesAdmin.adminIndicadores(), need: "view_indicators" },
     { re: /^#\/admin\/acessos$/, page: () => PagesAdmin.adminAcessos(), need: "manage_users" },
     { re: /^#\/admin\/chamados$/, page: () => PagesAdmin.adminChamados(), need: "manage_tickets" },

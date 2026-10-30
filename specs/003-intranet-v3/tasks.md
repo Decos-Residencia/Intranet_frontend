@@ -176,3 +176,5 @@ Caminhos relativos a `residencia qa/`. **Sem commit até o usuário liberar.**
 - [X] T050 Data de desligamento (migração `0030_desligamento_validade_doc`): login/token recusados no dia, desativação automática pela rotina do sino, proteção do último Admin e da reativação
 - [X] T051 Validade de documentos: "Revisar até" e responsável, alertas de 30 dias, 7 dias e vencido (notificação e e-mail), `GET /documentos/validades` e seção "Revisões a vencer"
 - [X] T052 Conferência: pytest 514 passaram; roteiro `check-admin-v4` 24/24 com axe; regressão dos demais roteiros
+- [X] T053 Telas próprias de Importar usuários (`#/admin/importacao`) e Validade de documentos (`#/admin/validades`) no menu de Administração
+- [X] T054 Controle de acesso volta a ser por pessoa (perfil + ajustes individuais), migração `0031_permissoes_por_pessoa`; pytest 512, `check-v5` 11/11, `check-admin-v4` 24/24
