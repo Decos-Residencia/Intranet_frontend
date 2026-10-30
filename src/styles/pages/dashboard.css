@@ -128,33 +128,31 @@ h3.dash-h:not(.mb-0):not(.mb-1):not(.mb-2):not(.mb-3){ margin-bottom:.75rem; }
 }
 html[data-movimento="reduzido"] .ev-carrossel-trilho{ transition:none; }
 
-/* ---------- Carrossel: a foto sozinha; informações e controles numa faixa abaixo dela ---------- */
-.ev-slide{ flex-direction:column; align-items:stretch; min-height:0; }
-.ev-slide-foto{ position:relative; display:block; height:180px; overflow:hidden;
+/* ---------- Carrossel: a foto cobre todo o cartão, com informações sobrepostas ---------- */
+.ev-slide{ position:relative; display:block; min-height:0; height:clamp(320px, 35vw, 440px); }
+.ev-slide-foto{ position:absolute; inset:0; display:block; height:auto; overflow:hidden;
   background:linear-gradient(135deg, var(--wine-dark), var(--wine)); }
 .ev-slide-foto .ev-slide-img{ position:absolute; inset:0; }
+.ev-slide-foto::after{ content:""; position:absolute; inset:25% 0 0; pointer-events:none;
+  background:linear-gradient(180deg, transparent 0%, rgba(48,7,18,.38) 30%, rgba(48,7,18,.96) 100%); }
 .ev-slide-sem-foto{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.45);
   background:radial-gradient(circle at 80% 30%, rgba(255,255,255,.14), transparent 55%); }
 .ev-slide-data{ position:absolute; left:1.25rem; top:1.25rem; padding:.4rem .75rem; border-radius:.75rem;
   background:rgba(60,10,20,.88); color:#fff; font-size:.8rem; font-weight:800; letter-spacing:.04em; }
-.ev-slide-legenda{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
-  padding:.85rem 1.25rem; background:var(--wine-dark); color:#fff; }
+.ev-slide-legenda{ position:absolute; z-index:1; inset:auto 0 0; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  padding:3.5rem 1.25rem 3.75rem; background:linear-gradient(180deg, transparent, rgba(48,7,18,.94) 28%); color:#fff; }
 .ev-slide-legenda .ev-slide-titulo{ font-size:clamp(1.1rem, 1rem + .6vw, 1.45rem); text-shadow:none; }
 .ev-slide-legenda .ev-slide-info{ margin-top:.2rem; font-size:.88rem; color:rgba(255,255,255,.9); }
 .ev-slide-descricao{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
   max-width:46rem; margin:.5rem 0; font-size:.9rem; line-height:1.4; color:rgba(255,255,255,.88); }
 .ev-slide-acoes{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
-.ev-carrossel-controles{ position:static; justify-content:center; padding:0 .75rem .4rem; background:var(--wine-dark); }
-@media (min-width:900px){
-  .ev-slide{ flex-direction:row; min-height:280px; }
-  .ev-slide-foto{ flex:0 0 40%; height:auto; min-height:280px; }
-  .ev-slide-legenda{ flex:1; min-width:0; align-content:center; padding:1rem 1.25rem; }
-  .ev-slide-descricao{ -webkit-line-clamp:1; }
-}
+.ev-carrossel-controles{ position:absolute; right:1rem; bottom:.65rem; z-index:3; display:flex; justify-content:center; padding:0; background:transparent; }
+.ev-slide-descricao{ -webkit-line-clamp:1; }
 @media (max-width:640px){
-  .ev-slide-foto{ height:170px; }
-  .ev-slide-legenda{ padding:.85rem 1.1rem; }
-  .ev-carrossel-controles{ left:auto; }
+  .ev-slide{ height:320px; }
+  .ev-slide-legenda{ gap:.55rem; padding:3rem 1rem 3.5rem; }
+  .ev-slide-legenda .ev-slide-acoes{ width:100%; }
+  .ev-carrossel-controles{ right:.75rem; bottom:.5rem; }
 }
 
 /* ---------- Avisos da Inicial: abas e comunicado que se abre ao passar o mouse ---------- */
