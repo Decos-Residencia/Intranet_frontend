@@ -39,7 +39,7 @@
     </a></li>`;
   }
 
-  /* ---------- comunicados urgentes: conteúdo visível na página inicial ---------- */
+  /* ---------- comunicados urgentes: dropdown da página inicial ---------- */
   function ligarUrgentes(box) {
     const botao = box.querySelector(".dash-urgente"), corpo = box.querySelector(".dash-urg-corpo");
     const abrir = (sim) => {
@@ -47,7 +47,7 @@
       botao.setAttribute("aria-expanded", String(sim));
       corpo.inert = !sim; // fechado: os links de dentro saem da ordem do Tab
     };
-    abrir(true);
+    abrir(false);
     botao.addEventListener("click", () => abrir(!box.classList.contains("is-open")));
   }
 
@@ -208,7 +208,6 @@
       title: "Início",
       html: `
       ${cabecalho}
-      ${alertaUrgente}
       ${hojeVoceTem}
       ${anivDoDia}
       <section class="mb-6" aria-labelledby="dash-eventos-h">
@@ -219,6 +218,7 @@
         ${eventosDisponiveis.length ? carrossel(eventosDisponiveis)
           : `<p class="card p-5 text-sm text-slate-600 dark:text-slate-300">Nenhum evento disponível no momento.</p>`}
       </section>
+      ${alertaUrgente}
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <section class="card p-5 sm:p-6 lg:col-span-2" aria-labelledby="dash-avisos-h">
           <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
