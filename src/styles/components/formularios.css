@@ -1,23 +1,20 @@
 /* Formulários */
 /* ---------- Formulários ---------- */
 .field-label{ display:block; font-size:.7rem; font-weight:700; letter-spacing:.03em; color:var(--muted); margin-bottom:.35rem; }
-.field-input{ width:100%; background:var(--bg); border:1px solid var(--border); border-radius:.6rem; padding:.7rem .9rem; font-size:.9rem; color:var(--text); outline:none; transition:.15s; }
-.dark .field-input{ background:#0e1420; }
-.field-input:focus{ border-color:var(--wine); }
+.field-input{ width:100%; background:var(--surface-strong); border:1px solid var(--border-strong); border-radius:.7rem; padding:.7rem .9rem; font-size:.9rem; color:var(--text); outline:none; transition:.15s; }
+.field-input:focus{ border-color:var(--focus); box-shadow:0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
 .field-hint{ font-size:.72rem; color:var(--muted); margin-top:.3rem; }
 .file-input-hidden{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-.file-picker{ display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; width:100%; background:var(--bg); border:1px solid var(--border); border-radius:.7rem; padding:.65rem; }
-.dark .file-picker{ background:#0e1420; }
+.file-picker{ display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; width:100%; background:var(--surface-strong); border:1px solid var(--border-strong); border-radius:.7rem; padding:.65rem; }
 .file-picker:focus-within{ border-color:var(--wine); box-shadow:0 0 0 3px rgba(157,25,48,.12); }
 .file-picker-btn{ display:inline-flex; align-items:center; justify-content:center; gap:.45rem; min-height:2.4rem; padding:.55rem .9rem; border-radius:.6rem; background:var(--wine); color:#fff; font-size:.86rem; font-weight:800; cursor:pointer; transition:.15s; }
 .file-picker-btn:hover{ filter:brightness(.96); transform:translateY(-1px); }
 .file-picker-name{ min-width:0; color:var(--text); font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 /* ---------- Selects / empty state / botão perigo ---------- */
-.select-field{ background:var(--card); border:1px solid var(--border); border-radius:.6rem; padding:.5rem .8rem;
+.select-field{ background:var(--surface-strong); border:1px solid var(--border-strong); border-radius:.7rem; padding:.5rem .8rem; min-height:2.5rem;
   font-size:.8rem; font-weight:700; color:var(--text); outline:none; cursor:pointer; }
-.select-field:focus{ border-color:var(--wine); }
-.dark .select-field{ background:#0e1420; }
+.select-field:focus{ border-color:var(--focus); }
 .btn-danger{ background:#dc2626; color:#fff; font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; transition:.15s; }
 .btn-danger:hover{ background:#b91c1c; }
 .empty-state{ text-align:center; padding:3rem 1rem; }

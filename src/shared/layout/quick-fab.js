@@ -10,13 +10,12 @@
   // internas; abre um menu com os mesmos atalhos da tela de Início.
   function quickFab(canInteract) {
     const item = (it) => qaLink(it, "fab-item",
-      `<span class="qa-icon">${icon(it.icon, "w-4 h-4")}</span><span>${it.titulo}</span>`, canInteract, 'data-action="close-fab"');
+      `<span class="qa-icon">${icon(it.icon, "w-4 h-4")}</span><span>${UI.esc(it.titulo)}</span>`, canInteract, 'data-action="close-fab"');
     return `<div class="quick-fab" id="quick-fab">
       <div class="fab-menu" role="menu" aria-label="Acessos rápidos">
         <div class="fab-menu-head">${icon("zap", "w-4 h-4 text-wine")} Acessos Rápidos</div>
-        <div class="fab-menu-list">${DB.acessosRapidos.map(item).join("")}</div>
+        <div class="fab-menu-list">${App.todosAtalhos().map(item).join("")}</div>
       </div>
-      <span class="fab-label">Acesso Rápido</span>
       <button data-action="toggle-fab" class="fab-btn" title="Acessos rápidos" aria-label="Acessos rápidos" aria-expanded="false">
         <span class="fab-ico fab-ico-open"><img src="assets/img/simbolo.png" alt="" class="fab-logo" draggable="false"></span>
         <span class="fab-ico fab-ico-close">${icon("x", "w-6 h-6")}</span>

@@ -1,8 +1,90 @@
-/* Transição de tela e foco visível */
+/* Acessibilidade: foco visível, transição de tela e as preferências da conta
+   (atributos data-* no <html>, aplicados por features/preferencias.js e pelo script do <head>). */
+
 /* transição suave ao trocar de tela */
 .page-fade{ animation:fadeUp .32s ease; }
 @keyframes fadeUp{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
-/* acessibilidade: foco visível */
-a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
-  outline:2px solid var(--wine); outline-offset:2px; border-radius:.4rem; }
+
+/* foco visível (cor do token: contraste ≥ 3:1 em todos os temas) */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--focus); outline-offset:2px; border-radius:.4rem; }
 @media (prefers-reduced-motion:reduce){ .page-fade{ animation:none; } * { scroll-behavior:auto; } }
+
+/* "Pular para o conteúdo": invisível até receber foco pelo teclado */
+.skip-link{ position:fixed; left:1rem; top:-4rem; z-index:100; padding:.7rem 1.1rem; border-radius:.8rem;
+  background:var(--wine); color:#fff; font-weight:800; box-shadow:var(--shadow-lg); transition:top .15s; }
+.skip-link:focus{ top:1rem; outline:3px solid #fff; outline-offset:2px; }
+.sr-only-focusable:not(:focus){ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+
+/* ---------- Tamanho do texto: o Tailwind usa rem, então tudo acompanha ---------- */
+html[data-texto="125"]{ font-size:125%; }
+html[data-texto="150"]{ font-size:150%; }
+html[data-texto="175"]{ font-size:175%; }
+html[data-texto="200"]{ font-size:200%; }
+/* Com texto grande, a barra lateral vira gaveta mais cedo e a busca do topo some (sem rolagem lateral). */
+html[data-texto="150"] .content, html[data-texto="175"] .content, html[data-texto="200"] .content{ padding:1rem; }
+html:is([data-texto="175"], [data-texto="200"]) .topbar-search{ display:none; }
+
+/* ---------- Escala da interface: alvos de toque e espaçamentos maiores ---------- */
+html[data-escala="confortavel"]{ --alvo:2.9rem; }
+html[data-escala="ampla"]{ --alvo:3.4rem; }
+html[data-escala] :is(.btn-wine, .btn-crimson, .btn-outline, .btn-danger, .btn-wine-soft, .select-field, .field-input, .chip, .pg){ min-height:var(--alvo); }
+html[data-escala] .icon-btn{ width:var(--alvo); height:var(--alvo); }
+html[data-escala] :is(.nav-link, .nav-sublink){ min-height:var(--alvo); }
+html[data-escala="confortavel"] .content{ padding:2rem; }
+html[data-escala="ampla"] .content{ padding:2.25rem; }
+
+/* ---------- Reduzir movimento (conta ou sistema) ---------- */
+html[data-movimento="reduzido"] *, html[data-movimento="reduzido"] *::before, html[data-movimento="reduzido"] *::after{
+  animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+
+/* ---------- Sublinhar links ---------- */
+html[data-links="sublinhado"] :is(.content, .panel-content) a:not([class*="btn"]):not(.card):not(.chip):not(.nav-link),
+html[data-links="sublinhado"] .text-wine{ text-decoration:underline; text-underline-offset:.18em; text-decoration-thickness:.08em; }
+
+/* ---------- Foco reforçado: contorno grosso + halo, sempre visível ---------- */
+html[data-foco="reforcado"] :is(a, button, input, textarea, select, [tabindex]):focus-visible{
+  outline:3px solid var(--focus) !important; outline-offset:3px;
+  box-shadow:0 0 0 7px color-mix(in srgb, var(--focus) 28%, transparent) !important; }
+
+/* ---------- Fonte de leitura facilitada (Atkinson Hyperlegible) ---------- */
+html[data-fonte="leitura"] body, html[data-fonte="leitura"] :is(button, input, select, textarea){
+  font-family:'Atkinson Hyperlegible', 'Public Sans', system-ui, sans-serif; letter-spacing:.01em; }
+html[data-fonte="leitura"] :is(p, li, .prose){ line-height:1.7; }
+
+/* ---------- Alto contraste: sublinha links e reforça o foco por padrão ---------- */
+html[data-contraste="alto"] :is(.content, .panel-content) a:not([class*="btn"]):not(.card):not(.chip):not(.nav-link){ text-decoration:underline; }
+html[data-contraste="alto"] :focus-visible{ outline:3px solid var(--focus) !important; outline-offset:3px; }
+
+/* O <main> recebe foco só como destino do "Pular para o conteúdo": sem contorno no bloco inteiro. */
+#conteudo:focus{ outline:none; }
+
+/* ---------- Tela Configurações ---------- */
+.cfg-section + .cfg-section{ margin-top:1.25rem; }
+.cfg-row{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.9rem 0; }
+.cfg-row + .cfg-row{ border-top:1px solid var(--border); }
+.cfg-seg{ display:inline-flex; flex-wrap:wrap; gap:.35rem; padding:.3rem; border-radius:1rem; background:var(--surface-strong); border:1px solid var(--border-strong); }
+.cfg-seg label{ position:relative; }
+.cfg-seg input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+.cfg-seg span{ display:inline-flex; align-items:center; justify-content:center; min-width:3.2rem; min-height:2.5rem; padding:.35rem .8rem;
+  border-radius:.75rem; font-weight:700; font-size:.85rem; color:var(--text); }
+.cfg-seg input:checked + span{ background:var(--wine); color:#fff; box-shadow:var(--shadow); }
+.cfg-seg input:focus-visible + span{ outline:3px solid var(--focus); outline-offset:2px; }
+/* Interruptor (checkbox com role="switch") */
+.switch{ position:relative; display:inline-flex; flex-shrink:0; }
+/* O campo invisível fica POR CIMA do desenho: é ele que recebe o clique/toque. */
+.switch input{ position:absolute; inset:0; opacity:0; cursor:pointer; margin:0; z-index:1; }
+.switch span{ width:3.1rem; height:1.85rem; border-radius:999px; background:color-mix(in srgb, var(--muted) 45%, transparent);
+  border:1px solid var(--border-strong); position:relative; transition:.2s; }
+.switch span::after{ content:""; position:absolute; top:2px; left:2px; width:calc(1.85rem - 6px); height:calc(1.85rem - 6px); border-radius:999px;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition:.2s; }
+.switch input:checked + span{ background:var(--wine); border-color:var(--wine); }
+.switch input:checked + span::after{ transform:translateX(1.25rem); }
+.switch input:focus-visible + span{ outline:3px solid var(--focus); outline-offset:2px; }
+.cfg-preview{ border:1px dashed var(--border-strong); border-radius:1rem; padding:1rem; }
+
+/* Espaçamento de texto ampliado (WCAG 1.4.12): mais altura de linha e respiro entre letras,
+   palavras e parágrafos, para dislexia e baixa visão. */
+html[data-espacamento="amplo"] :is(.content, .panel-content, .modal-content) :is(p, li, dd, td, label, .prose, blockquote){
+  line-height:1.8 !important; letter-spacing:.03em; word-spacing:.12em; }
+html[data-espacamento="amplo"] :is(.content, .panel-content) p + p{ margin-top:1em; }

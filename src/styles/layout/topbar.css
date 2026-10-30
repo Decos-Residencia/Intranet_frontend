@@ -1,10 +1,10 @@
 /* Topbar */
 /* ---------- Topbar ---------- */
-.search-box{ display:flex; align-items:center; gap:.5rem; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:.5rem 1rem; }
-.dark .search-box{ background:#0e1420; }
+.search-box{ display:flex; align-items:center; gap:.5rem; background:var(--surface-strong); border:1px solid var(--border); border-radius:999px; padding:.5rem 1rem; min-height:2.5rem; }
+.search-box:focus-within{ border-color:var(--focus); box-shadow:0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
 .topbar-search{ position:relative; }
 .search-preview{ position:absolute; top:calc(100% + .55rem); left:0; right:0; z-index:80; max-height:min(70vh,520px); overflow:auto;
-  background:var(--card); border:1px solid var(--border); border-radius:.9rem; box-shadow:0 20px 45px rgba(80,10,25,.16); padding:.55rem; text-align:left; }
+  border:1px solid var(--border); border-radius:1rem; box-shadow:var(--shadow-lg); padding:.55rem; text-align:left; }
 .search-preview-section + .search-preview-section{ margin-top:.35rem; padding-top:.35rem; border-top:1px solid var(--border); }
 .search-preview-title{ padding:.35rem .45rem; color:var(--muted); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
 .search-preview-item{ display:flex; align-items:center; gap:.65rem; padding:.65rem .7rem; border-radius:.65rem; color:var(--text); transition:.15s; }
@@ -17,8 +17,13 @@
 .search-preview-more:hover{ background:rgba(157,25,48,.1); }
 .search-preview-empty{ padding:1.2rem .7rem; color:var(--muted); font-size:.85rem; text-align:center; }
 .icon-btn{ width:40px; height:40px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
-  color:var(--muted); border:1px solid var(--border); background:var(--card); transition:.15s; }
-.icon-btn:hover{ color:var(--wine); border-color:var(--wine); }
+  color:var(--text); border:1px solid var(--border); background:var(--surface-strong); transition:.15s; }
+.icon-btn:hover{ color:var(--accent); border-color:var(--accent); }
 .sidebar-toggle svg{ transition:transform .22s cubic-bezier(.2,.8,.2,1); }
 .sidebar-toggle-collapsed svg,
 .sidebar-toggle-open svg{ transform:rotate(180deg); }
+
+/* Perfil de acesso junto ao nome (antes ficava num selo abaixo da logo, no menu). */
+.topbar-perfil{ display:inline-flex; align-items:center; gap:.2rem; padding:.05rem .45rem; border-radius:999px; font-size:.68rem; font-weight:700;
+  background:var(--wine-50, #fbeaec); color:var(--wine); white-space:nowrap; }
+.dark .topbar-perfil{ background:rgba(142,27,46,.25); color:#f7b8c2; }

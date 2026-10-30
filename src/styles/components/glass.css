@@ -1,0 +1,28 @@
+/* Superfícies de vidro fosco (estilo Apple): translúcidas, com desfoque e saturação do fundo.
+   Viram fundo sólido quando: o navegador não suporta backdrop-filter, o usuário pede
+   "Reduzir transparência" (conta ou sistema) ou liga o alto contraste. */
+.glass, .card, .topbar, .panel-head, #modal .modal-card, .search-preview, html:not(.theme-red) .sidebar{
+  background:var(--surface);
+  -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur);
+}
+.glass-strong{ background:var(--surface-strong); -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur); }
+.card{ border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+.glass{ border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .glass, .glass-strong, .card, .topbar, .panel-head, #modal .modal-card, .search-preview{ background:var(--card); }
+  html:not(.theme-red) .sidebar{ background:var(--sidebar); }
+}
+@media (prefers-reduced-transparency: reduce){
+  .glass, .glass-strong, .card, .topbar, .panel-head, #modal .modal-card, .search-preview{
+    background:var(--card); -webkit-backdrop-filter:none; backdrop-filter:none; }
+  html:not(.theme-red) .sidebar{ background:var(--sidebar); -webkit-backdrop-filter:none; backdrop-filter:none; }
+}
+html[data-transparencia="reduzida"] :is(.glass, .glass-strong, .card, .topbar, .panel-head, #modal .modal-card, .search-preview),
+html[data-contraste="alto"] :is(.glass, .glass-strong, .card, .topbar, .panel-head, #modal .modal-card, .search-preview){
+  background:var(--card); -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+html[data-transparencia="reduzida"]:not(.theme-red) .sidebar, html[data-contraste="alto"]:not(.theme-red) .sidebar{
+  background:var(--sidebar); -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+html[data-contraste="alto"] :is(.card, .glass){ border-width:2px; box-shadow:none; }

@@ -44,7 +44,7 @@
       ${fld("E-MAIL", `<input name="email" type="email" class="field-input" required maxlength="254" value="${UI.esc(u?.email || "")}" placeholder="nome@email.com">`)}
       ${fld("SETOR", `<select name="setor_id" class="field-input">${setorOpts}</select>`)}
       ${fld("CARGO", `<input name="cargo" class="field-input" required maxlength="150" value="${UI.esc(u?.cargo && u.cargo !== "—" ? u.cargo : "")}">`)}
-      ${fld("RAMAL", `<input name="ramal" class="field-input" maxlength="20" value="${UI.esc(u?.ramal || "")}" placeholder="Ex: 2210">`)}
+      ${fld("RAMAL", `<input name="ramal" class="field-input" inputmode="numeric" pattern="[0-9]{3,6}" maxlength="6" title="Só números, de 3 a 6 dígitos" value="${UI.esc(u?.ramal || "")}" placeholder="Ex: 2210">`)}
       ${fld("MATRÍCULA", `<input name="matricula" class="field-input" maxlength="30" value="${UI.esc(u?.matricula || "")}" placeholder="Opcional (única por pessoa)">`)}
       ${fld("UNIDADE", `<input name="unidade" class="field-input" maxlength="100" value="${UI.esc(u?.unidade || "")}" placeholder="Ex: Unidade Central">`)}
       ${fld("ANDAR / ALA", `<input name="andar" class="field-input" maxlength="40" value="${UI.esc(u?.andar || "")}" placeholder="Ex: 3º andar">`)}
@@ -126,7 +126,7 @@
     if (id && !s) { App.toast("Setor não encontrado"); return; }
     App.openPanel(s ? "Editar setor" : "Novo setor", `<form data-form="setor" data-id="${UI.esc(s?.id || "")}" class="space-y-4" autocomplete="off">
       ${fld("NOME DO SETOR", `<input name="nome" class="field-input" required maxlength="150" value="${UI.esc(s?.nome || "")}">`)}
-      ${fld("RAMAL", `<input name="ramal" class="field-input" required maxlength="20" value="${UI.esc(s?.ramal || "")}" placeholder="Ex: 2210">`)}
+      ${fld("RAMAL", `<input name="ramal" class="field-input" required inputmode="numeric" pattern="[0-9]{3,6}" maxlength="6" title="Só números, de 3 a 6 dígitos" value="${UI.esc(s?.ramal || "")}" placeholder="Ex: 2210">`)}
       <button type="submit" class="btn-crimson w-full py-3">${s ? "Salvar alterações" : "Criar setor"}</button>
     </form>`);
   }
@@ -187,7 +187,8 @@
       tipo: TIPO_API[f.dataset.tipo] || "GERAL", categoria: v.categoria, local: v.local.trim(),
       prioridade: PRIO_API[v.prioridade] || "MEDIA", descricao: v.descricao.trim(), anonimo,
     });
-    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece no seu perfil)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
+    App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece em Meus chamados)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
+    if (!anonimo && location.hash === "#/chamados") setTimeout(() => App.render(), 0); // lista recarrega da API
     return true;
   }
 

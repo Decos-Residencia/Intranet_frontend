@@ -44,7 +44,7 @@
   const catLabel = (cat) => (DB.categorias[cat] ? DB.categorias[cat].label : cat);
 
   // chips de filtro por categoria (Início e Mural de Avisos)
-  const CAT_FILTRO = { "Todos": "all", "Comunicado": "comunicado", "Promoção": "promocao", "Evento": "evento", "Urgente": "urgente" };
+  const CAT_FILTRO = { "Todos": "all", "Comunicado": "comunicado", "Notícia": "noticia", "Promoção": "promocao", "Evento": "evento", "Urgente": "urgente" };
 
   function badge(tone, label, extraCls = "") {
     return `<span class="badge badge-${tone} ${extraCls}">${label}</span>`;
@@ -62,5 +62,12 @@
     </nav>`;
   }
 
-  Object.assign(UI, { iniciais, foto, esc, saudacao, tone, catLabel, CAT_FILTRO, badge, breadcrumb });
+  // Estado de leitura de um aviso: texto + ícone (nunca só cor), para a Inicial e o mural.
+  function estadoLeitura(lido) {
+    return lido
+      ? `<span class="read-state read-state-on">${UI.icon("check", "w-3.5 h-3.5")} Lido</span>`
+      : `<span class="read-state read-state-new"><span class="read-dot" aria-hidden="true"></span>Não lido</span>`;
+  }
+
+  Object.assign(UI, { iniciais, foto, esc, saudacao, tone, catLabel, CAT_FILTRO, badge, breadcrumb, estadoLeitura });
 })();

@@ -98,7 +98,8 @@
 .nav-caret{ transition:transform .2s; flex-shrink:0; }
 .nav-group-open .nav-caret{ transform:rotate(180deg); }
 .nav-submenu{ overflow:hidden; max-height:0; transition:max-height .25s ease; }
-.nav-group-open .nav-submenu{ max-height:16rem; }
+/* Altura máxima folgada: o grupo Comunicação do gestor tem 9+ itens (16rem cortava os últimos). */
+.nav-group-open .nav-submenu{ max-height:40rem; }
 .nav-submenu-inner{ padding:.2rem .1rem .3rem 2.15rem; display:flex; flex-direction:column; gap:.15rem; }
 .nav-sublink{ display:flex; align-items:center; gap:.6rem; padding:.45rem .7rem; border-radius:.6rem;
   font-size:.83rem; font-weight:600; line-height:1.3; color:var(--muted); transition:.15s; }
@@ -116,23 +117,48 @@
 /* ---------- Papéis / mais vermelho ---------- */
 /* (a .sidebar já é position:sticky/fixed — não sobrescrever aqui, senão quebra o mobile) */
 .sidebar-accent{ position:absolute; top:0; left:0; width:4px; height:100%; background:linear-gradient(var(--wine),var(--wine-dark)); }
-.role-opt{ display:flex; align-items:center; gap:.8rem; width:100%; text-align:left; border:1px solid var(--border);
-  border-radius:.7rem; padding:.8rem; background:var(--card); transition:.15s; }
-.role-opt:hover{ border-color:var(--wine); }
-.role-opt-on{ border-color:var(--wine); background:var(--wine-50); }
-.dark .role-opt-on{ background:rgba(142,27,46,.16); }
-.role-ic{ width:38px; height:38px; border-radius:.6rem; background:var(--wine-50); color:var(--wine); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.dark .role-ic{ background:rgba(142,27,46,.2); color:#f2a8b4; }
-.theme-swatch{ width:38px; height:38px; border-radius:.6rem; flex-shrink:0; border:1px solid rgba(0,0,0,.08);
-  display:flex; align-items:flex-end; justify-content:flex-start; gap:3px; padding:5px; }
-.theme-swatch span{ display:block; border-radius:999px; width:9px; height:9px; box-shadow:0 0 0 1px rgba(0,0,0,.08); }
+/* Seletor de tema (painel Aparência e Configurações) */
+.theme-grid{ display:grid; gap:.6rem; }
+.theme-opt{ display:flex; align-items:center; gap:.9rem; width:100%; text-align:left; padding:.75rem; border-radius:1rem;
+  border:1px solid var(--border-strong); background:var(--surface-strong); transition:.15s; min-height:3.5rem; }
+.theme-opt:hover{ border-color:var(--accent); }
+.theme-opt-on{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent) inset; }
+.theme-opt-txt{ display:flex; flex-direction:column; gap:.1rem; flex:1; min-width:0; }
+.theme-opt-check{ width:1.5rem; height:1.5rem; border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--border-strong); color:transparent; flex-shrink:0; }
+.theme-opt-on .theme-opt-check{ background:var(--wine); border-color:var(--wine); color:#fff; }
+.theme-preview{ position:relative; width:56px; height:40px; border-radius:.7rem; flex-shrink:0; overflow:hidden; border:1px solid rgba(0,0,0,.12); }
+.theme-preview-card{ position:absolute; left:9px; right:9px; bottom:-4px; height:26px; border-radius:.45rem; box-shadow:0 2px 6px rgba(0,0,0,.18); }
+.theme-preview-card span{ position:absolute; left:7px; top:7px; width:18px; height:5px; border-radius:999px; }
+.theme-preview-auto{ display:flex; }
+.theme-preview-auto span{ flex:1; }
+@media (min-width:640px){ .theme-grid-2{ grid-template-columns:1fr 1fr; } }
 
-/* Selo "PERFIL: X" abaixo da marca */
-.role-pill{ display:flex; align-items:center; gap:.5rem; width:100%; padding:.55rem .75rem; border-radius:.7rem;
-  border:1px solid rgba(142,27,46,.22); background:var(--wine-50); color:var(--wine); font-size:.72rem; font-weight:800;
-  letter-spacing:.02em; text-align:left; transition:.15s; }
-.role-pill:hover{ border-color:var(--wine); }
-.dark .role-pill{ background:rgba(142,27,46,.18); color:#f7b8c2; border-color:rgba(247,184,194,.25); }
-.role-pill-txt{ flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.role-pill-more{ display:inline-flex; align-items:center; gap:.15rem; opacity:.75; font-weight:700; }
-.sidebar-collapsed .role-pill{ justify-content:center; padding:.55rem; }
+
+/* Menu de tema (abre junto ao botão do topo) */
+.theme-menu{ position:fixed; z-index:90; min-width:15rem; padding:.4rem; border-radius:1rem; border:1px solid var(--border);
+  background:var(--surface-strong); -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur); box-shadow:var(--shadow-lg);
+  animation:menuIn .14s ease; }
+@keyframes menuIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+.theme-menu-item, .theme-menu-mais{ display:flex; align-items:center; gap:.6rem; width:100%; min-height:2.5rem; padding:.45rem .7rem;
+  border-radius:.7rem; font-size:.9rem; font-weight:600; color:var(--text); text-align:left; }
+.theme-menu-item:hover, .theme-menu-item:focus-visible, .theme-menu-mais:hover{ background:color-mix(in srgb, var(--accent) 12%, transparent); }
+.theme-menu-item[aria-checked="true"]{ color:var(--accent); }
+.theme-menu-mais{ margin-top:.25rem; border-top:1px solid var(--border); border-radius:0 0 .7rem .7rem; font-size:.82rem; color:var(--muted); }
+html[data-transparencia="reduzida"] .theme-menu, html[data-contraste="alto"] .theme-menu{ background:var(--card); -webkit-backdrop-filter:none; backdrop-filter:none; }
+
+/* Alça com seta no meio da borda do menu: recolhe/expande (desktop). */
+.sidebar-alca{ position:fixed; top:50%; left:calc(264px - 15px); z-index:66; width:30px; height:30px; border-radius:999px;
+  display:inline-flex; align-items:center; justify-content:center; transform:translateY(-50%);
+  color:var(--text); background:var(--card); border:1px solid var(--border-strong); box-shadow:var(--shadow);
+  transition:left .22s cubic-bezier(.2,.8,.2,1), color .15s, border-color .15s; }
+.sidebar-alca:hover{ color:var(--accent); border-color:var(--accent); }
+.sidebar-collapsed ~ .sidebar-alca{ left:calc(76px - 15px); }
+@media (max-width:860px){ .sidebar-alca{ display:none; } }
+
+/* Link para o site institucional, no rodapé do menu */
+.site-link{ display:flex; align-items:center; gap:.55rem; min-height:2.5rem; padding:.5rem .75rem; border-radius:.8rem; font-size:.85rem; font-weight:700;
+  color:var(--text); border:1px solid var(--border); background:var(--surface-strong); }
+.site-link:hover{ border-color:var(--accent); color:var(--accent); }
+.sidebar-collapsed .site-link{ justify-content:center; padding:.5rem; }
+.theme-red .sidebar .site-link{ color:#fff; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); }

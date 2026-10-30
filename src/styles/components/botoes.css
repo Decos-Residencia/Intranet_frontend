@@ -1,22 +1,38 @@
 /* Botões */
-/* ---------- Botões ---------- */
-.btn-wine{ background:var(--wine); color:#fff; font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; transition:.15s; }
+/* ---------- Botões ----------
+   Primários sólidos e com contraste forte contra o fundo (texto ≥ 4,5:1, contorno ≥ 3:1).
+   Altura mínima de 40 px (alvo de toque confortável; WCAG 2.2 pede ≥ 24 px). */
+.btn-wine, .btn-crimson, .btn-outline, .btn-danger, .btn-crimson-outline, .btn-wine-soft{ min-height:2.5rem; }
+.btn-wine{ background:var(--wine); color:var(--on-primary); font-weight:700; border-radius:.8rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px -6px rgba(142,27,46,.55); transition:.15s; }
 .btn-wine:hover{ background:var(--wine-dark); }
-.btn-wine-soft{ background:var(--wine-50); color:var(--wine); font-weight:700; border-radius:.6rem; }
-.dark .btn-wine-soft{ background:rgba(142,27,46,.2); color:#f2a8b4; }
-.btn-white{ background:#fff; color:var(--wine); font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.1rem; }
-.btn-outline{ border:1px solid var(--border); color:var(--text); font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; background:var(--card); transition:.15s; }
-.btn-outline:hover{ border-color:var(--wine); color:var(--wine); }
-.btn-crimson{ background:var(--crimson); color:#fff; font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; transition:.15s; }
-.btn-crimson:hover{ filter:brightness(.94); }
-.btn-crimson-outline{ border:1px solid var(--crimson); color:var(--crimson); font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; }
-.btn-outline-white{ border:1px solid rgba(255,255,255,.55); color:#fff; font-weight:700; border-radius:.7rem;
-  display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.6rem 1.1rem; background:transparent; transition:.15s; }
+.btn-wine:active, .btn-crimson:active, .btn-outline:active{ transform:scale(.98); }
+.btn-wine-soft{ background:var(--wine-50); color:var(--wine); font-weight:700; border-radius:.7rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; }
+.dark .btn-wine-soft{ background:rgba(244,163,178,.14); color:var(--accent); }
+.btn-white{ background:#fff; color:var(--wine); font-weight:700; border-radius:.8rem; display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.1rem; min-height:2.5rem; }
+.btn-outline{ border:1px solid var(--border-strong); color:var(--text); font-weight:700; border-radius:.8rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+  background:var(--surface-strong); transition:.15s; }
+.btn-outline:hover{ border-color:var(--accent); color:var(--accent); }
+.btn-crimson{ background:var(--crimson); color:var(--on-primary); font-weight:700; border-radius:.8rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px -6px rgba(200,16,46,.55); transition:.15s; }
+.btn-crimson:hover{ filter:brightness(.92); }
+.btn-crimson-outline{ border:1px solid var(--crimson); color:var(--crimson); font-weight:700; border-radius:.8rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; }
+.dark .btn-crimson-outline{ border-color:var(--accent); color:var(--accent); }
+.btn-outline-white{ border:1px solid rgba(255,255,255,.7); color:#fff; font-weight:700; border-radius:.8rem;
+  display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.6rem 1.1rem; min-height:2.5rem; background:transparent; transition:.15s; }
 .btn-outline-white:hover{ background:rgba(255,255,255,.14); border-color:#fff; }
 
 /* ---------- Extras de UX / modernização ---------- */
-.icon-btn-on{ color:var(--wine); border-color:var(--wine); background:var(--wine-50); }
-.dark .icon-btn-on{ background:rgba(142,27,46,.18); }
-.ramal-btn{ font-weight:800; color:var(--wine); border:1px solid var(--border); border-radius:.5rem; padding:.25rem .7rem; transition:.15s; }
+.icon-btn-on{ color:var(--accent); border-color:var(--accent); background:var(--wine-50); }
+.dark .icon-btn-on{ background:rgba(244,163,178,.14); }
+.ramal-btn{ font-weight:800; color:var(--accent); border:1px solid var(--border-strong); border-radius:.6rem; padding:.3rem .75rem; min-height:2rem; transition:.15s; }
 .ramal-btn:hover{ background:var(--wine); color:#fff; border-color:var(--wine); }
+.ramal-btn{ display:inline-flex; align-items:center; gap:.35rem; }
+.ramal-btn-lg{ font-size:.95rem; letter-spacing:.02em; }
 .ramal-btn-empty{ border-style:dashed; color:var(--muted); background:var(--card); }
+
+/* Texto e ícones "vinho" sobre fundo escuro precisam do tom claro da marca (vinho puro dá 2,3:1). */
+.dark .text-wine{ color:var(--accent); }
+.text-crimson{ color:var(--crimson); }
+.dark .text-crimson{ color:#ff8a9c; }
+html[data-contraste="alto"] :is(.btn-outline, .ramal-btn, .icon-btn){ border-width:2px; border-color:var(--border-strong); }
