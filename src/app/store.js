@@ -155,7 +155,7 @@
       Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),
       Services.listAll(Services.documentos.list),
       Services.listAll(Services.faq.list),
-      Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 20 }).then((r) => r.items),
+      Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" }),
       Services.atalhos.list(),
     ]);
     if (avisos.status === "rejected" && avisos.reason?.status === 0) throw avisos.reason; // API fora do ar
@@ -317,9 +317,9 @@
   async function refreshEventos() {
     if (!state.auth || trocaPendente()) return;
     const [prox, minhas] = await Promise.allSettled([
-      Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 20 }), Services.eventos.minhas(),
+      Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" }), Services.eventos.minhas(),
     ]);
-    if (prox.status === "fulfilled") state.api.eventosProximos = prox.value.items;
+    if (prox.status === "fulfilled") state.api.eventosProximos = prox.value;
     if (minhas.status === "fulfilled") state.api.minhasInscricoes = minhas.value;
   }
 
@@ -346,7 +346,7 @@
       setores: () => Services.listAll(Services.setores.list),
       atalhos: () => Services.atalhos.list(),
       // Próximos eventos publicados (dashboard) e as inscrições do usuário (perfil).
-      eventosProximos: () => Services.eventos.list({ de: new Date().toISOString(), status: "PUBLICADO", page_size: 20 }).then((r) => r.items),
+      eventosProximos: () => Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" }),
       minhasInscricoes: () => Services.eventos.minhas(),
       eventosHoje: () => Services.eventos.hoje(),
       chamados: () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items),

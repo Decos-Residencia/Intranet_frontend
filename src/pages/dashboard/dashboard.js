@@ -1,12 +1,8 @@
 /* =========================================================================
    Tela: Início (Dashboard)
    Rota: #/dashboard
-   Duas variantes, conforme as permissões:
-   • Colaborador: avisos para ler (não lidos primeiro), próximos eventos com inscrição
-     direto no cartão, acessos rápidos e aniversariantes do mês.
-   • Gestor (RH/ADMIN): o mesmo, mais "Visão geral" (até 4 números) e uma única área
-     "Precisa da sua atenção" com as pendências (chamados, solicitações, avaliações).
-   Números vêm de GET /dashboard/resumo; avisos, eventos e aniversários do estado da sessão.
+   Avisos para ler, eventos disponíveis com inscrição, acessos rápidos e aniversariantes.
+   Eventos publicados com data futura vêm do estado da sessão.
    ========================================================================= */
 (function () {
   const { icon, badge, iniciais, foto, esc, saudacao, tone, catLabel } = UI;
@@ -78,20 +74,22 @@
     if (!lista.length) return "";
     const slides = lista.map((e, i) => `
       <article class="ev-slide" data-slide role="group" aria-roledescription="slide" aria-label="${i + 1} de ${lista.length}: ${esc(e.titulo)}" tabindex="-1">
-        <div class="ev-slide-foto" aria-hidden="true">${e.temBanner || e.temImagem
+        <div class="ev-slide-foto" aria-hidden="true"><span class="ev-slide-sem-foto">${icon("calendar", "w-12 h-12")}</span>${e.temBanner || e.temImagem
           ? `<img data-foto-evento="${e.id}" data-foto-tipo="${e.temBanner ? "banner" : "capa"}" data-preencher="1" alt="" class="ev-slide-img" decoding="async">`
-          : `<span class="ev-slide-sem-foto"></span>`}</div>
+          : ""}<span class="ev-slide-data">${esc(e.dia)} ${esc(e.mes)}</span></div>
         <div class="ev-slide-legenda">
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap mb-1"><span class="ev-slide-selo">${e.treinamento ? "Treinamento" : "Evento"}</span>${e.visto ? "" : `<span class="ev-slide-selo ev-slide-novo">Novo</span>`}</div>
             <h3 class="ev-slide-titulo">${esc(e.titulo)}</h3>
+            ${e.desc ? `<p class="ev-slide-descricao">${esc(e.desc)}</p>` : ""}
             <p class="ev-slide-info">${esc(e.dataLonga)} · ${esc(e.horario)} · ${esc(e.local)}</p>
+            ${e.organizador ? `<p class="ev-slide-info">Organização: ${esc(e.organizador)}</p>` : ""}
             <p class="ev-slide-info ev-slide-vagas">${esc(e.vagasTxt)}</p>
           </div>
           <div class="ev-slide-acoes">${acaoSlide(e)}<a href="#/eventos/${e.id}" class="btn-outline-white">Ver detalhes</a></div>
         </div>
       </article>`).join("");
-    return `<section class="ev-carrossel mb-6" data-carrossel aria-roledescription="carrossel" aria-label="Próximos eventos e treinamentos">
+    return `<section class="ev-carrossel" data-carrossel aria-roledescription="carrossel" aria-label="Eventos disponíveis">
       <div class="ev-carrossel-janela"><div class="ev-carrossel-trilho" data-carrossel-trilho>${slides}</div></div>
       ${lista.length > 1 ? `<div class="ev-carrossel-controles">
         <button type="button" class="ev-carrossel-btn" data-carrossel-ant aria-label="Evento anterior">${icon("chevron-left", "w-5 h-5")}</button>
@@ -100,51 +98,6 @@
         <button type="button" class="ev-carrossel-btn" data-carrossel-pausa></button>
       </div>` : ""}
     </section>`;
-  }
-
-  /* ---------- visão geral do gestor (até 4 números) e pendências ---------- */
-  function cartao(rotulo, valor, sub, rota, ic) {
-    return `<a href="${rota}" class="card stat-card">
-      <span class="stat-head"><span class="stat-ic">${icon(ic, "w-4 h-4")}</span><span class="stat-label">${esc(rotulo)}</span></span>
-      <span class="stat-value">${valor === null ? `<span class="stat-loading">…</span>` : esc(num(valor))}</span>
-      <span class="stat-sub">${esc(sub || "")}</span></a>`;
-  }
-  function visaoGeral(r) {
-    const p = r?.pessoal, a = r?.admin, v = (f) => (r ? f() : null), c = [];
-    if (App.can("manage_users") && (!r || a)) c.push(cartao("Usuários ativos", v(() => a.usuarios_ativos), r ? `${a.setores} setores` : "", "#/admin/acessos", "users"));
-    if (App.can("manage_news")) c.push(cartao("Avisos publicados", v(() => (a ? a.avisos.publicados : p.avisos_publicados)), a ? `${a.avisos.agendados} agendados · ${num(a.avisos.leituras)} leituras` : "no mural", "#/admin/noticias", "megaphone"));
-    if (App.can("manage_events")) c.push(cartao("Próximos eventos", v(() => p.eventos_proximos), a ? `${num(a.eventos.inscricoes)} inscrições` : "", "#/admin/eventos", "calendar"));
-    if (App.can("manage_docs")) c.push(cartao("Documentos", v(() => p.documentos_disponiveis), "ativos", "#/admin/documentos", "file-text"));
-    return c.slice(0, 4).join("");
-  }
-  function pendencias(r) {
-    if (!r) return `<li class="text-sm text-slate-500 dark:text-slate-400 py-2">Carregando…</li>`;
-    const a = r.admin, p = r.pessoal, itens = [];
-    if (a) {
-      const ch = a.chamados.abertos + a.chamados.em_analise;
-      if (ch) itens.push(["help-circle", plural(ch, "chamado em aberto", "chamados em aberto"), a.chamados.alta_prioridade_pendentes ? `${a.chamados.alta_prioridade_pendentes} de alta prioridade` : "", "#/admin/chamados", a.chamados.alta_prioridade_pendentes > 0]);
-      if (a.solicitacoes_pendentes) itens.push(["user-cog", plural(a.solicitacoes_pendentes, "solicitação cadastral", "solicitações cadastrais"), "aguardando análise", "#/admin/solicitacoes", false]);
-      if (a.avisos.rascunhos) itens.push(["edit", plural(a.avisos.rascunhos, "aviso em rascunho", "avisos em rascunho"), "não publicados", "#/admin/noticias", false]);
-    }
-    if (p.avaliacoes_pendentes) itens.push(["check-check", plural(p.avaliacoes_pendentes, "avaliação sua pendente", "avaliações suas pendentes"), "para responder", "#/revisoes", true]);
-    if (!itens.length) return `<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 py-2">${icon("check", "w-4 h-4 text-green-700 dark:text-green-400")} Tudo em dia. Nenhuma pendência agora.</li>`;
-    return itens.map(([ic, titulo, sub, rota, alerta]) => `<li><a href="${rota}" class="attn-item ${alerta ? "attn-alerta" : ""}">
-      <span class="stat-ic">${icon(ic, "w-4 h-4")}</span>
-      <span class="min-w-0 flex-1"><span class="block font-bold text-sm text-slate-800 dark:text-slate-100">${esc(titulo)}</span>
-        ${sub ? `<span class="block text-xs text-slate-500 dark:text-slate-400">${esc(sub)}</span>` : ""}</span>
-      ${icon("chevron-right", "w-4 h-4 text-slate-500")}</a></li>`).join("");
-  }
-  async function carregarGestao() {
-    const cards = document.getElementById("dash-cards"), lista = document.getElementById("dash-attn");
-    if (!cards && !lista) return;
-    try {
-      const r = await Services.dashboard.resumo();
-      if (cards && document.contains(cards)) { cards.innerHTML = visaoGeral(r); cards.setAttribute("aria-busy", "false"); }
-      if (lista && document.contains(lista)) lista.innerHTML = pendencias(r);
-    } catch (err) {
-      if (cards && document.contains(cards)) { cards.innerHTML = ""; cards.setAttribute("aria-busy", "false"); }
-      if (lista && document.contains(lista)) lista.innerHTML = `<li class="text-sm text-slate-500 dark:text-slate-400 py-2">Não foi possível carregar as pendências. ${esc(err.message || "")}</li>`;
-    }
   }
 
   /* ---------- cabeçalho ---------- */
@@ -158,7 +111,6 @@
     const logado = App.state.auth;
     const u = App.state.user;
     const primeiroNome = logado ? esc(u.nome.split(" ")[0]) : "";
-    const gestor = logado && ["manage_news", "manage_events", "manage_docs", "manage_users", "manage_tickets", "manage_reviews"].some(App.can);
     // Só os avisos em destaque aparecem na Inicial (prazo vencido sai sozinho, spec 003).
     const todos = App.avisosAll().filter((a) => a.emDestaque);
     const naoLidos = logado ? todos.filter((a) => !a.lido) : [];
@@ -167,8 +119,9 @@
     // Comunicados urgentes em destaque, não lidos primeiro: ficam juntos num bloco que abre e fecha.
     const urgentes = [...todos.filter((a) => a.categoria === "urgente" && !a.lido), ...todos.filter((a) => a.categoria === "urgente" && a.lido)];
     const urgentesNaoLidos = logado ? urgentes.filter((a) => !a.lido).length : 0;
-    const destaques = App.eventosProximos().filter((e) => !e.cancelado && !e.encerrado).slice(0, 5);
-    const novosEventos = logado ? destaques.filter((e) => !e.visto).length : 0;
+    const agora = new Date();
+    const eventosDisponiveis = App.eventosProximos().filter((e) => !e.cancelado && e.ini > agora);
+    const novosEventos = logado ? eventosDisponiveis.filter((e) => !e.visto).length : 0;
     const deHoje = logado ? (App.state.api.eventosHoje || []).map(App.eventoView) : [];
 
     const hoje = App.hoje();
@@ -259,20 +212,6 @@
         </div></div>
       </section>` : "";
 
-    const blocoGestao = gestor ? `
-      <section class="mb-6" aria-labelledby="dash-visao">
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-          <div class="xl:col-span-2">
-            <h3 id="dash-visao" class="dash-h">Visão geral</h3>
-            <div id="dash-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-busy="true">${visaoGeral(null)}</div>
-          </div>
-          <div class="card p-5">
-            <h3 class="dash-h mb-2">Precisa da sua atenção</h3>
-            <ul id="dash-attn" class="space-y-1" aria-live="polite">${pendencias(null)}</ul>
-          </div>
-        </div>
-      </section>` : "";
-
     return {
       title: "Início",
       html: `
@@ -280,10 +219,14 @@
       ${alertaUrgente}
       ${hojeVoceTem}
       ${anivDoDia}
-      ${destaques.length ? `<div class="flex items-center justify-between gap-3 mb-2 flex-wrap"><h3 class="dash-h mb-0">${icon("calendar", "w-5 h-5 text-wine")} Próximos eventos e treinamentos</h3>
-        <a href="#/eventos" class="text-sm font-bold text-wine flex items-center gap-1">Ver todos ${icon("chevron-right", "w-4 h-4")}</a></div>` : ""}
-      ${carrossel(destaques)}
-      ${blocoGestao}
+      <section class="mb-6" aria-labelledby="dash-eventos-h">
+        <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
+          <h3 id="dash-eventos-h" class="dash-h mb-0">${icon("calendar", "w-5 h-5 text-wine")} Eventos disponíveis</h3>
+          <a href="#/eventos" class="text-sm font-bold text-wine flex items-center gap-1">Ver calendário ${icon("chevron-right", "w-4 h-4")}</a>
+        </div>
+        ${eventosDisponiveis.length ? carrossel(eventosDisponiveis)
+          : `<p class="card p-5 text-sm text-slate-600 dark:text-slate-300">Nenhum evento disponível no momento.</p>`}
+      </section>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <section class="card p-5 sm:p-6 lg:col-span-2" aria-labelledby="dash-avisos-h">
           <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -329,10 +272,20 @@
           document.querySelectorAll("[data-lista-avisos]").forEach((l) => { l.hidden = l.dataset.listaAvisos !== b.dataset.abaAvisos; });
         }));
         const caixa = document.querySelector("[data-carrossel]");
-        if (caixa) { Lib.wireCarrossel(caixa); App.carregarFotosEventos(caixa); }
+        if (caixa) {
+          const slides = [...caixa.querySelectorAll("[data-slide]")], carregados = new WeakSet();
+          const carregar = (slide) => {
+            if (!slide || carregados.has(slide)) return;
+            carregados.add(slide);
+            App.carregarFotosEventos(slide);
+          };
+          Lib.wireCarrossel(caixa, { aoMostrar(slide, indice) {
+            carregar(slide);
+            carregar(slides[(indice + 1) % slides.length]);
+          } });
+        }
         const urg = document.querySelector("[data-urgentes]");
         if (urg) { App.carregarFotos(urg); ligarUrgentes(urg); }
-        if (gestor) carregarGestao();
         document.getElementById("dash-add-atalho")?.addEventListener("click", () => App.abrirNovoAtalho(() => App.render()));
         const btn = document.querySelector('[data-auto-confetti="1"]');
         if (btn) setTimeout(() => btn.click(), 500);
