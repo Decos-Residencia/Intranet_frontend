@@ -1,10 +1,9 @@
 /* =========================================================================
    Tela: Controle de acesso (ADMIN)
    Rota: #/admin/acessos
-   Fonte: GET /acessos/perfis, /acessos/permissoes e /acessos/usuarios.
-   O acesso é por perfil, nunca por pessoa: a matriz "Permissões por perfil" grava em
-   PUT /acessos/perfis/{perfil} (vale para todos do perfil) e cada pessoa só recebe um perfil
-   (PUT /acessos/usuarios/{id}: perfil e situação). O perfil Administrador tem tudo.
+   Fonte: GET /acessos/usuarios e GET /acessos/permissoes; grava em PUT /acessos/usuarios/{id}.
+   Substitui a antiga troca de perfil do topo: o perfil de cada pessoa só muda aqui.
+   Permissão efetiva = permissões do perfil + concedidas − retiradas (calculado no servidor).
    ========================================================================= */
 (function () {
   const { icon, badge, esc } = UI;
@@ -14,8 +13,7 @@
   const COR_PERFIL = { ADMIN: "red", RH: "amber", COLABORADOR: "blue", LEITURA: "gray" };
   const rotuloPerfil = (p) => (PERFIS.find(([k]) => k === p) || [p, p])[1];
 
-  let catalogo = null; // [{codigo, rotulo, editavel, perfis, perfis_padrao}]
-  let perfisInfo = []; // [{perfil, editavel, permissoes, usuarios_ativos}]
+  let catalogo = null; // [{codigo, rotulo, ajustavel, perfis_padrao}]
   let cache = new Map(); // id → usuário exibido (para abrir o painel sem ir ao servidor)
 
   function ultimoAcesso(iso) {
@@ -23,11 +21,13 @@
   }
 
   function linha(u) {
+    const ajustes = u.ajustes.length
+      ? `<span class="badge badge-blue" title="Permissões ajustadas individualmente">${u.ajustes.length} ajuste${u.ajustes.length > 1 ? "s" : ""}</span>` : "";
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${u.ativo ? "" : "opacity-60"}">
       <td class="py-3.5 pl-4"><div class="flex items-center gap-3"><div class="avatar-soft w-9 h-9 text-xs">${UI.foto(u.nome)}${esc(UI.iniciais(u.nome))}</div>
         <div class="min-w-0"><div class="font-bold text-slate-800 dark:text-slate-100">${esc(u.nome)}</div><div class="text-xs text-slate-500 dark:text-slate-400 truncate">${esc(u.email)}</div></div></div></td>
       <td class="text-sm text-slate-600 dark:text-slate-300">${esc(u.setor)}</td>
-      <td><div class="flex items-center gap-1.5 flex-wrap">${badge(COR_PERFIL[u.perfil] || "gray", rotuloPerfil(u.perfil).toUpperCase())}</div></td>
+      <td><div class="flex items-center gap-1.5 flex-wrap">${badge(COR_PERFIL[u.perfil] || "gray", rotuloPerfil(u.perfil).toUpperCase())}${ajustes}</div></td>
       <td>${u.ativo ? badge("green", "Ativo") : badge("gray", "Inativo")}</td>
       <td class="text-xs text-slate-500 dark:text-slate-400">${esc(ultimoAcesso(u.ultimo_acesso_em))}</td>
       <td class="text-right pr-4"><button class="btn-outline text-xs px-3 py-1.5" data-acesso-abrir="${u.id}" aria-label="Gerenciar acesso de ${esc(u.nome)}">Gerenciar</button></td></tr>`;
@@ -69,20 +69,7 @@
       html: `
       <div class="mb-6"><div class="text-sm text-slate-500 dark:text-slate-400">Hospital Decós Intranet • Administração</div>
         <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Controle de acesso</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">O acesso é definido por perfil: escolha o que cada perfil pode fazer e depois o perfil de cada pessoa. Toda mudança fica registrada na auditoria.</p></div>
-      <section class="card p-6 mb-8" aria-labelledby="ac-matriz-h">
-        <div class="flex items-center justify-between gap-3 flex-wrap mb-1">
-          <h3 id="ac-matriz-h" class="font-extrabold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">${icon("shield", "w-5 h-5 text-wine")} Permissões por perfil</h3>
-          <div class="flex gap-2"><button type="button" id="ac-matriz-padrao" class="btn-outline px-4 text-sm">Restaurar padrão</button>
-            <button type="button" id="ac-matriz-salvar" class="btn-wine px-4 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Salvar permissões</button></div>
-        </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Marque o que cada perfil pode fazer. Vale na hora para todas as pessoas do perfil. Administrador tem tudo; usuários/acessos e auditoria são só dele.</p>
-        <div class="overflow-x-auto"><table class="w-full text-sm text-left acc-matriz">
-          <caption class="sr-only">Permissões de cada perfil</caption>
-          <thead id="ac-matriz-head"></thead><tbody id="ac-matriz"><tr><td class="py-6 text-slate-500 dark:text-slate-400">Carregando…</td></tr></tbody></table></div>
-        <p id="ac-matriz-status" class="text-sm mt-3 hidden" role="status"></p>
-      </section>
-      <h3 class="font-extrabold text-lg text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">${icon("users", "w-5 h-5 text-wine")} Pessoas e perfis</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">Defina o perfil de cada pessoa e, se precisar, conceda ou retire permissões específicas. Toda mudança fica registrada na auditoria.</p></div>
       <div class="flex gap-2 items-center flex-wrap mb-4">
         <div class="search-box w-64"><span>${icon("search", "w-4 h-4 text-slate-400")}</span>
           <input id="ac-busca" type="search" aria-label="Buscar por nome, e-mail ou setor" placeholder="Buscar nome, e-mail ou setor..." maxlength="100" class="bg-transparent outline-none flex-1 text-sm text-slate-600 dark:text-slate-200"></div>
@@ -114,10 +101,6 @@
           if (btn) abrirPainel(Number(btn.dataset.acessoAbrir));
         });
         carregar();
-        carregarMatriz();
-        document.getElementById("ac-matriz").addEventListener("change", marcarMatriz);
-        document.getElementById("ac-matriz-salvar").addEventListener("click", salvarMatriz);
-        document.getElementById("ac-matriz-padrao").addEventListener("click", restaurarPadrao);
         carregarAtalhos();
         document.getElementById("ac-novo-atalho").addEventListener("click", () => formAtalho(null));
         document.getElementById("ac-atalhos").addEventListener("click", (e) => {
@@ -179,96 +162,39 @@
     });
   }
 
-  /* ---------- matriz de permissões por perfil ---------- */
-  const EDITAVEIS = ["LEITURA", "COLABORADOR", "RH"];
-  let rascunhoMatriz = {}; // perfil → Set(códigos) ainda não salvos
-
-  async function carregarMatriz() {
-    try {
-      const [perfis, cat] = await Promise.all([Services.acessos.perfis(), Services.acessos.permissoes()]);
-      perfisInfo = perfis; catalogo = cat;
-      rascunhoMatriz = Object.fromEntries(perfis.map((p) => [p.perfil, new Set(p.permissoes)]));
-      desenharMatriz();
-    } catch (err) {
-      const alvo = document.getElementById("ac-matriz");
-      if (alvo) alvo.innerHTML = `<tr><td class="py-6 text-slate-500 dark:text-slate-400">Não foi possível carregar as permissões. ${esc(err.message || "")}</td></tr>`;
-    }
+  /* ---------- painel do usuário ---------- */
+  // Estado de cada permissão no rascunho: "padrao" | "concedida" | "retirada".
+  function estadoInicial(u) {
+    const m = {};
+    u.ajustes.forEach((a) => { m[a.permissao] = a.concedida ? "concedida" : "retirada"; });
+    return m;
   }
 
-  const mudancasMatriz = () => perfisInfo.filter((p) => p.editavel).flatMap((p) => {
-    const antes = new Set(p.permissoes), depois = rascunhoMatriz[p.perfil];
-    return catalogo.filter((c) => antes.has(c.codigo) !== depois.has(c.codigo))
-      .map((c) => ({ perfil: p.perfil, rotulo: c.rotulo, entra: depois.has(c.codigo) }));
-  });
-
-  function desenharMatriz() {
-    const head = document.getElementById("ac-matriz-head"), corpo = document.getElementById("ac-matriz");
-    if (!head || !catalogo) return;
-    head.innerHTML = `<tr class="text-xs font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
-      <th scope="col" class="py-3 pr-4">PERMISSÃO</th>${perfisInfo.map((p) => `<th scope="col" class="text-center px-3">${esc(rotuloPerfil(p.perfil).toUpperCase())}<span class="block font-normal normal-case">${p.usuarios_ativos} ${p.usuarios_ativos === 1 ? "pessoa" : "pessoas"}</span></th>`).join("")}</tr>`;
-    corpo.innerHTML = catalogo.map((c) => `<tr class="border-b border-slate-100 dark:border-slate-800">
-      <th scope="row" class="py-2.5 pr-4 font-semibold text-slate-700 dark:text-slate-200">${esc(c.rotulo)}${c.editavel ? "" : `<span class="block text-xs font-normal text-slate-500 dark:text-slate-400">Só Administrador</span>`}</th>
-      ${perfisInfo.map((p) => {
-        const marcado = rascunhoMatriz[p.perfil].has(c.codigo);
-        const travado = !p.editavel || !c.editavel;
-        return `<td class="text-center px-3"><input type="checkbox" class="acc-check" data-perfil="${p.perfil}" data-perm="${c.codigo}" ${marcado ? "checked" : ""} ${travado ? "disabled" : ""}
-          aria-label="${esc(c.rotulo)} para o perfil ${esc(rotuloPerfil(p.perfil))}"></td>`;
-      }).join("")}</tr>`).join("");
-    const n = mudancasMatriz().length;
-    const botao = document.getElementById("ac-matriz-salvar");
-    botao.disabled = !n;
-    botao.textContent = n ? `Salvar ${n} ${n === 1 ? "mudança" : "mudanças"}` : "Salvar permissões";
-  }
-
-  function marcarMatriz(e) {
-    const cb = e.target.closest("[data-perfil]"); if (!cb) return;
-    const conjunto = rascunhoMatriz[cb.dataset.perfil];
-    if (cb.checked) conjunto.add(cb.dataset.perm); else conjunto.delete(cb.dataset.perm);
-    desenharMatriz();
-    document.querySelector(`[data-perfil="${cb.dataset.perfil}"][data-perm="${cb.dataset.perm}"]`)?.focus();
-  }
-
-  function restaurarPadrao() {
-    if (!catalogo) return;
-    EDITAVEIS.forEach((perfil) => { rascunhoMatriz[perfil] = new Set(catalogo.filter((c) => c.perfis_padrao.includes(perfil)).map((c) => c.codigo)); });
-    desenharMatriz();
-    App.toast("Padrão carregado na tabela. Revise e clique em Salvar.");
-  }
-
-  function salvarMatriz() {
-    const mud = mudancasMatriz(); if (!mud.length) return;
-    const lista = mud.map((m) => `${m.entra ? "✓ Dar" : "✕ Tirar"} <b>${esc(m.rotulo)}</b> ${m.entra ? "ao" : "do"} perfil ${esc(rotuloPerfil(m.perfil))}`).join("<br>");
-    const pessoas = [...new Set(mud.map((m) => m.perfil))].reduce((t, perfil) => t + (perfisInfo.find((p) => p.perfil === perfil)?.usuarios_ativos || 0), 0);
-    App.openConfirm("Salvar permissões dos perfis?", `${lista}<br><br>Afeta ${pessoas} ${pessoas === 1 ? "pessoa ativa" : "pessoas ativas"} na hora.`, async () => {
-      const status = document.getElementById("ac-matriz-status");
-      try {
-        for (const perfil of new Set(mud.map((m) => m.perfil))) {
-          await Services.acessos.definirPerfil(perfil, catalogo.filter((c) => rascunhoMatriz[perfil].has(c.codigo)).map((c) => c.codigo));
-        }
-        App.toast("Permissões dos perfis atualizadas");
-        await carregarMatriz();
-        PagesAdmin.recarregarAcessos?.();
-      } catch (err) {
-        if (status) { status.textContent = err.message || "Não foi possível salvar."; status.className = "text-sm mt-3 text-red-700 dark:text-red-300"; }
-      }
-    }, "Salvar", "btn-wine");
-  }
-
-  /* ---------- painel do usuário: só perfil e situação ---------- */
-  function resumoDoPerfil(perfil) {
-    const info = perfisInfo.find((p) => p.perfil === perfil);
-    if (!info || !catalogo) return "";
-    const tem = catalogo.filter((c) => info.permissoes.includes(c.codigo));
-    return tem.length ? `<ul class="space-y-1.5">${tem.map((c) => `<li class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">${icon("check", "w-4 h-4 text-green-600 dark:text-green-400")}${esc(c.rotulo)}</li>`).join("")}</ul>`
-      : `<p class="text-sm text-slate-500 dark:text-slate-400">Este perfil não tem permissões.</p>`;
+  function linhaPermissao(p, perfil, rascunho) {
+    const doPerfil = p.perfis_padrao.includes(perfil);
+    const atual = rascunho[p.codigo] || "padrao";
+    const efetiva = atual === "concedida" || (atual === "padrao" && doPerfil);
+    const origem = atual === "padrao" ? (doPerfil ? "do perfil" : "fora do perfil") : atual === "concedida" ? "concedida individualmente" : "retirada individualmente";
+    const nome = `perm-${p.codigo}`;
+    const opcao = (valor, rotulo) => `<label class="acc-opt"><input type="radio" name="${nome}" value="${valor}" ${atual === valor ? "checked" : ""} ${p.ajustavel ? "" : "disabled"}><span>${rotulo}</span></label>`;
+    return `<fieldset class="acc-perm ${efetiva ? "acc-perm-on" : ""}" data-perm="${p.codigo}">
+      <legend class="sr-only">${esc(p.rotulo)}</legend>
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><div class="font-semibold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">${efetiva ? icon("check", "w-4 h-4 text-green-600 dark:text-green-400") : icon("x", "w-4 h-4 text-slate-400")}${esc(p.rotulo)}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${p.ajustavel ? esc(origem) : "Só pelo perfil Administrador"}</div></div>
+      </div>
+      ${p.ajustavel ? `<div class="acc-opts mt-2">${opcao("padrao", doPerfil ? "Padrão (tem)" : "Padrão (não tem)")}${doPerfil ? opcao("retirada", "Retirar") : opcao("concedida", "Conceder")}</div>` : ""}
+    </fieldset>`;
   }
 
   function abrirPainel(id) {
     const u = cache.get(id);
     if (!u || !catalogo) return;
     const eu = App.state.user?.id === u.id;
+    const rascunho = estadoInicial(u);
     let perfil = u.perfil, ativo = u.ativo;
 
+    const corpoPermissoes = () => catalogo.map((p) => linhaPermissao(p, perfil, rascunho)).join("");
     App.openPanel(`Acesso · ${esc(u.nome)}`, `<form id="ac-form" class="space-y-5" novalidate>
       <div class="text-sm text-slate-600 dark:text-slate-300">${esc(u.email)} · ${esc(u.setor)}${u.cargo ? ` · ${esc(u.cargo)}` : ""}</div>
       ${eu ? `<div class="card p-3 text-xs text-slate-600 dark:text-slate-300">${icon("alert-triangle", "w-4 h-4 inline mr-1")}Este é o seu próprio usuário: perfil e situação não podem ser alterados aqui.</div>` : ""}
@@ -278,25 +204,48 @@
         <div><span class="field-label" id="ac-f-ativo-lbl">SITUAÇÃO</span>
           <label class="flex items-center gap-2 mt-2 text-sm text-slate-700 dark:text-slate-200"><input id="ac-f-ativo" type="checkbox" ${ativo ? "checked" : ""} ${eu ? "disabled" : ""} aria-labelledby="ac-f-ativo-lbl"> Acesso ativo</label></div>
       </div>
-      <div><div class="field-label">O QUE ESTE PERFIL PODE FAZER</div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">As permissões são do perfil, não da pessoa. Para mudar, use a tabela "Permissões por perfil".</p>
-        <div id="ac-perms">${resumoDoPerfil(perfil)}</div></div>
+      <div><div class="field-label">PERMISSÕES</div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">"Padrão" segue o perfil. Conceda ou retire só as exceções desta pessoa.</p>
+        <div id="ac-perms" class="space-y-2">${corpoPermissoes()}</div></div>
       <div id="ac-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></div>
       <button type="submit" class="btn-wine w-full py-3">Salvar alterações</button>
     </form>`);
 
     const form = document.getElementById("ac-form");
-    form.querySelector("#ac-f-perfil").addEventListener("change", (e) => { perfil = e.target.value; document.getElementById("ac-perms").innerHTML = resumoDoPerfil(perfil); });
+    const redesenhar = () => { document.getElementById("ac-perms").innerHTML = corpoPermissoes(); };
+    form.querySelector("#ac-f-perfil").addEventListener("change", (e) => {
+      perfil = e.target.value;
+      // Ajuste que passou a ser o próprio padrão do novo perfil deixa de existir.
+      catalogo.forEach((p) => {
+        const doPerfil = p.perfis_padrao.includes(perfil);
+        if ((rascunho[p.codigo] === "concedida" && doPerfil) || (rascunho[p.codigo] === "retirada" && !doPerfil)) delete rascunho[p.codigo];
+      });
+      redesenhar();
+    });
     form.querySelector("#ac-f-ativo").addEventListener("change", (e) => { ativo = e.target.checked; });
+    form.querySelector("#ac-perms").addEventListener("change", (e) => {
+      const fs = e.target.closest("[data-perm]");
+      if (!fs) return;
+      if (e.target.value === "padrao") delete rascunho[fs.dataset.perm]; else rascunho[fs.dataset.perm] = e.target.value;
+      redesenhar();
+      document.querySelector(`[data-perm="${fs.dataset.perm}"] input[value="${e.target.value}"]`)?.focus();
+    });
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      const original = estadoInicial(u);
+      const codigos = new Set([...Object.keys(original), ...Object.keys(rascunho)]);
+      const ajustes = [...codigos].filter((c) => original[c] !== rascunho[c])
+        .map((c) => ({ permissao: c, concedida: rascunho[c] === "concedida" ? true : rascunho[c] === "retirada" ? false : null }));
       const body = {};
       if (perfil !== u.perfil) body.perfil = perfil;
       if (ativo !== u.ativo) body.ativo = ativo;
+      if (ajustes.length) body.ajustes = ajustes;
       if (!Object.keys(body).length) { App.toast("Nenhuma alteração para salvar."); return; }
+
       const mudancas = [
         body.perfil ? `perfil: ${rotuloPerfil(u.perfil)} → ${rotuloPerfil(body.perfil)}` : "",
         "ativo" in body ? (body.ativo ? "reativar o acesso" : "desativar o acesso") : "",
+        ajustes.length ? `${ajustes.length} ajuste${ajustes.length > 1 ? "s" : ""} de permissão` : "",
       ].filter(Boolean).join(", ");
       App.openConfirm("Confirmar alteração de acesso", `${esc(u.nome)}: ${esc(mudancas)}.`, () => salvar(u, body), "Salvar", "btn-wine");
     });
@@ -309,7 +258,6 @@
       App.toast("Acesso atualizado");
       App.closePanel();
       PagesAdmin.recarregarAcessos?.();
-      carregarMatriz(); // contagem de pessoas por perfil
     } catch (err) {
       const erro = document.getElementById("ac-erro");
       const msg = err.status === 409 ? "Não é possível rebaixar ou desativar o último administrador ativo."

@@ -22,6 +22,18 @@
     update(id, data) {
       return App.API.request(`/avisos/${encodeURIComponent(id)}`, { method: "PUT", body: data });
     },
+    // Foto opcional: link assinado de 60 s; enviar (multipart) ou remover.
+    imagem(id) {
+      return App.API.request(`/avisos/${encodeURIComponent(id)}/imagem`);
+    },
+    definirImagem(id, arquivo) {
+      const fd = new FormData();
+      fd.append("arquivo", arquivo);
+      return App.API.request(`/avisos/${encodeURIComponent(id)}/imagem`, { method: "PUT", body: fd, timeout: 60000 });
+    },
+    removerImagem(id) {
+      return App.API.request(`/avisos/${encodeURIComponent(id)}/imagem`, { method: "DELETE" });
+    },
     remove(id) {
       return App.API.request(`/avisos/${encodeURIComponent(id)}`, { method: "DELETE" });
     },

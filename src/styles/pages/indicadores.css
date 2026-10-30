@@ -1,0 +1,21 @@
+/* Painel de indicadores: barras de uma série (uma cor, validada no claro e no escuro). */
+:root{ --ind-barra:#B4233A; --ind-trilho:#EEF0F4; }
+.dark{ --ind-barra:#E0566C; --ind-trilho:rgba(148,163,184,.18); }
+.ind-tabela{ width:100%; font-size:.875rem; border-collapse:collapse; }
+.ind-tabela th{ text-align:left; font-size:.72rem; font-weight:700; letter-spacing:.04em; color:#64748b; padding:.5rem .75rem; border-bottom:1px solid #e2e8f0; }
+.dark .ind-tabela th{ color:#94a3b8; border-color:#1e293b; }
+.ind-tabela td{ padding:.55rem .75rem; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.dark .ind-tabela td{ border-color:#1e293b; }
+.ind-tabela tbody tr:hover{ background:rgba(148,163,184,.10); }
+.ind-tabela .num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.ind-barra-cel{ width:42%; min-width:140px; }
+.ind-barra{ display:flex; align-items:center; gap:.6rem; }
+.ind-trilho{ flex:1; height:10px; border-radius:4px; background:var(--ind-trilho); overflow:hidden; }
+.ind-trilho > span{ display:block; height:100%; border-radius:0 4px 4px 0; background:var(--ind-barra); min-width:2px; }
+.ind-pct{ width:3.6rem; text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#1e293b; }
+.dark .ind-pct{ color:#f1f5f9; }
+.ind-vazio{ color:#64748b; font-size:.875rem; padding:.75rem 0; }
+.dark .ind-vazio{ color:#94a3b8; }
+.ind-nota{ font-size:.78rem; color:#64748b; margin-top:.5rem; }
+.dark .ind-nota{ color:#94a3b8; }
+@media (forced-colors: active){ .ind-trilho > span{ background:CanvasText; } .ind-trilho{ border:1px solid CanvasText; } }

@@ -43,6 +43,28 @@
     </a></li>`;
   }
 
+  /* ---------- comunicados urgentes: abre ao passar o mouse; clique/teclado fixa ---------- */
+  function ligarUrgentes(box) {
+    const botao = box.querySelector(".dash-urgente"), corpo = box.querySelector(".dash-urg-corpo");
+    let fixo = box.dataset.fixo === "1", espera = 0;
+    const abrir = (sim) => {
+      box.classList.toggle("is-open", sim);
+      botao.setAttribute("aria-expanded", String(sim));
+      corpo.inert = !sim; // fechado: os links de dentro saem da ordem do Tab
+    };
+    abrir(fixo);
+    // Só em aparelhos com mouse: no toque, o clique decide.
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      box.addEventListener("mouseenter", () => { clearTimeout(espera); espera = setTimeout(() => abrir(true), 120); });
+      box.addEventListener("mouseleave", () => { clearTimeout(espera); if (!fixo) espera = setTimeout(() => abrir(false), 350); });
+    }
+    botao.addEventListener("click", () => {
+      clearTimeout(espera);
+      const abrirAgora = !box.classList.contains("is-open") || !fixo;
+      fixo = abrirAgora; abrir(abrirAgora);
+    });
+  }
+
   /* ---------- carrossel de próximos eventos (com a foto de capa) ---------- */
   function acaoSlide(e) {
     if (!App.state.auth) return e.aberto ? `<a href="#/login" data-action="entrar" class="btn-white px-5">${icon("lock", "w-4 h-4")} Entrar para se inscrever</a>` : "";
@@ -102,11 +124,9 @@
       const ch = a.chamados.abertos + a.chamados.em_analise;
       if (ch) itens.push(["help-circle", plural(ch, "chamado em aberto", "chamados em aberto"), a.chamados.alta_prioridade_pendentes ? `${a.chamados.alta_prioridade_pendentes} de alta prioridade` : "", "#/admin/chamados", a.chamados.alta_prioridade_pendentes > 0]);
       if (a.solicitacoes_pendentes) itens.push(["user-cog", plural(a.solicitacoes_pendentes, "solicitação cadastral", "solicitações cadastrais"), "aguardando análise", "#/admin/solicitacoes", false]);
-      const av = a.avaliacoes.pendentes + a.avaliacoes.em_analise;
-      if (av) itens.push(["check-check", plural(av, "avaliação de documento", "avaliações de documento"), "em andamento", "#/admin/avaliacoes", false]);
       if (a.avisos.rascunhos) itens.push(["edit", plural(a.avisos.rascunhos, "aviso em rascunho", "avisos em rascunho"), "não publicados", "#/admin/noticias", false]);
     }
-    if (p.avaliacoes_pendentes) itens.push(["check-check", plural(p.avaliacoes_pendentes, "avaliação sua pendente", "avaliações suas pendentes"), "para responder", "#/avaliacoes", true]);
+    if (p.avaliacoes_pendentes) itens.push(["check-check", plural(p.avaliacoes_pendentes, "avaliação sua pendente", "avaliações suas pendentes"), "para responder", "#/revisoes", true]);
     if (!itens.length) return `<li class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 py-2">${icon("check", "w-4 h-4 text-green-700 dark:text-green-400")} Tudo em dia. Nenhuma pendência agora.</li>`;
     return itens.map(([ic, titulo, sub, rota, alerta]) => `<li><a href="${rota}" class="attn-item ${alerta ? "attn-alerta" : ""}">
       <span class="stat-ic">${icon(ic, "w-4 h-4")}</span>
@@ -144,7 +164,9 @@
     const naoLidos = logado ? todos.filter((a) => !a.lido) : [];
     // Não lidos primeiro (mais recentes antes); completa com os lidos até 5.
     const avisos = logado ? [...naoLidos, ...todos.filter((a) => a.lido)].slice(0, 5) : todos.slice(0, 5);
-    const urgente = logado ? naoLidos.find((a) => a.categoria === "urgente") : todos.find((a) => a.categoria === "urgente");
+    // Comunicados urgentes em destaque, não lidos primeiro: ficam juntos num bloco que abre e fecha.
+    const urgentes = [...todos.filter((a) => a.categoria === "urgente" && !a.lido), ...todos.filter((a) => a.categoria === "urgente" && a.lido)];
+    const urgentesNaoLidos = logado ? urgentes.filter((a) => !a.lido).length : 0;
     const destaques = App.eventosProximos().filter((e) => !e.cancelado && !e.encerrado).slice(0, 5);
     const novosEventos = logado ? destaques.filter((e) => !e.visto).length : 0;
     const deHoje = logado ? (App.state.api.eventosHoje || []).map(App.eventoView) : [];
@@ -216,13 +238,26 @@
         </div>
       </section>` : "";
 
-    const alertaUrgente = urgente ? `
-      <a href="#/avisos/${urgente.id}" class="dash-urgente mb-6">
-        <span class="dash-urgente-ic">${icon("alert-triangle", "w-5 h-5")}</span>
-        <span class="min-w-0 flex-1"><span class="block text-xs font-extrabold tracking-wide">${logado ? "COMUNICADO URGENTE NÃO LIDO" : "COMUNICADO URGENTE"}</span>
-          <span class="block font-bold truncate">${esc(urgente.titulo)}</span></span>
-        <span class="font-bold text-sm whitespace-nowrap">Ler agora ${icon("chevron-right", "w-4 h-4 inline")}</span>
-      </a>` : "";
+    const itemUrgente = (a, i) => `<li class="dash-urg-item" style="--i:${i}">
+        ${a.temImagem ? `<span class="dash-urg-foto" data-foto-caixa><img data-foto-aviso="${a.id}" alt="" decoding="async"></span>` : ""}
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap mb-1">${logado && !a.lido ? `<span class="dash-urg-novo">Não lido</span>` : ""}<span class="text-xs text-white/80">${esc(a.data)}</span></div>
+          <h3 class="font-bold text-white leading-snug">${esc(a.titulo)}</h3>
+          <p class="dash-urg-texto">${esc(a.resumo)}</p>
+          <a href="#/avisos/${a.id}" class="dash-urg-ler">Ler comunicado ${icon("chevron-right", "w-4 h-4 inline")}</a>
+        </div></li>`;
+    const alertaUrgente = urgentes.length ? `
+      <section class="dash-urgente-box mb-6" data-urgentes data-fixo="${urgentesNaoLidos ? 1 : 0}" aria-label="Comunicados urgentes">
+        <button type="button" class="dash-urgente" aria-expanded="false" aria-controls="dash-urg-corpo">
+          <span class="dash-urgente-ic">${icon("alert-triangle", "w-5 h-5")}</span>
+          <span class="min-w-0 flex-1"><span class="block text-xs font-extrabold tracking-wide">${urgentes.length === 1 ? "COMUNICADO URGENTE" : `${urgentes.length} COMUNICADOS URGENTES`}${urgentesNaoLidos ? ` · ${urgentesNaoLidos} NÃO ${urgentesNaoLidos === 1 ? "LIDO" : "LIDOS"}` : ""}</span>
+            <span class="block font-bold truncate">${esc(urgentes[0].titulo)}</span></span>
+          <span class="dash-urgente-acao"><span class="dash-urgente-abrir">Ver ${urgentes.length === 1 ? "comunicado" : "comunicados"}</span><span class="dash-urgente-fechar">Fechar</span>${icon("chevron-down", "w-4 h-4 dash-urgente-seta")}</span>
+        </button>
+        <div id="dash-urg-corpo" class="dash-urg-corpo" inert><div class="dash-urg-dentro">
+          <ul class="dash-urg-lista">${urgentes.map(itemUrgente).join("")}</ul>
+        </div></div>
+      </section>` : "";
 
     const blocoGestao = gestor ? `
       <section class="mb-6" aria-labelledby="dash-visao">
@@ -295,6 +330,8 @@
         }));
         const caixa = document.querySelector("[data-carrossel]");
         if (caixa) { Lib.wireCarrossel(caixa); App.carregarFotosEventos(caixa); }
+        const urg = document.querySelector("[data-urgentes]");
+        if (urg) { App.carregarFotos(urg); ligarUrgentes(urg); }
         if (gestor) carregarGestao();
         document.getElementById("dash-add-atalho")?.addEventListener("click", () => App.abrirNovoAtalho(() => App.render()));
         const btn = document.querySelector('[data-auto-confetti="1"]');

@@ -11,3 +11,12 @@
 .urgent-feature-marca{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; min-height:200px; color:#fff;
   background:radial-gradient(420px 220px at 80% 0%, rgba(255,255,255,.16), transparent 60%), linear-gradient(135deg, #7a0f1f, var(--crimson, #C8102E)); }
 .noticia-destaque{ box-shadow:inset 4px 0 0 #0f766e; }
+
+/* Foto opcional do comunicado */
+.aviso-foto{ margin:0; border-radius:14px; overflow:hidden; aspect-ratio:16/9; max-width:100%; background:var(--wine-50, #fce9ed); }
+.aviso-foto img, .aviso-miniatura img{ width:100%; height:100%; object-fit:cover; display:block; opacity:0; transition:opacity .25s; }
+.aviso-foto img.is-loaded, .aviso-miniatura img.is-loaded{ opacity:1; }
+.aviso-miniatura{ flex:0 0 132px; aspect-ratio:16/10; max-width:100%; border-radius:10px; overflow:hidden; background:var(--wine-50, #fce9ed); }
+.dark .aviso-foto, .dark .aviso-miniatura{ background:rgba(142,27,46,.22); }
+@media (max-width: 560px){ .aviso-miniatura{ flex-basis:96px; } }
+@media (prefers-reduced-motion: reduce){ .aviso-foto img, .aviso-miniatura img{ transition:none; } }

@@ -138,6 +138,8 @@
         else { erro.textContent = err.message || "Não foi possível enviar os parabéns."; erro.classList.remove("hidden"); botao.disabled = false; }
       }
       if (enviado && document.contains(el)) { el.disabled = true; el.innerHTML = UI.icon("check", "w-4 h-4") + " Parabéns enviado"; }
+      // Na tela do Aniversariante do Dia, redesenha para a contagem de parabéns subir (depois do confete).
+      if (enviado && location.hash === "#/aniversariantes/hoje") setTimeout(() => App.render(), 900);
     });
   }
 

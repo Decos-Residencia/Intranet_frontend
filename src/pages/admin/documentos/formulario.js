@@ -55,6 +55,7 @@
 
   function adminDocumentoNovo(id) {
     const setores = App.setoresAll();
+    const pessoas = [...(App.state.api.usuariosRaw || [])].filter((u) => u.ativo !== false).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     const categorias = [...new Set([...TIPOS_DOC.map((t) => t.value), ...App.documentosAll().map((d) => d.tipo)].filter(Boolean))];
     return {
       title: id ? "Editar Documento" : "Adicionar Documento",
@@ -76,6 +77,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${fld("QUEM PODE VER", `<select id="dc-setor" class="field-input"><option value="">Geral — todos os colaboradores</option>${setores.map((s) => `<option value="${s.id}">Somente o setor ${esc(s.nome)}</option>`).join("")}</select>`, "Documentos restritos só aparecem para o setor escolhido e para administradores.")}
               ${fld("STATUS", `<select id="dc-ativo" class="field-input"><option value="true">Ativo (visível)</option><option value="false">Inativo (escondido)</option></select>`)}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${fld("REVISAR ATÉ (VALIDADE)", `<input id="dc-revisar" type="date" class="field-input">`, "Opcional. Ex.: POP revisado a cada 2 anos. Alertas faltando 30 e 7 dias e no vencimento.")}
+              ${fld("RESPONSÁVEL PELA REVISÃO", `<select id="dc-responsavel" class="field-input"><option value="">Quem gerencia documentos</option>${pessoas.map((u) => `<option value="${u.id}">${esc(u.nome)}${u.setor?.nome ? ` · ${esc(u.setor.nome)}` : ""}</option>`).join("")}</select>`, "Recebe os alertas por notificação e e-mail.")}
             </div>
             <fieldset><legend class="field-label">PERMISSÃO DO ARQUIVO</legend>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -114,13 +119,65 @@
             <p class="text-sm text-slate-500 dark:text-slate-400">O arquivo vai para um armazenamento <b>privado</b>. Os colaboradores abrem por um link temporário (60 s) gerado após conferir o login e o setor.</p>
             <p class="text-xs text-slate-400 mt-3">Validamos o tipo real do arquivo, não só a extensão.</p>
           </div>
+          ${id && App.can("manage_reviews") ? `<section class="card p-5" aria-labelledby="dc-av-h">
+            <div class="flex items-center justify-between gap-2 mb-2"><h3 id="dc-av-h" class="font-bold text-slate-800 dark:text-slate-100">Avaliações</h3>
+              <button type="button" id="dc-pedir-avaliacao" class="btn-wine text-xs px-3 py-1.5 flex items-center gap-1">${icon("plus", "w-3.5 h-3.5")} Pedir avaliação</button></div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Peça a alguém que leia e aprove ou rejeite este documento. A pessoa é avisada e responde em “Minhas revisões”.</p>
+            <ul id="dc-avaliacoes" class="space-y-2" aria-live="polite"><li class="text-sm text-slate-500 dark:text-slate-400">Carregando…</li></ul>
+          </section>` : ""}
         </aside>
       </form>`,
       init() { iniciar(id); },
     };
   }
 
+  /* ---------- avaliações do documento (POST /avaliacoes-documentos) ---------- */
+  const ROT_AV = { PENDENTE: ["blue", "Pendente"], EM_ANALISE: ["amber", "Em análise"], APROVADO: ["green", "Aprovado"], REJEITADO: ["red", "Rejeitado"] };
+
+  async function carregarAvaliacoes(id) {
+    const box = $("dc-avaliacoes");
+    if (!box) return;
+    try {
+      const r = await Services.avaliacoes.list({ documento_id: id, page_size: 50 });
+      if (!document.contains(box)) return;
+      box.innerHTML = r.items.length ? r.items.map((a) => {
+        const [tom, rot] = ROT_AV[a.status] || ["gray", a.status];
+        return `<li class="text-sm"><div class="flex items-center justify-between gap-2"><span class="font-semibold text-slate-800 dark:text-slate-100 truncate">${esc(a.avaliador_nome || "—")}</span>${badge(tom, rot)}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">pedida em ${esc(UI.fmtDataHora(a.data_solicitacao))}</div>
+          ${a.status === "REJEITADO" && a.observacao ? `<div class="text-xs text-slate-600 dark:text-slate-300 mt-1 whitespace-pre-line">${esc(a.observacao)}</div>` : ""}</li>`;
+      }).join("") : `<li class="text-sm text-slate-500 dark:text-slate-400">Nenhuma avaliação pedida ainda.</li>`;
+    } catch (err) { box.innerHTML = `<li class="text-sm text-slate-500 dark:text-slate-400">Não foi possível carregar. ${esc(err.message || "")}</li>`; }
+  }
+
+  function pedirAvaliacao(id) {
+    const pessoas = [...(App.state.api.usuariosRaw || [])].filter((u) => u.ativo !== false && u.id !== App.state.user?.id)
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    App.openPanel("Pedir avaliação", `<form id="dc-av-form" class="space-y-4" novalidate>
+      <p class="text-sm text-slate-500 dark:text-slate-400">${esc($("dc-titulo")?.value || "Documento")}</p>
+      <div><label class="field-label" for="dc-av-pessoa">QUEM VAI AVALIAR *</label><select id="dc-av-pessoa" class="field-input"><option value="">Escolha a pessoa</option>${pessoas.map((u) => `<option value="${u.id}">${esc(u.nome)}${u.setor?.nome ? ` · ${esc(u.setor.nome)}` : ""}</option>`).join("")}</select>
+        <div class="field-hint">Documento de setor só pode ser avaliado por alguém do setor.</div></div>
+      <div><label class="field-label" for="dc-av-obs">O QUE VERIFICAR</label><textarea id="dc-av-obs" class="field-input" rows="3" maxlength="5000" placeholder="Opcional. Ex.: conferir as doses da página 3"></textarea></div>
+      <p id="dc-av-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></p>
+      <button type="submit" class="btn-wine w-full py-3">Pedir avaliação</button></form>`);
+    $("dc-av-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const erro = $("dc-av-erro"), pessoa = $("dc-av-pessoa").value, obs = $("dc-av-obs").value.trim();
+      if (!pessoa) { erro.textContent = "Escolha quem vai avaliar."; erro.classList.remove("hidden"); $("dc-av-pessoa").focus(); return; }
+      const corpo = { documento_id: Number(id), avaliador_id: Number(pessoa) };
+      if (obs) corpo.observacao = obs;
+      try {
+        await Services.avaliacoes.create(corpo);
+        App.closePanel(); App.toast("Avaliação pedida: a pessoa foi avisada");
+        carregarAvaliacoes(id);
+      } catch (err) { erro.textContent = err.message || "Não foi possível pedir a avaliação."; erro.classList.remove("hidden"); }
+    });
+  }
+
   async function iniciar(id) {
+    if (id && $("dc-pedir-avaliacao")) {
+      $("dc-pedir-avaliacao").addEventListener("click", () => pedirAvaliacao(id));
+      carregarAvaliacoes(id);
+    }
     const arq = $("dc-arquivo");
     document.querySelector("[data-pick-document-file]")?.addEventListener("click", (e) => {
       e.preventDefault();
@@ -143,6 +200,7 @@
       const d = await Services.documentos.get(id);
       if (!$("form-doc")) return;
       $("dc-titulo").value = d.titulo; $("dc-categoria").value = d.categoria; $("dc-versao").value = d.versao;
+      $("dc-revisar").value = d.revisar_em || ""; $("dc-responsavel").value = d.responsavel_id ? String(d.responsavel_id) : "";
       $("dc-desc").value = d.descricao || ""; contar(); $("dc-setor").value = d.setor_id ? String(d.setor_id) : ""; $("dc-ativo").value = d.ativo ? "true" : "false";
       document.querySelector(`input[name="dc-permissao"][value="${d.somente_visualizacao ? "visualizacao" : "download"}"]`).checked = true;
       $("dc-atual").innerHTML = atualHtml(d);
@@ -160,13 +218,15 @@
     const titulo = $("dc-titulo").value.trim(), categoria = $("dc-categoria").value.trim(), versao = $("dc-versao").value.trim() || "1.0";
     const desc = $("dc-desc").value.trim(), setor = $("dc-setor").value, ativo = $("dc-ativo").value === "true";
     const somenteVisualizacao = document.querySelector('input[name="dc-permissao"]:checked')?.value === "visualizacao";
+    const revisar = $("dc-revisar").value, responsavel = $("dc-responsavel").value;
     if (!titulo) { App.toast("Informe o título do documento"); $("dc-titulo").focus(); return; }
     if (!categoria) { App.toast("Informe a categoria"); $("dc-categoria").focus(); return; }
     if (desc.length < MIN_DESC) { estado("erro", `Descrição obrigatória (mínimo ${MIN_DESC} caracteres).`); $("dc-desc").focus(); return; }
     if (id) {
       ocupado(true); estado("enviando", "Salvando alterações…");
       try {
-        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc, setor_id: setor ? Number(setor) : null, ativo, somente_visualizacao: somenteVisualizacao });
+        await Services.documentos.update(id, { titulo, categoria, versao, descricao: desc, setor_id: setor ? Number(setor) : null, ativo, somente_visualizacao: somenteVisualizacao,
+          revisar_em: revisar || null, responsavel_id: responsavel ? Number(responsavel) : null });
         estado("sucesso", "Alterações salvas."); App.toast("Documento atualizado");
         await App.loadApiData(); setTimeout(() => App.go("#/admin/documentos"), 400);
       } catch (err) { estado("erro", err.message || "Não foi possível salvar."); ocupado(false); }
@@ -182,6 +242,8 @@
     data.append("ativo", String(ativo)); data.append("vigente", vigente); data.append("descricao", desc);
     if (setor) data.append("setor_id", setor);
     data.append("somente_visualizacao", String(somenteVisualizacao));
+    if (revisar) data.append("revisar_em", revisar);
+    if (responsavel) data.append("responsavel_id", responsavel);
     ocupado(true); estado("enviando", `Enviando ${file.name} (${bytes(file.size)}) para o armazenamento seguro…`);
     try {
       await Services.documentos.create(data);
