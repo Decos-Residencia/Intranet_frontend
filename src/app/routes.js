@@ -44,6 +44,7 @@
     { re: /^#\/admin\/validades$/, page: () => PagesAdmin.adminValidades(), need: "manage_docs" },
     { re: /^#\/admin\/indicadores$/, page: () => PagesAdmin.adminIndicadores(), need: "view_indicators" },
     { re: /^#\/admin\/acessos$/, page: () => PagesAdmin.adminAcessos(), need: "manage_users" },
+    { re: /^#\/admin\/responsaveis-setor$/, page: () => PagesAdmin.adminResponsaveisSetor(), need: "manage_users" },
     { re: /^#\/admin\/chamados$/, page: () => PagesAdmin.adminChamados(), need: "manage_tickets" },
     { re: /^#\/admin\/eventos$/, page: () => PagesAdmin.adminEventos(), need: "manage_events" },
     { re: /^#\/admin\/eventos\/novo$/, page: () => PagesAdmin.adminEventoForm(), need: "manage_events" },
