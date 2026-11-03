@@ -24,7 +24,7 @@ window.DB = (function () {
     { icon: "file-text", titulo: "Documentos & POPs", route: "#/documentos" },
     { icon: "help-circle", titulo: "FAQ", route: "#/faq" },
     { icon: "users", titulo: "Diretório & Ramais", route: "#/diretorio" },
-    { icon: "printer", titulo: "Chamado de TI", chamado: "ti" },
+    { icon: "help-circle", titulo: "Fazer chamado", chamado: "geral" },
     { icon: "shield", titulo: "Reportar Evento Adverso", chamado: "evento-adverso" },
     { icon: "user", titulo: "Meu Perfil", route: "#/perfil" },
     { icon: "bell", titulo: "Notificações", route: "#/notificacoes" },

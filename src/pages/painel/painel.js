@@ -141,7 +141,7 @@
       <div class="flex items-end justify-between gap-3 mb-3 flex-wrap">
         <div><h3 id="painel-chamados-h" class="text-lg font-extrabold text-slate-800 dark:text-slate-100" tabindex="-1">Meus chamados</h3>
           <p class="text-sm text-slate-500 dark:text-slate-400">Todos os chamados que você abriu. Relatos anônimos não aparecem aqui, para preservar o anonimato.</p></div>
-        <button type="button" data-action="open-chamado" data-tipo="geral" class="btn-wine px-5">${icon("plus", "w-4 h-4")} Abrir chamado</button></div>
+        <button type="button" data-action="open-chamado" data-tipo="geral" class="btn-wine px-5">${icon("plus", "w-4 h-4")} Fazer chamado</button></div>
       <div class="flex gap-2 flex-wrap mb-4" role="group" aria-label="Filtrar chamados por status" data-filter-group="painel-ch">
         ${FILTROS_CH.map(([v, l], i) => `<button type="button" class="chip ${i === 0 ? "chip-active" : ""}" data-filter="${v}" aria-pressed="${i === 0}">${l}</button>`).join("")}</div>
       <ul id="painel-ch-lista" class="space-y-3" aria-live="polite"><li class="text-sm text-slate-500 dark:text-slate-400 py-6">Carregando…</li></ul>
