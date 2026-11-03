@@ -24,7 +24,9 @@
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
-    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
+    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0,
+    chamadoPermissoes: { pode_atender: false, administrador: false, setores_ids: [] },
+    avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
@@ -63,6 +65,7 @@
   const role = realRole;
   Object.defineProperty(state, "role", { get: role, enumerable: false });
   function can(cap) {
+    if (cap === "manage_tickets" && state.api.chamadoPermissoes?.pode_atender) return true;
     const permissao = CAP_PERMISSAO[cap] || cap;
     return !!state.user && (state.user.permissoes || []).includes(permissao);
   }
@@ -281,6 +284,7 @@
       cargo: u.cargo || "—", ramal: u.ramal || "", matricula: u.matricula || "", unidade: u.unidade || "", andar: u.andar || "",
       admissao: u.data_admissao || "", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
       senhaTemporaria: !!u.must_change_password, desligamento: u.data_desligamento || "",
+      emailVerificado: !!u.email_verificado_em, emailVerificadoEm: u.email_verificado_em || "",
     };
   }
 
@@ -336,6 +340,8 @@
 
   async function loadApiData() {
     if (!state.auth || !App.API.getToken() || trocaPendente()) return;
+    try { state.api.chamadoPermissoes = await Services.chamados.permissoes(); }
+    catch (_) { state.api.chamadoPermissoes = { pode_atender: false, administrador: false, setores_ids: [] }; }
     const jobs = {
       // O mural/dashboard só recebem avisos EFETIVAMENTE publicados (inclusive para o ADMIN).
       avisos: () => Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),

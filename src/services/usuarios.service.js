@@ -23,6 +23,9 @@
     remove(id) {
       return App.API.request(`/usuarios/${encodeURIComponent(id)}`, { method: "DELETE" });
     },
+    convite(id) {
+      return App.API.request(`/usuarios/${encodeURIComponent(id)}/convite`, { method: "POST" });
+    },
   };
 
   Object.assign(window.Services, { usuarios: usuariosService });
