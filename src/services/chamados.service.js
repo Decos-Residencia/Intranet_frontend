@@ -11,13 +11,22 @@
       return App.API.request(`/chamados${Services.toQuery(params)}`); // ADMIN
     },
     resumo() {
-      return App.API.request("/chamados/resumo"); // ADMIN
+      return App.API.request("/chamados/resumo");
+    },
+    permissoes() {
+      return App.API.request("/chamados/permissoes");
+    },
+    atendentes(id) {
+      return App.API.request(`/chamados/${encodeURIComponent(id)}/atendentes`);
+    },
+    historico(id) {
+      return App.API.request(`/chamados/${encodeURIComponent(id)}/historico`);
     },
     get(id) {
       return App.API.request(`/chamados/${encodeURIComponent(id)}`);
     },
     update(id, data) {
-      return App.API.request(`/chamados/${encodeURIComponent(id)}`, { method: "PUT", body: data }); // ADMIN
+      return App.API.request(`/chamados/${encodeURIComponent(id)}`, { method: "PUT", body: data });
     },
   };
   Object.assign(window.Services, { chamados: chamadosService });

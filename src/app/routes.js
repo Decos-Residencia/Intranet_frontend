@@ -28,6 +28,8 @@
     { re: /^#\/vagas$/, page: () => Pages.vagas() },
     { re: /^#\/vagas\/(\d+)$/, page: (m) => Pages.vagaDetalhe(m[1]) },
     { re: /^#\/admin\/vagas$/, page: () => PagesAdmin.adminVagas(), need: "manage_vagas" },
+    // Link do e-mail: abre o chamado depois do login. Mais específica que #/chamados.
+    { re: /^#\/chamados\/(\d+)$/, page: (m) => PagesAdmin.chamadoDireto(m[1]) },
     // "Meus chamados" fica no Meu painel; o endereço antigo continua abrindo lá.
     { re: /^#\/chamados$/, page: () => Pages.painel() },
     { re: /^#\/notificacoes$/, page: () => Pages.notificacoes() },
@@ -44,7 +46,6 @@
     { re: /^#\/admin\/validades$/, page: () => PagesAdmin.adminValidades(), need: "manage_docs" },
     { re: /^#\/admin\/indicadores$/, page: () => PagesAdmin.adminIndicadores(), need: "view_indicators" },
     { re: /^#\/admin\/acessos$/, page: () => PagesAdmin.adminAcessos(), need: "manage_users" },
-    { re: /^#\/admin\/responsaveis-setor$/, page: () => PagesAdmin.adminResponsaveisSetor(), need: "manage_users" },
     { re: /^#\/admin\/chamados$/, page: () => PagesAdmin.adminChamados(), need: "manage_tickets" },
     { re: /^#\/admin\/eventos$/, page: () => PagesAdmin.adminEventos(), need: "manage_events" },
     { re: /^#\/admin\/eventos\/novo$/, page: () => PagesAdmin.adminEventoForm(), need: "manage_events" },
