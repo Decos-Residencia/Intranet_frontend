@@ -22,6 +22,10 @@
     historico(id) {
       return App.API.request(`/chamados/${encodeURIComponent(id)}/historico`);
     },
+    // Quem pode atender chamados do setor (nome e setor; nunca e-mail). Alimenta o seletor "Responsável".
+    atendentesDoSetor(setorId) {
+      return App.API.request(`/chamados/atendentes${Services.toQuery({ setor_id: setorId })}`);
+    },
     get(id) {
       return App.API.request(`/chamados/${encodeURIComponent(id)}`);
     },
