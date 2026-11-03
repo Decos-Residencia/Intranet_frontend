@@ -1,9 +1,4 @@
-/* =========================================================================
-   Tela: Chamados (ADMIN)
-   Rota: #/admin/chamados
-   Fonte: GET /chamados (filtros, busca e paginação no servidor) e GET /chamados/resumo.
-   Relatos anônimos aparecem sem solicitante: o servidor não grava quem enviou.
-   ========================================================================= */
+/* Chamados: ADMIN e profissionais com a permissão "Atender chamados" no setor. */
 (function () {
   const { icon, badge, esc } = UI;
 
@@ -35,7 +30,7 @@
           <div class="text-xs text-slate-400 truncate">${esc(c.solicitante_setor || "Sem setor")}${c.solicitante_ramal ? ` · ramal ${esc(c.solicitante_ramal)}` : ""}</div></div></div>`;
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40" data-id="${c.id}">
       <td class="py-3.5 pl-4"><div class="font-bold text-slate-800 dark:text-slate-100">${esc(c.protocolo)} <span class="font-normal text-slate-400">· ${esc(ROT_TIPO[c.tipo])}</span></div>
-        <div class="text-xs text-slate-400 truncate max-w-sm">${esc(c.categoria)} · ${esc(c.local)}</div></td>
+        <div class="text-xs text-slate-400 truncate max-w-sm">${esc(c.titulo || c.categoria)} · ${esc(c.setor_responsavel_nome || "Sem setor")}</div></td>
       <td class="text-sm text-slate-600 dark:text-slate-300">${quem}</td>
       <td>${badge(tp, np)}</td><td>${badge(ts, ns)}</td>
       <td class="text-xs"><div class="text-slate-600 dark:text-slate-300">${esc(quando(c.criado_em))}</div><div class="text-slate-400">${haQuanto(c.criado_em)}</div></td>
@@ -83,7 +78,7 @@
     return {
       title: "Chamados",
       html: `
-      <div class="mb-6"><div class="text-sm text-slate-400">Hospital Decós Intranet • Painel Administrador</div>
+      <div class="mb-6"><div class="text-sm text-slate-400">Hospital Decós Intranet • Atendimento autorizado</div>
         <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Chamados & Relatos</h2></div>
       <div id="ch-stats" class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6"></div>
       <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
@@ -128,32 +123,48 @@
           <div class="text-xs text-slate-500 dark:text-slate-400">${esc([c.solicitante_cargo, c.solicitante_setor].filter(Boolean).join(" · ") || "Sem setor")}</div>
           <dl class="mt-2 space-y-1">${contato("E-mail", c.solicitante_email, c.solicitante_email ? `mailto:${encodeURIComponent(c.solicitante_email)}?subject=${encodeURIComponent(`Chamado ${c.protocolo}`)}` : "")}${contato("Ramal", c.solicitante_ramal)}</dl></div></div>`;
     const marco = (rotulo, iso, extra = "") => iso ? `<li><span class="ch-marco-ponto" aria-hidden="true"></span><div><div class="font-semibold text-slate-700 dark:text-slate-200">${rotulo}${extra}</div><div class="text-xs text-slate-500 dark:text-slate-400">${esc(quando(iso))} · ${haQuanto(iso)}</div></div></li>` : "";
-    App.openPanel(`${c.protocolo} · ${ROT_TIPO[c.tipo]}`, `<form data-form="chamado-admin" data-id="${c.id}" class="space-y-4">
+    let atribuicao = "";
+    if (c.pode_atribuir) {
+      const setorOpts = App.setoresAll().map((s) => `<option value="${s.id}" ${Number(s.id) === Number(c.setor_responsavel_id) ? "selected" : ""}>${esc(s.nome)}</option>`).join("");
+      let atendentes = [];
+      try { atendentes = await Services.chamados.atendentes(c.id); } catch (_) { atendentes = []; }
+      if (c.responsavel_id && !atendentes.some((r) => r.usuario_id === c.responsavel_id)) {
+        atendentes.push({ usuario_id: c.responsavel_id, usuario_nome: c.responsavel_nome || "Responsável atual" });
+      }
+      const respOpts = atendentes.map((r) => `<option value="${r.usuario_id}" ${Number(r.usuario_id) === Number(c.responsavel_id) ? "selected" : ""}>${esc(r.usuario_nome)}</option>`).join("");
+      atribuicao = `<div class="grid grid-cols-2 gap-3"><div><label class="field-label">SETOR RESPONSÁVEL</label><select name="setor_responsavel_id" class="field-input"><option value="">Sem setor</option>${setorOpts}</select></div><div><label class="field-label">PROFISSIONAL RESPONSÁVEL</label><select name="responsavel_id" class="field-input"><option value="">Não atribuído</option>${respOpts}</select></div></div><div class="field-hint">A lista vem de quem pode atender este chamado. Ao transferir o setor, salve antes de escolher um profissional do setor novo.</div>`;
+    }
+    const atendimento = c.pode_atender ? `<form data-form="chamado-admin" data-id="${c.id}" class="space-y-4">${atribuicao}<div class="grid grid-cols-2 gap-3"><div><label class="field-label" for="ch-f-status">STATUS</label><select id="ch-f-status" name="status" class="field-input">${opts(ROT_STATUS, c.status)}</select></div><div><label class="field-label" for="ch-f-prio">PRIORIDADE</label><select id="ch-f-prio" name="prioridade" class="field-input">${opts(ROT_PRIO, c.prioridade)}</select></div></div><div><label class="field-label">RESPOSTA ${c.anonimo ? "(interna: o relato é anônimo)" : "AO SOLICITANTE"}</label><textarea name="resposta_admin" class="field-input" rows="4" maxlength="5000" placeholder="Opcional">${esc(c.resposta_admin || "")}</textarea></div><button type="submit" class="btn-wine w-full py-3">Salvar atendimento</button></form>` : `<div class="card p-3 text-sm text-slate-500">Acompanhamento somente. O atendimento é restrito à equipe autorizada.</div>`;
+    App.openPanel(`${c.protocolo} · ${ROT_TIPO[c.tipo]}`, `<div class="space-y-4">
       <div class="flex gap-2 flex-wrap">${badge(ts, ns)} ${badge(tp, `Prioridade ${np.toLowerCase()}`)}</div>
       <section aria-label="Quem abriu"><div class="field-label">QUEM ABRIU</div>${solicitante}</section>
       <div class="text-sm space-y-1 text-slate-600 dark:text-slate-300">
+        <div><b>Título:</b> ${esc(c.titulo || c.categoria)}</div>
+        <div><b>Setor responsável:</b> ${esc(c.setor_responsavel_nome || "Não definido")}</div>
+        ${c.responsavel_nome ? `<div><b>Atendido por:</b> ${esc(c.responsavel_nome)}</div>` : ""}
         <div><b>Categoria:</b> ${esc(c.categoria)}</div><div><b>Local:</b> ${esc(c.local)}</div></div>
       <section aria-label="Linha do tempo"><div class="field-label">LINHA DO TEMPO</div><ol class="ch-marcos">
         ${marco("Aberto", c.criado_em)}
         ${c.atualizado_em && c.atualizado_em !== c.criado_em ? marco("Última atualização", c.atualizado_em, c.responsavel_nome ? ` por ${esc(c.responsavel_nome)}` : "") : ""}
         ${marco("Concluído", c.concluido_em)}</ol></section>
       <div><label class="field-label">DESCRIÇÃO</label><div class="card p-3 text-sm whitespace-pre-line text-slate-700 dark:text-slate-200">${esc(c.descricao)}</div></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="field-label" for="ch-f-status">STATUS</label><select id="ch-f-status" name="status" class="field-input">${opts(ROT_STATUS, c.status)}</select></div>
-        <div><label class="field-label" for="ch-f-prio">PRIORIDADE</label><select id="ch-f-prio" name="prioridade" class="field-input">${opts(ROT_PRIO, c.prioridade)}</select></div></div>
-      <div><label class="field-label">RESPOSTA ${c.anonimo ? "(interna: o relato é anônimo)" : "AO SOLICITANTE"}</label>
-        <textarea name="resposta_admin" class="field-input" rows="4" maxlength="5000" placeholder="Opcional">${esc(c.resposta_admin || "")}</textarea></div>
-      <button type="submit" class="btn-wine w-full py-3">Salvar atendimento</button></form>`);
+      ${atendimento}</div>`);
   }
 
   async function submitChamadoAdmin(f, v) {
     const corpo = { status: v.status, prioridade: v.prioridade };
     if ((v.resposta_admin || "").trim()) corpo.resposta_admin = v.resposta_admin.trim();
+    if (f.elements.setor_responsavel_id) corpo.setor_responsavel_id = v.setor_responsavel_id ? Number(v.setor_responsavel_id) : null;
+    if (f.elements.responsavel_id) corpo.responsavel_id = v.responsavel_id ? Number(v.responsavel_id) : null;
     await Services.chamados.update(f.dataset.id, corpo);
     App.toast("Chamado atualizado");
     if (PagesAdmin.recarregarChamados) PagesAdmin.recarregarChamados();
     return true;
   }
 
-  Object.assign(PagesAdmin, { adminChamados, abrirChamado, submitChamadoAdmin });
+  function chamadoDireto(id) {
+    return { title: "Chamado", html: `<div class="card p-8 text-center text-slate-400">Abrindo chamado com autenticação e verificação de acesso…</div>`, init() { abrirChamado(id); } };
+  }
+
+  Object.assign(PagesAdmin, { adminChamados, abrirChamado, submitChamadoAdmin, chamadoDireto });
 })();

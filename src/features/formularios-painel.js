@@ -25,14 +25,19 @@
   };
   function openChamadoPanel(tipo) {
     const c = CHAMADOS[tipo] || CHAMADOS.geral;
+    const setores = App.setoresAll();
+    if (!setores.length) { App.toast("Não foi possível carregar os setores disponíveis."); return; }
+    const setorOpts = setores.map((s) => `<option value="${s.id}">${UI.esc(s.nome)}</option>`).join("");
     App.openPanel(c.titulo, `<form data-form="chamado" data-tipo="${tipo}" class="space-y-4">
       <p class="text-sm text-slate-500 dark:text-slate-400">${c.intro}</p>
+      ${fld("TÍTULO", `<input name="titulo" class="field-input" required minlength="3" maxlength="160" placeholder="Resuma a solicitação">`)}
       ${fld("CATEGORIA", `<select name="categoria" class="field-input">${opts(c.cats)}</select>`)}
+      ${fld("SETOR RESPONSÁVEL", `<select name="setor_responsavel_id" class="field-input" required><option value="">Selecione o setor</option>${setorOpts}</select><div class="field-hint">O encaminhamento usa o identificador do setor, sem presumir equivalência entre nomes.</div>`)}
       ${fld(tipo === "evento-adverso" ? "LOCAL DA OCORRÊNCIA" : "SETOR / LOCAL", `<input name="local" class="field-input" required placeholder="Ex: UTI Adulto, leito 12" value="">`)}
       ${fld("PRIORIDADE", `<select name="prioridade" class="field-input">${opts(["Baixa", "Média", "Alta"], "Média")}</select>`)}
       ${fld("DESCRIÇÃO", `<textarea name="descricao" class="field-input" rows="5" required minlength="10" placeholder="Conte o que aconteceu com o máximo de detalhes possível..."></textarea>`)}
       ${c.anonimo ? `<label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" name="anonimo" class="accent-[#8E1B2E]"> Enviar anonimamente</label>
-      <p class="text-xs text-slate-400 -mt-2">Anônimo: ninguém é ligado ao relato (nem o administrador) e você não poderá acompanhá-lo; guarde o protocolo.</p>` : ""}
+      <p class="text-xs text-slate-400 -mt-2">Anônimo: ninguém é ligado ao relato (nem o administrador) e você não poderá acompanhá-lo; guarde o protocolo.</p>` : `<label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"><input type="checkbox" name="confidencial" class="accent-[#8E1B2E]"> Não incluir o resumo da descrição no e-mail</label>`}
       <button type="submit" class="btn-wine w-full py-3">Enviar</button>
     </form>`);
   }
@@ -58,7 +63,7 @@
       ${fld("DATA DE ADMISSÃO", `<input name="admissao" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.admissao || "")}">`)}
       ${fld("DATA DE NASCIMENTO", `<input name="nascimento" type="date" class="field-input" max="${new Date().toISOString().slice(0, 10)}" value="${UI.esc(u?.nascimento || "")}"><div class="field-hint">Opcional. Usada nos aniversariantes (a intranet mostra só dia e mês).</div>`)}
       ${fld("DATA DE DESLIGAMENTO", `<input name="desligamento" type="date" class="field-input" value="${UI.esc(u?.desligamento || "")}"><div class="field-hint">Opcional. A partir desse dia o acesso é desativado sozinho (e registrado na auditoria).</div>`)}
-      ${u ? "" : fld("SENHA INICIAL", `<input name="senha" type="password" class="field-input" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><div class="field-hint">A senha é temporária: o novo usuário precisará criar a própria senha no primeiro acesso.</div>`)}
+      ${u ? `<p class="text-sm text-slate-500 dark:text-slate-400">E-mail ${u.emailVerificado ? "verificado" : "pendente de confirmação"}. Quem ainda não confirmou não recebe notificações de chamados. O reenvio do convite fica na lista de usuários.</p>` : `<p class="text-sm text-slate-500 dark:text-slate-400">Não há senha inicial. O colaborador recebe um convite para confirmar o e-mail e definir a própria senha. Para atender chamados do setor, conceda a permissão <b>Atender chamados</b> em Controle de acesso — pertencer ao setor não basta.</p>`}
       ${fld("PAPEL DE ACESSO", `<select name="role" class="field-input" ${proprio ? "disabled" : ""}>${papelOpts}</select>${proprio ? `<div class="field-hint">Você não pode alterar o próprio papel.</div>` : `<div class="field-hint">Leitura: somente consulta · Colaborador: padrão · RH: cria e gerencia conteúdo · Administrador: acesso total.</div>`}`)}
       ${u ? fld("STATUS", `<select name="status" class="field-input" ${proprio ? "disabled" : ""}>${opts(["Ativo", "Inativo"], u.status)}</select>${proprio ? `<div class="field-hint">Você não pode desativar a própria conta.</div>` : ""}`) : ""}
       <button type="submit" class="btn-crimson w-full py-3">${u ? "Salvar alterações" : "Cadastrar usuário"}</button>
@@ -73,21 +78,21 @@
       andar: (v.andar || "").trim() || null, data_admissao: v.admissao || null,
     };
     if (!f.dataset.id) {
-      const senha = v.senha || "";
-      if (senha.length < 8) { App.toast("A senha inicial deve ter pelo menos 8 caracteres."); return false; }
-      if (new TextEncoder().encode(senha).length > 72) { App.toast("A senha inicial deve ter no máximo 72 bytes."); return false; }
-      const body = { nome, email, senha, setor_id, cargo, ramal: ramal || null };
+      const perfil = App.ROLE_PERFIL[v.role] || "COLABORADOR";
+      const body = { nome, email, setor_id, cargo, ramal: ramal || null };
+      if (perfil !== "ADMIN") body.perfil = perfil;
       Object.entries(extras).forEach(([k, val]) => { if (val) body[k] = val; });
       if (v.nascimento) body.data_nascimento = v.nascimento;
       if (v.desligamento) body.data_desligamento = v.desligamento;
       const criado = await Services.auth.register(body);
-      const perfil = App.ROLE_PERFIL[v.role] || "COLABORADOR"; // o cadastro nasce COLABORADOR; o papel escolhido é aplicado em seguida
-      if (perfil !== "COLABORADOR") {
+      if (perfil === "ADMIN") {
         try { await Services.usuarios.update(criado.id, { perfil }); }
         catch (err) { App.toast("Usuário criado como Colaborador, mas o papel não foi aplicado: " + (err.message || "erro")); return true; }
       }
-      if (f.elements.senha) f.elements.senha.value = ""; // a senha não fica no DOM nem em lugar nenhum
-      App.toast("Usuário cadastrado como Colaborador");
+      const convite = criado.convite_enviado
+        ? "Convite de ativação enviado. O e-mail fica pendente até a pessoa confirmar o link."
+        : `Usuário cadastrado. O convite não foi enviado${criado.convite_motivo ? `: ${criado.convite_motivo}` : "."}`;
+      App.toast(convite);
     } else {
       const u = App.findItem("usuarios", f.dataset.id);
       if (!u) { App.toast("Usuário não encontrado"); return false; }
@@ -193,8 +198,10 @@
     const c = CHAMADOS[f.dataset.tipo] || CHAMADOS.geral;
     const anonimo = !!v.anonimo;
     const r = await Services.chamados.create({
-      tipo: TIPO_API[f.dataset.tipo] || "GERAL", categoria: v.categoria, local: v.local.trim(),
-      prioridade: PRIO_API[v.prioridade] || "MEDIA", descricao: v.descricao.trim(), anonimo,
+      titulo: v.titulo.trim(), tipo: TIPO_API[f.dataset.tipo] || "GERAL", categoria: v.categoria,
+      local: v.local.trim(), prioridade: PRIO_API[v.prioridade] || "MEDIA",
+      descricao: v.descricao.trim(), anonimo, confidencial: !!v.confidencial,
+      setor_responsavel_id: Number(v.setor_responsavel_id),
     });
     App.toast(anonimo ? `${c.titulo} enviado anonimamente — protocolo ${r.protocolo} (guarde-o: não aparece no Meu painel)` : `${c.titulo} registrado — protocolo ${r.protocolo}`);
     if (!anonimo && ["#/painel", "#/chamados"].includes(location.hash)) setTimeout(() => App.render(), 0); // lista recarrega da API

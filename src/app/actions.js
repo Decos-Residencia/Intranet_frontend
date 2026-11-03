@@ -102,14 +102,14 @@
           } catch (err) { App.toast(err.message || "Não foi possível desativar o usuário."); }
         }, "Sim, desativar"); }
       else if (a === "open-senha") { e.preventDefault(); App.openSenhaPanel(el.dataset.id); }
-      else if (a === "convidar-usuario") { e.preventDefault();
+      else if (a === "reenviar-convite") { e.preventDefault();
         const { id, nome } = el.dataset;
-        App.openConfirm("Reenviar convite?", `<b>${UI.esc(nome || "Este usuário")}</b> receberá um link de uso único para ativar a conta e definir a própria senha.`, async () => {
+        App.openConfirm("Reenviar convite?", `Um link de uso único será enviado para o e-mail de <b>${UI.esc(nome || "este usuário")}</b>. A conta não é recriada. O e-mail só fica verificado depois que a pessoa abrir o link.`, async () => {
           try {
-            const r = await Services.usuarios.convidar(id);
-            App.toast(r.enviado ? "Convite enviado" : `Convite não enviado: ${r.motivo || "bloqueado pela configuração"}`);
-          } catch (err) { App.toast(err.message || "Não foi possível enviar o convite."); }
-        }, "Sim, enviar"); }
+            const r = await Services.usuarios.convite(id);
+            App.toast(r.enviado ? "Convite reenviado. A confirmação acontece quando a pessoa usar o link." : `Convite não enviado${r.motivo ? `: ${r.motivo}` : "."}`);
+          } catch (err) { App.toast(err.message || "Não foi possível reenviar o convite."); }
+        }, "Reenviar convite", "btn-wine"); }
       else if (a === "reactivate-usuario") { e.preventDefault();
         const { id, nome } = el.dataset;
         App.openConfirm("Reativar usuário?", `<b>${UI.esc(nome || "Este usuário")}</b> poderá entrar novamente na intranet com a senha atual.`, async () => {
