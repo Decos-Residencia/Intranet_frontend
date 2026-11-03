@@ -22,6 +22,8 @@
 .sidebar-toggle svg{ transition:transform .22s cubic-bezier(.2,.8,.2,1); }
 .sidebar-toggle-collapsed svg,
 .sidebar-toggle-open svg{ transform:rotate(180deg); }
+/* Em telas largas o menu recolhe pela alça da borda (.sidebar-alca); o botão do topo só existe no celular. */
+@media (min-width:861px){ .sidebar-toggle{ display:none; } }
 
 /* Perfil de acesso junto ao nome (antes ficava num selo abaixo da logo, no menu). */
 .topbar-perfil{ display:inline-flex; align-items:center; gap:.2rem; padding:.05rem .45rem; border-radius:999px; font-size:.68rem; font-weight:700;
