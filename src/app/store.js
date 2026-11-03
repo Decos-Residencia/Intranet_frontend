@@ -281,6 +281,7 @@
       cargo: u.cargo || "—", ramal: u.ramal || "", matricula: u.matricula || "", unidade: u.unidade || "", andar: u.andar || "",
       admissao: u.data_admissao || "", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
       senhaTemporaria: !!u.must_change_password, desligamento: u.data_desligamento || "",
+      emailVerificado: !!u.email_verificado_em,
     };
   }
 

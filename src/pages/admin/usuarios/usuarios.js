@@ -24,10 +24,11 @@
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.setor)}</td>
         <td class="text-sm text-slate-500 dark:text-slate-400">${esc(u.cargo)}</td>
         <td>${roleBadge(u.role)}</td>
-        <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}${u.senhaTemporaria ? `<div class="mt-1">${badge("amber", "Senha temporária")}</div>` : ""}${u.desligamento && u.status === "Ativo" ? `<div class="mt-1">${badge("amber", `Desliga em ${esc(u.desligamento.split("-").reverse().join("/"))}`)}</div>` : ""}</td>
+        <td>${u.status === "Ativo" ? badge("green", "Ativo") : badge("gray", "Inativo")}${u.status === "Ativo" ? `<div class="mt-1">${u.emailVerificado ? badge("green", "E-mail verificado") : badge("amber", "Ativação pendente")}</div>` : ""}${u.senhaTemporaria ? `<div class="mt-1">${badge("amber", "Senha temporária")}</div>` : ""}${u.desligamento && u.status === "Ativo" ? `<div class="mt-1">${badge("amber", `Desliga em ${esc(u.desligamento.split("-").reverse().join("/"))}`)}</div>` : ""}</td>
         <td><div class="flex items-center gap-1.5 justify-end pr-4">
           <button class="act-btn" data-action="open-usuario" data-id="${esc(u.id)}" title="Editar">${icon("edit","w-4 h-4")}</button>
           <button class="act-btn" data-action="open-senha" data-id="${esc(u.id)}" title="Redefinir senha">${icon("key","w-4 h-4")}</button>
+          ${u.status === "Ativo" && !u.emailVerificado ? `<button class="act-btn" data-action="convidar-usuario" data-id="${esc(u.apiId)}" data-nome="${esc(u.nome)}" title="Reenviar convite de ativação">${icon("inbox","w-4 h-4")}</button>` : ""}
           ${u.status === "Inativo"
             ? `<button class="act-btn" data-action="reactivate-usuario" data-id="${esc(u.apiId)}" data-nome="${esc(u.nome)}" title="Reativar usuário">${icon("rotate-ccw","w-4 h-4")}</button>`
             : u.apiId === eu.id ? "" : `<button class="act-btn act-btn-danger" data-action="deactivate-usuario" data-id="${esc(u.apiId)}" data-nome="${esc(u.nome)}" title="Desativar usuário">${icon("trash","w-4 h-4")}</button>`}</div></td>

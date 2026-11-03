@@ -50,7 +50,6 @@
     if (can("manage_docs")) adminChildren.push({ icon: "clock", label: "Validade de documentos", route: "#/admin/validades" });
     if (can("manage_users")) adminChildren.push({ icon: "user-cog", label: "Usuários & Setores", route: "#/admin/usuarios" });
     if (can("manage_users")) adminChildren.push({ icon: "key", label: "Controle de acesso", route: "#/admin/acessos" });
-    if (can("manage_users")) adminChildren.push({ icon: "users", label: "Responsáveis por setor", route: "#/admin/responsaveis-setor" });
     if (can("approve")) adminChildren.push({ icon: "check-check", label: "Revisão de publicações", route: "#/admin/revisao", count: App.state.api.revisaoPendentes || 0 });
     if (can("manage_tickets")) adminChildren.push({ icon: "help-circle", label: "Chamados", route: "#/admin/chamados", count: App.state.api.chamadosPendentes || 0 });
     if (can("manage_users")) adminChildren.push({ icon: "check-check", label: "Solicitações Cadastrais", route: "#/admin/solicitacoes", count: App.state.api.solicitacoesPendentes || 0 });

@@ -13,6 +13,10 @@
     update(id, data) {
       return App.API.request(`/usuarios/${encodeURIComponent(id)}`, { method: "PUT", body: data });
     },
+    // Reenvia o convite de ativação (link de uso único; nenhuma senha viaja por e-mail). ADMIN.
+    convidar(id) {
+      return App.API.request(`/usuarios/${encodeURIComponent(id)}/convite`, { method: "POST" });
+    },
     // Planilha CSV: simular=true só confere (nada é gravado); false grava se não houver erro.
     importar(arquivo, simular) {
       const fd = new FormData();

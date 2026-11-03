@@ -102,6 +102,14 @@
           } catch (err) { App.toast(err.message || "Não foi possível desativar o usuário."); }
         }, "Sim, desativar"); }
       else if (a === "open-senha") { e.preventDefault(); App.openSenhaPanel(el.dataset.id); }
+      else if (a === "convidar-usuario") { e.preventDefault();
+        const { id, nome } = el.dataset;
+        App.openConfirm("Reenviar convite?", `<b>${UI.esc(nome || "Este usuário")}</b> receberá um link de uso único para ativar a conta e definir a própria senha.`, async () => {
+          try {
+            const r = await Services.usuarios.convidar(id);
+            App.toast(r.enviado ? "Convite enviado" : `Convite não enviado: ${r.motivo || "bloqueado pela configuração"}`);
+          } catch (err) { App.toast(err.message || "Não foi possível enviar o convite."); }
+        }, "Sim, enviar"); }
       else if (a === "reactivate-usuario") { e.preventDefault();
         const { id, nome } = el.dataset;
         App.openConfirm("Reativar usuário?", `<b>${UI.esc(nome || "Este usuário")}</b> poderá entrar novamente na intranet com a senha atual.`, async () => {
