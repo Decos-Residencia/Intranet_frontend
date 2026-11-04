@@ -7,8 +7,8 @@
 (function () {
   const { icon, esc } = UI;
 
-  const FILTROS = [["all", "Todas"], ["aviso", "Notícias"], ["documento", "Documentos"], ["usuario", "Usuários"], ["setor", "Setores"], ["faq", "FAQ"], ["avaliacao", "Avaliações"], ["solicitacao", "Solicitações"], ["evento", "Eventos"], ["chamado", "Chamados"]];
-  const TIPO_ICONE = { aviso: "megaphone", documento: "file-text", usuario: "user-cog", setor: "users", faq: "help-circle", avaliacao: "check-check", solicitacao: "user-cog", evento: "calendar", chamado: "help-circle" };
+  const FILTROS = [["all", "Todas"], ["aviso", "Notícias"], ["documento", "Documentos"], ["usuario", "Usuários"], ["setor", "Setores"], ["faq", "FAQ"], ["avaliacao", "Avaliações"], ["solicitacao", "Solicitações"], ["evento", "Eventos"], ["chamado", "Chamados"], ["vaga", "Vagas"], ["perfil", "Perfis e acessos"], ["funcionalidade", "Funcionalidades"], ["email", "E-mails"]];
+  const TIPO_ICONE = { aviso: "megaphone", documento: "file-text", usuario: "user-cog", setor: "users", faq: "help-circle", avaliacao: "check-check", solicitacao: "user-cog", evento: "calendar", chamado: "help-circle", vaga: "trending-up", perfil: "key", funcionalidade: "settings", email: "inbox" };
   const POR_PAGINA = 20;
   const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
   const fmtQuando = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "—" : quando.format(d); };
