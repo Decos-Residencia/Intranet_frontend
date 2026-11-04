@@ -2,7 +2,8 @@
    Tela: Diretório & Ramais
    Rota: #/diretorio
    Busca única (nome, cargo, setor ou número de ramal), ramal em destaque com botão de
-   copiar e duas visões: Pessoas (tabela) e Por setor (ramal do setor + quem trabalha nele).
+   copiar e duas visões: Por setor (padrão: ramal do setor e, dentro, cada pessoa com o seu
+   ramal individual ou o do setor) e Pessoas (tabela). Só o ADMIN cadastra ramais.
    ========================================================================= */
 (function () {
   const { icon, breadcrumb, iniciais, foto, esc } = UI;
@@ -50,7 +51,7 @@
         <ul class="divide-y divide-slate-100 dark:divide-slate-800">${pessoas.map((p) => `
           <li class="flex items-center justify-between gap-3 py-2"><div class="min-w-0"><div class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">${esc(p.nome)}</div>
             <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${esc(p.cargo)}</div></div>
-            ${p.ramalProprio ? botaoRamal(p.ramal, p.nome) : ""}</li>`).join("") || `<li class="text-sm text-slate-500 dark:text-slate-400 py-2">Ninguém cadastrado neste setor.</li>`}</ul>
+            ${p.ramalProprio ? botaoRamal(p.ramal, p.nome) : s.ramal ? `<span class="text-xs text-slate-500 dark:text-slate-400 shrink-0">${esc(s.ramal)} (do setor)</span>` : ""}</li>`).join("") || `<li class="text-sm text-slate-500 dark:text-slate-400 py-2">Ninguém cadastrado neste setor.</li>`}</ul>
       </section>`;
     }).join("");
 
@@ -67,12 +68,12 @@
         <select id="dir-setor" class="select-field" aria-label="Filtrar por setor"><option value="">Setor: Todos</option>${opt(setoresU)}</select>
         ${andaresU.length ? `<select id="dir-andar" class="select-field" aria-label="Filtrar por andar"><option value="">Andar: Todos</option>${opt(andaresU)}</select>` : ""}
         <div class="cfg-seg" role="group" aria-label="Forma de exibição">
-          <label><input type="radio" name="dir-visao" value="pessoas" checked><span>${icon("users", "w-4 h-4 mr-1")}Pessoas</span></label>
-          <label><input type="radio" name="dir-visao" value="setores"><span>${icon("user-cog", "w-4 h-4 mr-1")}Por setor</span></label>
+          <label><input type="radio" name="dir-visao" value="setores" checked><span>${icon("user-cog", "w-4 h-4 mr-1")}Por setor</span></label>
+          <label><input type="radio" name="dir-visao" value="pessoas"><span>${icon("users", "w-4 h-4 mr-1")}Pessoas</span></label>
         </div>
       </div>
 
-      <div id="dir-pessoas">
+      <div id="dir-pessoas" class="hidden">
         <div class="card overflow-x-auto">
           <table class="w-full text-sm text-left">
             <caption class="sr-only">Colaboradores e ramais</caption>
@@ -86,7 +87,7 @@
           <span id="dir-info" aria-live="polite"></span><div class="flex gap-1.5" id="dir-pager"></div>
         </div>
       </div>
-      <div id="dir-setores" class="hidden grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">${porSetor}</div>
+      <div id="dir-setores" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">${porSetor}</div>
       <p id="dir-setores-vazio" class="hidden text-sm text-slate-500 dark:text-slate-400 py-6 text-center">Nenhum setor encontrado.</p>`,
       init() {
         const valor = (id) => document.getElementById(id)?.value || "";
@@ -119,6 +120,9 @@
           const andar = document.getElementById("dir-andar"); if (andar) andar.disabled = setoresVis;
           filtrarSetores();
         }));
+        // Começa na visão por setor (o filtro de andar só vale na visão Pessoas).
+        const andar0 = document.getElementById("dir-andar"); if (andar0) andar0.disabled = true;
+        filtrarSetores();
       },
     };
   }

@@ -68,19 +68,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               ${field("NOME COMPLETO",u.nome)}${field("E-MAIL CORPORATIVO",u.email)}
               ${field("CARGO",u.cargo || "—")}${field("SETOR",setorNome)}
-              ${field("ANDAR / ALA",u.andar || "—")}${field("MATRÍCULA",u.matricula || "—")}${field("RAMAL INTERNO",u.ramal || u.setor?.ramal || "—")}
+              ${field("ANDAR / ALA",u.andar || "—")}${field("MATRÍCULA",u.matricula || "—")}${field("RAMAL",u.ramal || (u.setor?.ramal ? `${u.setor.ramal} (do setor)` : "—"))}
               ${field("UNIDADE",u.unidade || "—")}${field("DATA DE ADMISSÃO",admissao)}${field("DATA DE NASCIMENTO",nascimento)}
             </div>
-            ${App.can("edit_profile") ? `<form id="pf-ramal" class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800" novalidate>
-              <label for="pf-ramal-in" class="font-bold text-slate-800 dark:text-slate-100">Meu ramal</label>
-              <p id="pf-ramal-ajuda" class="text-sm text-slate-500 dark:text-slate-400 mb-3">Mantenha seu ramal em dia: ele aparece no Diretório. Só números, de 3 a 6 dígitos.${!u.ramal && u.setor?.ramal ? ` Hoje aparece o ramal do setor (${esc(u.setor.ramal)}).` : ""}</p>
-              <div class="flex gap-2 flex-wrap items-start">
-                <input id="pf-ramal-in" class="field-input max-w-[10rem]" inputmode="numeric" pattern="[0-9]{3,6}" maxlength="6" autocomplete="off" value="${esc(u.ramal || "")}" aria-describedby="pf-ramal-ajuda pf-ramal-erro">
-                <button type="submit" class="btn-wine px-5">Salvar ramal</button>
-                ${u.ramal ? `<button type="button" id="pf-ramal-limpar" class="btn-outline px-4">Remover</button>` : ""}
-              </div>
-              <p id="pf-ramal-erro" class="text-sm text-red-700 dark:text-red-300 mt-2 hidden" role="alert"></p>
-            </form>` : ""}
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-4">O ramal é cadastrado pelo administrador: para mudá-lo, use "Solicitar Alteração".</p>
           </div>
           <div class="card p-6" data-perfil-tab="seguranca">
             <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-1">Segurança de Acesso</h3>
@@ -94,21 +85,6 @@
           document.querySelectorAll("[data-perfil-tab]").forEach((el) => el.classList.toggle("hidden", el.dataset.perfilTab !== f));
         });
         document.querySelector('[data-perfil-tab="seguranca"]').classList.add("hidden");
-        const form = document.getElementById("pf-ramal");
-        if (form) {
-          const erro = document.getElementById("pf-ramal-erro");
-          const salvar = async (ramal) => {
-            erro.classList.add("hidden");
-            if (ramal !== null && !/^\d{3,6}$/.test(ramal)) { erro.textContent = "Use só números, de 3 a 6 dígitos (ex.: 2145)."; erro.classList.remove("hidden"); return; }
-            try {
-              App.state.user = await Services.usuarios.atualizarMeuRamal(ramal);
-              App.toast(ramal ? `Ramal ${ramal} salvo` : "Ramal removido");
-              App.loadApiData().then(() => { if (location.hash === "#/perfil") App.render(); });
-            } catch (err) { erro.textContent = err.message || "Não foi possível salvar o ramal."; erro.classList.remove("hidden"); }
-          };
-          form.addEventListener("submit", (e) => { e.preventDefault(); salvar(document.getElementById("pf-ramal-in").value.trim()); });
-          document.getElementById("pf-ramal-limpar")?.addEventListener("click", () => salvar(null));
-        }
         // Traz o cadastro e os pedidos mais recentes (ex.: pedido aprovado desde a última carga).
         App.refreshPerfil().then((mudou) => { if (mudou && location.hash === "#/perfil") App.render(); }).catch(() => {});
       },

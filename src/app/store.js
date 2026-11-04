@@ -322,7 +322,7 @@
     return {
       id: String(u.id), nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", andar: u.andar || "—",
       unidade: u.unidade || "", email: u.email, setorId: u.setor_id,
-      // O ramal do usuário vale; o do setor só entra como alternativa.
+      // Ramal individual (cadastrado pelo ADMIN); sem ele, vale o do setor.
       ramal: u.ramal || u.setor?.ramal || "—", ramalProprio: !!u.ramal,
     };
   }
