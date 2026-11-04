@@ -154,7 +154,11 @@
       else if (a === "avaliacao-responder") { e.preventDefault(); await PagesAvaliacoes.responder(el.dataset.id); }
       else if (a === "avaliacao-doc") { e.preventDefault(); await App.abrirDocumento(el.dataset.id, true); }
       else if (a === "chamado-abrir") { e.preventDefault(); await PagesAdmin.abrirChamado(el.dataset.id); }
-      else if (a === "open-chamado") { e.preventDefault(); App.toggleFab(false); App.openChamadoPanel(el.dataset.tipo || "geral"); }
+      else if (a === "open-chamado") {
+        e.preventDefault(); App.toggleFab(false);
+        if (!App.ligada("chamados")) App.toast("Os chamados estão desativados no momento.");
+        else App.openChamadoPanel(el.dataset.tipo || "geral");
+      }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
       else if (a === "open-pedido") { e.preventDefault(); App.openPedidoPanel(); }
       else if (a === "preview-noticia") { e.preventDefault(); PagesAdmin.previewNoticia(el.dataset.id); }

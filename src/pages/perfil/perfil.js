@@ -58,7 +58,7 @@
             <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">${icon("clock","w-5 h-5 text-wine")} Minhas atividades</h3>
             <p class="text-xs text-slate-400 mb-2">Chamados, pedidos de alteração cadastral e inscrições em eventos.</p>
             ${atividades.length ? `<div>${atividades.join("")}</div>` : `<div class="text-sm text-slate-400 py-4 text-center">Nada por aqui ainda.</div>`}
-            ${App.can("interact") ? `<button data-action="open-chamado" data-tipo="geral" class="btn-outline w-full mt-3 py-2 text-sm">Abrir novo chamado</button>` : ""}
+            ${App.can("interact") && App.ligada("chamados") ? `<button data-action="open-chamado" data-tipo="geral" class="btn-outline w-full mt-3 py-2 text-sm">Abrir novo chamado</button>` : ""}
           </div>
         </div>
         <div class="lg:col-span-2 space-y-6">

@@ -31,6 +31,13 @@
       App.toast("Acesso restrito ao seu perfil (" + App.roleInfo().label + ")");
       location.hash = "#/dashboard"; return;
     }
+    // Funcionalidade desligada pelo ADMIN para este perfil (ou para todos).
+    if (!App.rotaLigada(hash)) {
+      App.toast("Esta funcionalidade está desativada no momento.");
+      location.hash = "#/dashboard"; return;
+    }
+    // Relê o que está ligado (no máximo a cada 30 s); se mudou, redesenha menu e tela.
+    App.atualizarFuncionalidades().then((mudou) => { if (mudou) App.render(); });
 
     const page = match.page(hash.match(match.re));
     if (page.shell === false) {
