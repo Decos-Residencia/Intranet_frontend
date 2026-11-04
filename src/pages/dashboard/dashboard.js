@@ -53,6 +53,7 @@
 
   /* ---------- carrossel de próximos eventos (com a foto de capa) ---------- */
   function acaoSlide(e) {
+    if (e.linkExterno && !e.encerrado) return `<a href="${esc(e.linkExterno)}" target="_blank" rel="noopener noreferrer" class="btn-white px-5" aria-label="Inscrever-se em ${esc(e.titulo)} no site externo (abre em nova aba)">${icon("external-link", "w-4 h-4")} Inscrever-se</a>`;
     if (!App.state.auth) return e.aberto ? `<a href="#/login" data-action="entrar" class="btn-white px-5">${icon("lock", "w-4 h-4")} Entrar para se inscrever</a>` : "";
     if (e.inscrito) return `<span class="ev-slide-ok">${icon("check", "w-4 h-4")} Inscrito</span>
       <button type="button" data-action="cancelar-inscricao" data-id="${e.id}" class="ev-slide-cancelar" aria-label="Cancelar inscrição em ${esc(e.titulo)}">Cancelar inscrição</button>`;
@@ -71,7 +72,7 @@
           : ""}<span class="ev-slide-data">${esc(e.dia)} ${esc(e.mes)}</span></div>
         <div class="ev-slide-legenda">
           <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap mb-1"><span class="ev-slide-selo">${e.treinamento ? "Treinamento" : "Evento"}</span>${e.visto ? "" : `<span class="ev-slide-selo ev-slide-novo">Novo</span>`}</div>
+            <div class="flex items-center gap-2 flex-wrap mb-1"><span class="ev-slide-selo">${e.treinamento ? "Treinamento" : "Evento"}</span>${e.linkExterno ? `<span class="ev-slide-selo">Inscrição externa</span>` : ""}${e.visto ? "" : `<span class="ev-slide-selo ev-slide-novo">Novo</span>`}</div>
             <h3 class="ev-slide-titulo">${esc(e.titulo)}</h3>
             ${e.desc ? `<p class="ev-slide-descricao">${esc(e.desc)}</p>` : ""}
             <p class="ev-slide-info">${esc(e.dataLonga)} · ${esc(e.horario)} · ${esc(e.local)}</p>

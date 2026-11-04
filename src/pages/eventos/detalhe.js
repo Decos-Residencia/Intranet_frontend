@@ -14,7 +14,12 @@
     if (e.inscrito && !e.encerrado && e.ini > new Date()) return `<div class="mt-4 p-3 rounded-xl bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-sm font-bold flex items-center gap-2">${icon("check", "w-4 h-4")} Você está inscrito</div>
       <button data-action="cancelar-inscricao" data-id="${e.id}" class="btn-outline w-full mt-2 py-2.5">Cancelar inscrição</button>`;
     if (e.inscrito) return `<div class="mt-4 p-3 rounded-xl bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-sm font-bold flex items-center gap-2">${icon("check", "w-4 h-4")} Você estava inscrito</div>`;
+    if (e.inscricao === "NENHUMA") return `<p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Este evento não tem inscrição.</p>`;
     if (e.encerrado || e.ini <= new Date()) return `<button class="btn-outline w-full mt-4 py-3 opacity-60 cursor-not-allowed" disabled>Inscrições encerradas</button>`;
+    // Link externo: vale também para o visitante (a inscrição acontece fora da intranet).
+    if (e.linkExterno) return `<a href="${esc(e.linkExterno)}" target="_blank" rel="noopener noreferrer" class="btn-wine w-full mt-4 py-3 flex items-center justify-center gap-2">
+      ${icon("external-link", "w-4 h-4")} Inscrever-se (site externo)<span class="sr-only"> (abre em nova aba)</span></a>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">A inscrição é feita no site do organizador e abre em nova aba.</p>`;
     if (!App.state.auth) return `<button type="button" data-action="entrar" class="btn-wine w-full mt-4 py-3 flex items-center justify-center gap-2">${icon("lock", "w-4 h-4")} Entrar para se inscrever</button>`;
     if (!App.can("interact")) return `<button class="btn-outline w-full mt-4 py-3 opacity-60 cursor-not-allowed flex items-center justify-center gap-2" disabled>${icon("lock", "w-4 h-4")} Inscrição indisponível</button>`;
     if (!e.aberto) return `<button class="btn-outline w-full mt-4 py-3 opacity-60 cursor-not-allowed" disabled>Vagas esgotadas</button>`;
@@ -23,7 +28,9 @@
 
   function corpo(e, outros) {
     const pct = e.vagas ? Math.round((e.inscritos / e.vagas) * 100) : 0;
-    const vagas = e.vagas
+    const vagas = e.inscricao !== "INTRANET"
+      ? `<div class="text-xs text-slate-500 dark:text-slate-400">${esc(e.vagasTxt)}.</div>`
+      : e.vagas
       ? `<div class="flex items-center justify-between text-xs mb-2"><span class="font-bold tracking-wider text-slate-400">VAGAS PREENCHIDAS</span><span class="font-bold text-slate-800 dark:text-slate-100">${e.inscritos}/${e.vagas}</span></div>
          <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
          <div class="text-xs ${e.livres ? "text-green-600 dark:text-green-400" : "text-red-500"} mt-2 flex items-center gap-1">${icon(e.livres ? "check" : "x", "w-3.5 h-3.5")} ${e.livres} ${e.livres === 1 ? "vaga disponível" : "vagas disponíveis"}</div>`
@@ -40,7 +47,7 @@
             <div class="p-6 flex gap-4">
               <div class="date-chip-lg"><span class="text-2xl font-extrabold leading-none">${e.dia}</span><span class="text-[11px] font-bold">${e.mes}</span></div>
               <div><div class="flex items-center gap-2 mb-1 flex-wrap"><span class="tag-outline">${esc(e.tag)}</span><span class="text-sm text-slate-400">${esc(e.dataLonga)}</span>
-                ${e.inscrito ? badge("green", "✓ INSCRITO") : ""}${e.cancelado ? badge("red", "CANCELADO") : e.encerrado ? badge("gray", "ENCERRADO") : ""}</div>
+                ${e.linkExterno ? badge("blue", "INSCRIÇÃO EXTERNA") : ""}${e.inscrito ? badge("green", "✓ INSCRITO") : ""}${e.cancelado ? badge("red", "CANCELADO") : e.encerrado ? badge("gray", "ENCERRADO") : ""}</div>
               <h1 class="text-xl font-extrabold text-slate-800 dark:text-slate-100">${esc(e.titulo)}</h1></div>
             </div>
           </div>

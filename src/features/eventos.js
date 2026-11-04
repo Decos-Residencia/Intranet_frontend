@@ -28,7 +28,10 @@
       aberto: e.inscricoes_abertas, inscrito: e.inscrito, cancelado: e.status === "CANCELADO",
       tipo: e.tipo || "EVENTO", treinamento: e.tipo === "TREINAMENTO", visto: !!e.visto, temImagem: !!e.tem_imagem, temBanner: !!e.tem_banner,
       fotoDemo: e.categoria === "Demonstração" ? fotosDemo[e.titulo] || null : null,
-      vagasTxt: textoVagas(e.vagas, e.vagas_disponiveis, e.inscritos),
+      // Inscrição: pela intranet (padrão), num link de fora (abre em nova aba) ou nenhuma.
+      inscricao: e.inscricao || "INTRANET", linkExterno: e.inscricao === "EXTERNA" ? e.inscricao_url : null,
+      vagasTxt: e.inscricao === "EXTERNA" ? "Inscrição no site externo" : e.inscricao === "NENHUMA" ? "Sem inscrição"
+        : textoVagas(e.vagas, e.vagas_disponiveis, e.inscritos),
     };
   }
 
