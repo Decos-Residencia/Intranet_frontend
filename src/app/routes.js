@@ -28,6 +28,8 @@
     { re: /^#\/vagas$/, page: () => Pages.vagas() },
     { re: /^#\/vagas\/(\d+)$/, page: (m) => Pages.vagaDetalhe(m[1]) },
     { re: /^#\/admin\/vagas$/, page: () => PagesAdmin.adminVagas(), need: "manage_vagas" },
+    // Link do e-mail: abre o chamado depois do login. Mais específica que #/chamados.
+    { re: /^#\/chamados\/(\d+)$/, page: (m) => PagesAdmin.chamadoDireto(m[1]) },
     // "Meus chamados" fica no Meu painel; o endereço antigo continua abrindo lá.
     { re: /^#\/chamados$/, page: () => Pages.painel() },
     { re: /^#\/notificacoes$/, page: () => Pages.notificacoes() },

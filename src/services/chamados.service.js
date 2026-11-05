@@ -14,15 +14,25 @@
     resumo() {
       return App.API.request("/chamados/resumo");
     },
-    // { pode_atender, administrador (fila inteira), setores_ids }
+    // { pode_atender, administrador, setores_ids }
     permissoes() {
       return App.API.request("/chamados/permissoes");
+    },
+    atendentes(id) {
+      return App.API.request(`/chamados/${encodeURIComponent(id)}/atendentes`);
+    },
+    historico(id) {
+      return App.API.request(`/chamados/${encodeURIComponent(id)}/historico`);
+    },
+    // Quem pode atender chamados do setor (nome e setor; nunca e-mail). Alimenta o seletor "Responsável".
+    atendentesDoSetor(setorId) {
+      return App.API.request(`/chamados/atendentes${Services.toQuery({ setor_id: setorId })}`);
     },
     get(id) {
       return App.API.request(`/chamados/${encodeURIComponent(id)}`);
     },
     update(id, data) {
-      return App.API.request(`/chamados/${encodeURIComponent(id)}`, { method: "PUT", body: data }); // ADMIN
+      return App.API.request(`/chamados/${encodeURIComponent(id)}`, { method: "PUT", body: data });
     },
   };
   Object.assign(window.Services, { chamados: chamadosService });

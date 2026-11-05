@@ -27,8 +27,8 @@ Volta o controle de acesso só por perfil (reaproveita a matriz da 0029, que exi
 
 ```text
 Intranet_backend/
-├── alembic/versions/0035_acesso_por_perfil.py, 0036_funcionalidades.py,
-│   0037_eventos_inscricao_externa.py
+├── alembic/versions/0036_acesso_por_perfil.py, 0037_funcionalidades.py,
+│   0038_eventos_inscricao_externa.py
 ├── app/core/funcionalidades.py (catálogo), permissoes.py, dependencies.py
 ├── app/models/perfil_permissao.py, funcionalidade.py, evento.py, usuario.py
 ├── app/routes/funcionalidades.py, acessos.py (+ dependência nos routers dos módulos)

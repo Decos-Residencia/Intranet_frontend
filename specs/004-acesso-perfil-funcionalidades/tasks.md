@@ -10,7 +10,7 @@
 ## Phase 2: US1 — Acesso por perfil (P1)
 
 - [X] T003 [US1] Reverter `c21b44e` no backend (matriz `perfil_permissoes`, `PUT /acessos/perfis/{perfil}`, sem ajustes por pessoa)
-- [X] T004 [US1] Migração `0035_acesso_por_perfil` (reaproveita a `0029`)
+- [X] T004 [US1] Migração `0036_acesso_por_perfil` (reaproveita a `0029`)
 - [X] T005 [US1] Reverter `16e1cd8` no frontend (tela Controle de acesso com matriz por perfil)
 - [X] T006 [US1] Ajustar `test_migration_graph` para exigir uma head só
 
@@ -24,7 +24,7 @@
 
 ## Phase 4: US4 — Funcionalidades liberáveis (P1)
 
-- [X] T012 [US4] Catálogo `app/core/funcionalidades.py`, modelo `FuncionalidadeConfig`, migração `0036_funcionalidades`
+- [X] T012 [US4] Catálogo `app/core/funcionalidades.py`, modelo `FuncionalidadeConfig`, migração `0037_funcionalidades`
 - [X] T013 [US4] Serviço (ligadas, exigir, filtrar destinatários, listar, definir + auditoria) e rotas `/funcionalidades`
 - [X] T014 [US4] Dependência nos routers de agenda, vagas, aniversariantes, eventos, treinamentos, calendário, FAQ, painel e chamados; diretório em `GET /usuarios`
 - [X] T015 [US4] `/auth/me.funcionalidades`, Meu painel e Inicial sem os módulos desligados; notificações automáticas filtradas
@@ -50,7 +50,7 @@
 
 - [X] T027 README do backend e do frontend, CLAUDE.md
 - [X] T028 Suíte completa do backend e conferência visual com Playwright de todas as telas alteradas
-- [X] T030 [US2] "Atender chamados" passa a valer no servidor (fila inteira, transferir/atribuir); responsável de setor vê a fila no menu
+- [X] T030 [US2] "Atender chamados" passa a valer no servidor e a fila aparece no menu de quem atende (após o merge da `main`: só os chamados do próprio setor; transferir/atribuir é do ADMIN)
 - [X] T031 [US2] Pedido de alteração cadastral exige "Pedir alteração do próprio cadastro" (editar_perfil), igual à tela; Diretório desligado também barra `GET /usuarios/{id}`
 - [X] T032 Testes rigorosos de acesso: `test_matriz_acesso.py` (153 rotas classificadas × visitante e 4 perfis; cada permissão isolada; 9 módulos × 4 perfis; módulos públicos) e `test_chamados_atender_permissao.py`
 - [X] T033 Navegador: 42 endereços × 5 perfis, links do menu, botões de interação, matriz personalizada, responsável de setor (41 verificações) e fluxos completos (61 verificações)

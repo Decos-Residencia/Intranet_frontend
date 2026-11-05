@@ -34,7 +34,7 @@
       <div id="faq-list" class="space-y-3">${items}</div>
       <div class="card p-5 mt-6 flex items-center justify-between flex-wrap gap-3 ring-1 ring-wine/20">
         <div><div class="font-bold text-wine">Ainda possui alguma dúvida?</div><div class="text-sm text-slate-500 dark:text-slate-400">Fale diretamente com o setor administrativo responsável ou com o suporte de TI.</div></div>
-        ${App.can("interact") && App.ligada("chamados") ? `<button data-action="open-chamado" data-tipo="geral" class="btn-wine px-6 py-2.5">Abrir Chamado</button>` : ""}
+        ${App.can("interact") && App.ligada("chamados") ? `<button data-action="open-chamado" data-tipo="geral" class="btn-wine px-6 py-2.5">Fazer chamado</button>` : ""}
       </div>`,
       init() {
         document.querySelectorAll('[data-action="faq-toggle"]').forEach((b) => {

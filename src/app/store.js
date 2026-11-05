@@ -24,7 +24,8 @@
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
-    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0, avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
+    eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0,
+    avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
 
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (_) { stored = {}; }
@@ -63,8 +64,8 @@
   const role = realRole;
   Object.defineProperty(state, "role", { get: role, enumerable: false });
   function can(cap) {
-    // Atender a fila: a permissão do perfil (fila inteira) ou ser responsável por um setor.
-    if (cap === "attend_tickets") return can("manage_tickets") || !!state.api?.chamadosPermissoes?.pode_atender;
+    // Atender chamados: o servidor diz (ADMIN, ou "Atender chamados" no próprio setor).
+    if (cap === "attend_tickets") return !!state.api?.chamadosPermissoes?.pode_atender;
     const permissao = CAP_PERMISSAO[cap] || cap;
     return !!state.user && (state.user.permissoes || []).includes(permissao);
   }
@@ -333,6 +334,7 @@
       cargo: u.cargo || "—", ramal: u.ramal || "", matricula: u.matricula || "", unidade: u.unidade || "", andar: u.andar || "",
       admissao: u.data_admissao || "", nascimento: u.data_nascimento || "", role: PERFIL_ROLE[u.perfil] || "normal", status: u.ativo === false ? "Inativo" : "Ativo",
       senhaTemporaria: !!u.must_change_password, desligamento: u.data_desligamento || "",
+      emailVerificado: !!u.email_verificado_em, emailVerificadoEm: u.email_verificado_em || "",
     };
   }
 

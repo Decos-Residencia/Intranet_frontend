@@ -194,9 +194,9 @@ Ao criar ou editar um evento, o organizador escolhe como é a inscrição: "Pela
 
 - **FR-007**: Menu, endereço da tela e servidor MUST usar a mesma regra (permissão do perfil + funcionalidade ligada) para cada tela e ação.
 - **FR-008**: Quem gerencia documentos MUST ver no menu a consulta "Documentos & POPs" e, separado, "Gerenciar Documentos".
-- **FR-009**: A configuração de responsáveis por setor dos chamados e o reenvio de e-mails MUST depender de permissões do catálogo, visíveis na matriz.
+- **FR-009**: O reenvio de e-mails (e, antes do merge da `main`, a configuração de responsáveis por setor) MUST depender de permissões do catálogo, visíveis na matriz.
 - **FR-010**: O endereço de uma tela sem acesso MUST voltar ao Início com aviso.
-- **FR-010a**: "Atender chamados" MUST dar acesso à fila inteira (atender, transferir e atribuir); sem ela, o responsável por um setor atende só os chamados do setor e vê a fila no menu.
+- **FR-010a**: "Atender chamados" MUST valer no servidor e mostrar a fila no menu de quem atende. *Revisto no merge da `main`, que removeu os responsáveis por setor:* a permissão (do perfil) dá os chamados do próprio setor; só o ADMIN atende todos, transfere e atribui.
 - **FR-010b**: Pedir alteração do próprio cadastro MUST depender da permissão "Pedir alteração do próprio cadastro" (antes "Editar o próprio perfil"), na tela e no servidor.
 
 **Auditoria (US3)**
