@@ -53,6 +53,7 @@
 
   /* ---------- carrossel de próximos eventos (com a foto de capa) ---------- */
   function acaoSlide(e) {
+    if (e.linkExterno && !e.encerrado) return `<a href="${esc(e.linkExterno)}" target="_blank" rel="noopener noreferrer" class="btn-white px-5" aria-label="Inscrever-se em ${esc(e.titulo)} no site externo (abre em nova aba)">${icon("external-link", "w-4 h-4")} Inscrever-se</a>`;
     if (!App.state.auth) return e.aberto ? `<a href="#/login" data-action="entrar" class="btn-white px-5">${icon("lock", "w-4 h-4")} Entrar para se inscrever</a>` : "";
     if (e.inscrito) return `<span class="ev-slide-ok">${icon("check", "w-4 h-4")} Inscrito</span>
       <button type="button" data-action="cancelar-inscricao" data-id="${e.id}" class="ev-slide-cancelar" aria-label="Cancelar inscrição em ${esc(e.titulo)}">Cancelar inscrição</button>`;
@@ -71,7 +72,7 @@
           : ""}<span class="ev-slide-data">${esc(e.dia)} ${esc(e.mes)}</span></div>
         <div class="ev-slide-legenda">
           <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap mb-1"><span class="ev-slide-selo">${e.treinamento ? "Treinamento" : "Evento"}</span>${e.visto ? "" : `<span class="ev-slide-selo ev-slide-novo">Novo</span>`}</div>
+            <div class="flex items-center gap-2 flex-wrap mb-1"><span class="ev-slide-selo">${e.treinamento ? "Treinamento" : "Evento"}</span>${e.linkExterno ? `<span class="ev-slide-selo">Inscrição externa</span>` : ""}${e.visto ? "" : `<span class="ev-slide-selo ev-slide-novo">Novo</span>`}</div>
             <h3 class="ev-slide-titulo">${esc(e.titulo)}</h3>
             ${e.desc ? `<p class="ev-slide-descricao">${esc(e.desc)}</p>` : ""}
             <p class="ev-slide-info">${esc(e.dataLonga)} · ${esc(e.horario)} · ${esc(e.local)}</p>
@@ -127,6 +128,7 @@
     const lista = App.todosAtalhos();
     const atalhos = [...lista.filter((it) => it.origem === "pessoal"), ...lista.filter((it) => it.origem !== "pessoal")]
       .filter((it) => logado || it.url || ["#/avisos", "#/eventos", "#/documentos", "#/faq"].includes(it.route))
+      .filter((it) => !it.route || App.rotaLigada(it.route))
       .slice(0, 8).map((it) => UI.qaLink(it, `qa-grid-tile ${it.origem ? `qa-${it.origem}` : ""}`,
         `<span class="qa-icon">${icon(it.icon, "w-5 h-5")}</span><span class="qa-label">${esc(it.titulo)}</span>`, App.can("interact"))).join("");
 
@@ -144,7 +146,7 @@
         <p class="text-white/90 max-w-md mx-auto mb-6">Hoje é o seu dia! Toda a equipe do Hospital Decós deseja muita saúde, alegria e sucesso nesse novo ciclo.</p>
         <div class="flex items-center justify-center gap-3 flex-wrap">
           <button data-action="celebrate" data-auto-confetti="1" data-msg="🎉 Feliz aniversário para você!" class="btn-white">${icon("party", "w-4 h-4")} Comemorar</button>
-          <a href="#/aniversariantes/hoje" class="btn-outline-white">Ver quem mais celebra hoje</a>
+          ${App.ligada("aniversariantes") ? `<a href="#/aniversariantes/hoje" class="btn-outline-white">Ver quem mais celebra hoje</a>` : ""}
         </div>
       </section>` : `
       <section class="dash-hero mb-6" aria-labelledby="dash-ola">
@@ -153,7 +155,7 @@
           <p class="dash-hero-sub mt-1">${logado ? `Você tem ${esc(resumo)}.` : "Avisos, eventos e documentos do hospital."}</p>
           <div class="flex gap-2 flex-wrap mt-4">
             ${logado ? `${naoLidos.length ? `<a href="#/avisos" class="btn-white px-4">${icon("megaphone", "w-4 h-4")} Ler avisos</a>` : ""}
-              <a href="#/agenda" class="btn-outline-white px-4">${icon("check-check", "w-4 h-4")} Minha agenda</a>`
+              ${App.ligada("agenda") ? `<a href="#/agenda" class="btn-outline-white px-4">${icon("check-check", "w-4 h-4")} Minha agenda</a>` : ""}`
               : `<a href="#/login" data-action="entrar" class="btn-white px-5">${icon("lock", "w-4 h-4")} Entrar</a>
               <a href="${DB.SITE_HOSPITAL}" target="_blank" rel="noopener noreferrer" class="btn-outline-white px-4">${icon("external-link", "w-4 h-4")} Site do hospital<span class="sr-only"> (abre em nova aba)</span></a>`}
           </div>
@@ -210,14 +212,14 @@
       ${cabecalho}
       ${hojeVoceTem}
       ${anivDoDia}
-      <section class="mb-6" aria-labelledby="dash-eventos-h">
+      ${App.ligada("eventos") ? `<section class="mb-6" aria-labelledby="dash-eventos-h">
         <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
           <h3 id="dash-eventos-h" class="dash-h mb-0">${icon("calendar", "w-5 h-5 text-wine")} Eventos disponíveis</h3>
           <a href="#/eventos" class="text-sm font-bold text-wine flex items-center gap-1">Ver calendário ${icon("chevron-right", "w-4 h-4")}</a>
         </div>
         ${eventosDisponiveis.length ? carrossel(eventosDisponiveis)
           : `<p class="card p-5 text-sm text-slate-600 dark:text-slate-300">Nenhum evento disponível no momento.</p>`}
-      </section>
+      </section>` : ""}
       ${alertaUrgente}
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <section class="card p-5 sm:p-6 lg:col-span-2" aria-labelledby="dash-avisos-h">
@@ -244,7 +246,7 @@
             </div>
             <div class="qa-grid">${atalhos}</div>
           </section>
-          ${logado ? `<section class="card p-5" aria-labelledby="dash-aniv-h">
+          ${logado && !App.ligada("aniversariantes") ? "" : logado ? `<section class="card p-5" aria-labelledby="dash-aniv-h">
             <h3 id="dash-aniv-h" class="dash-h mb-1">${icon("gift", "w-5 h-5 text-wine")} Próximos aniversários de ${esc(mesNome)}</h3>
             ${proximosAniv.length ? `<ul class="divide-y divide-slate-100 dark:divide-slate-800">${proximosAniv.map((p) => `<li class="flex items-center gap-3 py-2">
               <div class="avatar-soft w-9 h-9 text-xs rounded-full flex items-center justify-center shrink-0">${foto(p.nome)}${esc(iniciais(p.nome))}</div>

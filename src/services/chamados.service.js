@@ -7,12 +7,14 @@
     meus(params = {}) {
       return App.API.request(`/chamados/meus${Services.toQuery(params)}`);
     },
+    // Fila de atendimento: quem tem "Atender chamados" vê tudo; responsável por setor, só o setor.
     list(params = {}) {
-      return App.API.request(`/chamados${Services.toQuery(params)}`); // ADMIN
+      return App.API.request(`/chamados${Services.toQuery(params)}`);
     },
     resumo() {
       return App.API.request("/chamados/resumo");
     },
+    // { pode_atender, administrador, setores_ids }
     permissoes() {
       return App.API.request("/chamados/permissoes");
     },

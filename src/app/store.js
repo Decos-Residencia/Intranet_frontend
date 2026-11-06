@@ -25,7 +25,6 @@
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
     aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
     eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0,
-    chamadoPermissoes: { pode_atender: false, administrador: false, setores_ids: [] },
     avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
 
   let stored = {};
@@ -65,11 +64,59 @@
   const role = realRole;
   Object.defineProperty(state, "role", { get: role, enumerable: false });
   function can(cap) {
-    if (cap === "manage_tickets" && state.api.chamadoPermissoes?.pode_atender) return true;
+    // Atender chamados: o servidor diz (ADMIN, ou "Atender chamados" no próprio setor).
+    if (cap === "attend_tickets") return !!state.api?.chamadosPermissoes?.pode_atender;
     const permissao = CAP_PERMISSAO[cap] || cap;
     return !!state.user && (state.user.permissoes || []).includes(permissao);
   }
   function roleInfo() { return DB.roles[role()] || DB.roles.normal; }
+
+  /* ---------- funcionalidades (módulos que o ADMIN liga e desliga por perfil) ---------- */
+  // Logado: GET /auth/me → user.funcionalidades. Visitante: GET /funcionalidades/ligadas.
+  const ABERTAS_AO_VISITANTE = ["eventos", "calendario", "faq"];
+  // Endereço → módulo dono. A ordem importa: o primeiro prefixo que casar vence.
+  const MODULO_DA_ROTA = [
+    ["#/agenda", "agenda"], ["#/vagas", "vagas"], ["#/admin/vagas", "vagas"],
+    ["#/aniversariantes", "aniversariantes"],
+    ["#/eventos", "eventos"], ["#/admin/eventos", "eventos"], ["#/admin/treinamentos", "eventos"],
+    ["#/admin/calendario", "calendario"],
+    ["#/faq", "faq"], ["#/admin/faqs", "faq"],
+    ["#/diretorio", "diretorio"],
+    ["#/painel", "painel"], ["#/chamados", "painel"], ["#/admin/chamados", "chamados"],
+  ];
+  function ligada(modulo) {
+    if (!modulo) return true;
+    if (state.auth) return !Array.isArray(state.user?.funcionalidades) || state.user.funcionalidades.includes(modulo);
+    // Visitante: os módulos fechados nem existem para ele (quem barra é o login).
+    if (!ABERTAS_AO_VISITANTE.includes(modulo)) return true;
+    return !Array.isArray(state.funcVisitante) || state.funcVisitante.includes(modulo);
+  }
+  function moduloDaRota(rota) {
+    if (!rota) return null;
+    const achado = MODULO_DA_ROTA.find(([p]) => rota === p || rota.startsWith(p + "/") || rota.startsWith(p + "?"));
+    return achado ? achado[1] : null;
+  }
+  const rotaLigada = (rota) => ligada(moduloDaRota(rota));
+  // Mudanças do ADMIN valem na próxima navegação: relê o /auth/me (ou a lista do visitante) no máximo a cada 30 s.
+  let ultimaChecagem = 0;
+  async function atualizarFuncionalidades(forcar = false) {
+    if (!forcar && Date.now() - ultimaChecagem < 30000) return false;
+    ultimaChecagem = Date.now();
+    try {
+      if (state.auth) {
+        if (trocaPendente()) return false;
+        const me = await Services.auth.me();
+        if (!state.auth || me.id !== state.user?.id) return false;
+        const antes = JSON.stringify([state.user.funcionalidades, state.user.permissoes]);
+        state.user = me;
+        return antes !== JSON.stringify([me.funcionalidades, me.permissoes]);
+      }
+      const { ligadas } = await Services.funcionalidades.ligadas();
+      const antes = JSON.stringify(state.funcVisitante);
+      state.funcVisitante = ligadas;
+      return antes !== JSON.stringify(ligadas);
+    } catch (_) { return false; }
+  }
 
   /* ---------- sessão ---------- */
   function resetServerData() {
@@ -154,11 +201,14 @@
 
   // Visitante: avisos publicados, documentos gerais, FAQ, próximos eventos e acessos rápidos.
   async function carregarPublico() {
+    try { state.funcVisitante = (await Services.funcionalidades.ligadas()).ligadas; ultimaChecagem = Date.now(); }
+    catch (_) { state.funcVisitante = null; } // sem a lista, nada some (o servidor recusa o que estiver desligado)
+    const vazio = () => Promise.resolve([]);
     const [avisos, documentos, faqs, eventos, atalhos] = await Promise.allSettled([
       Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),
       Services.listAll(Services.documentos.list),
-      Services.listAll(Services.faq.list),
-      Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" }),
+      ligada("faq") ? Services.listAll(Services.faq.list) : vazio(),
+      ligada("eventos") ? Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" }) : vazio(),
       Services.atalhos.list(),
     ]);
     if (avisos.status === "rejected" && avisos.reason?.status === 0) throw avisos.reason; // API fora do ar
@@ -273,7 +323,7 @@
     return {
       id: String(u.id), nome: u.nome, cargo: u.cargo || "—", setor: u.setor?.nome || "—", andar: u.andar || "—",
       unidade: u.unidade || "", email: u.email, setorId: u.setor_id,
-      // O ramal do usuário vale; o do setor só entra como alternativa.
+      // Ramal individual (cadastrado pelo ADMIN); sem ele, vale o do setor.
       ramal: u.ramal || u.setor?.ramal || "—", ramalProprio: !!u.ramal,
     };
   }
@@ -292,7 +342,7 @@
     avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
     aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
     solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
-    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPendentes: "chamados pendentes", avaliacoesPendentes: "avaliações pendentes", minhasRevisoes: "minhas revisões", revisaoPendentes: "fila de revisão",
+    eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPermissoes: "fila de chamados", avaliacoesPendentes: "avaliações pendentes", minhasRevisoes: "minhas revisões", revisaoPendentes: "fila de revisão",
   };
 
   // Troca de senha pendente (senha temporária): a API só aceita /auth/me e /auth/change-password.
@@ -340,30 +390,38 @@
 
   async function loadApiData() {
     if (!state.auth || !App.API.getToken() || trocaPendente()) return;
-    try { state.api.chamadoPermissoes = await Services.chamados.permissoes(); }
-    catch (_) { state.api.chamadoPermissoes = { pode_atender: false, administrador: false, setores_ids: [] }; }
+    ultimaChecagem = Date.now(); // o /auth/me acabou de chegar
+    // Módulo desligado para o perfil: nem pede ao servidor (ele recusaria) e a lista fica vazia.
+    const se = (modulo, job) => (ligada(modulo) ? job : () => Promise.resolve([]));
     const jobs = {
       // O mural/dashboard só recebem avisos EFETIVAMENTE publicados (inclusive para o ADMIN).
       avisos: () => Services.listAll(Services.avisos.list, { status: "PUBLICADO" }),
       documentos: () => Services.listAll(Services.documentos.list, state.docsComAntigas ? { incluir_antigas: true } : {}),
-      faqs: () => Services.listAll(Services.faq.list),
+      faqs: se("faq", () => Services.listAll(Services.faq.list)),
       // O ADMIN também recebe os desativados (para reativar); os demais só veem ativos.
-      usuarios: () => Services.listAll(Services.usuarios.list, can("manage_users") ? { incluir_inativos: true } : {}),
+      usuarios: can("manage_users") || ligada("diretorio")
+        ? () => Services.listAll(Services.usuarios.list, can("manage_users") ? { incluir_inativos: true } : {})
+        : () => Promise.resolve([]),
       setores: () => Services.listAll(Services.setores.list),
       atalhos: () => Services.atalhos.list(),
       // Próximos eventos publicados (dashboard) e as inscrições do usuário (perfil).
-      eventosProximos: () => Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" }),
-      minhasInscricoes: () => Services.eventos.minhas(),
-      eventosHoje: () => Services.eventos.hoje(),
-      chamados: () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items),
+      eventosProximos: se("eventos", () => Services.listAll(Services.eventos.list, { de: new Date().toISOString(), status: "PUBLICADO" })),
+      minhasInscricoes: se("eventos", () => Services.eventos.minhas()),
+      eventosHoje: se("eventos", () => Services.eventos.hoje()),
+      chamados: se("chamados", () => Services.chamados.meus({ page_size: 100 }).then((r) => r.items)),
       avaliacoesPendentes: () => Services.avaliacoes.list({ status: "PENDENTE", avaliador_id: state.user.id, page_size: 1 }).then((r) => r.total),
       minhasRevisoes: () => Services.documentos.minhasRevisoes().then((r) => r.length),
-      ...(can("manage_tickets") ? { chamadosPendentes: () => Services.chamados.resumo().then((r) => r.abertos + r.em_analise) } : {}),
+      // Quem atende (fila inteira ou setor) recebe também o total pendente para o selo do menu.
+      chamadosPermissoes: se("chamados", async () => {
+        const p = await Services.chamados.permissoes();
+        if (p.pode_atender) { const r = await Services.chamados.resumo(); p.pendentes = r.abertos + r.em_analise; }
+        return p;
+      }),
       ...(can("approve") ? { revisaoPendentes: () => Services.revisao.fila().then((f) => f.length) } : {}),
       me: () => Services.auth.me(), // dados cadastrais podem ter mudado (aprovação de solicitação, edição do ADMIN)
-      aniversariantes: () => Services.aniversariantes.list(),
-      aniversariantesHoje: () => Services.aniversariantes.hoje(),
-      proximos: () => Services.aniversariantes.proximos(30),
+      aniversariantes: se("aniversariantes", () => Services.aniversariantes.list()),
+      aniversariantesHoje: se("aniversariantes", () => Services.aniversariantes.hoje()),
+      proximos: se("aniversariantes", () => Services.aniversariantes.proximos(30)),
       solicitacoes: () => Services.cadastro.list({ page_size: 100 }).then((r) => r.items),
       // ADMIN: quantas solicitações aguardam análise (selo no menu).
       ...(can("manage_users") ? { pendentes: () => Services.cadastro.list({ status: "PENDENTE", page_size: 1 }).then((r) => r.total) } : {}),
@@ -396,7 +454,10 @@
     if (data.chamados) state.api.chamados = data.chamados;
     if (typeof data.avaliacoesPendentes === "number") state.api.avaliacoesPendentes = data.avaliacoesPendentes;
     if (typeof data.minhasRevisoes === "number") state.api.minhasRevisoes = data.minhasRevisoes;
-    if (typeof data.chamadosPendentes === "number") state.api.chamadosPendentes = data.chamadosPendentes;
+    if (data.chamadosPermissoes && !Array.isArray(data.chamadosPermissoes)) {
+      state.api.chamadosPermissoes = data.chamadosPermissoes;
+      state.api.chamadosPendentes = data.chamadosPermissoes.pendentes || 0;
+    }
     if (typeof data.revisaoPendentes === "number") state.api.revisaoPendentes = data.revisaoPendentes;
     if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
     if (data.aniversariantesHoje) state.api.aniversariantesHoje = data.aniversariantesHoje;
@@ -569,6 +630,7 @@
 
   Object.assign(App, {
     ROLE_ORDER, realRole, PERFIL_ROLE, ROLE_PERFIL, CAP_PERMISSAO, THEMES, state, save, role, can, roleInfo,
+    ligada, moduloDaRota, rotaLigada, atualizarFuncionalidades,
     setSession, clearSession, expireSession, startSession, restoreSession, logout, carregarPublico, pedirLogin, guardarDestino, destinoAposLogin, loadApiData, changePassword, requirePasswordChange, refreshPerfil, refreshEventos, refreshAvisos, carregarAviso, registrarLeitura, nomeDoUsuario,
     removeItem, findItem, deleteRemoteItem,
     avisosAll, documentosAll, carregarDocumentos, faqsAll, ramaisAll, setoresAll, aniversariantesAll, aniversariantesHoje, aniversariantesProximos, hoje, souAniversariante, parabenizar, marcarParabenizado,

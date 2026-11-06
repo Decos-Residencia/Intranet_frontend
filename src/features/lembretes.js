@@ -23,7 +23,7 @@
 
   async function agendarLembretes() {
     limpar();
-    if (!App.state.auth || App.state.user?.must_change_password) return;
+    if (!App.state.auth || App.state.user?.must_change_password || !App.ligada("agenda")) return;
     let lista = [];
     try { lista = await Services.agenda.lembretes(hojeIso()); } catch (_) { return; }
     const agora = Date.now();

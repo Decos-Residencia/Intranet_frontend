@@ -159,11 +159,11 @@
       <div id="painel-grade" class="painel-grade" aria-busy="true">
         ${[1, 2, 3, 4, 5].map(() => `<div class="card p-5 painel-bloco painel-esqueleto" aria-hidden="true"></div>`).join("")}
       </div>
-      ${secaoChamados()}`,
+      ${App.ligada("chamados") ? secaoChamados() : ""}`,
       async init() {
         const grade = document.getElementById("painel-grade");
         const resumo = document.getElementById("painel-resumo");
-        carregarChamados();
+        if (App.ligada("chamados")) carregarChamados();
         grade.addEventListener("click", (e) => {
           if (!e.target.closest("[data-ir-chamados]")) return;
           e.preventDefault(); document.getElementById("painel-chamados-h")?.focus();
@@ -177,10 +177,13 @@
           resumo.textContent = pendencias
             ? `${nome}, você tem ${pendencias} ${pendencias === 1 ? "pendência" : "pendências"} hoje.`
             : `Tudo em dia, ${nome}! Nenhuma pendência no momento.`;
+          // Blocos de módulos desligados pelo ADMIN não aparecem (o servidor já os manda vazios).
+          const ev = App.ligada("eventos");
           grade.innerHTML = [
-            blocoAvisos(p.avisos_nao_lidos), blocoTreinamentos(p.treinamentos_pendentes), blocoAgenda(p.agenda_hoje),
-            blocoChamados(p.chamados_abertos), blocoEventos(p.proximos_eventos),
-          ].join("");
+            blocoAvisos(p.avisos_nao_lidos), ev && blocoTreinamentos(p.treinamentos_pendentes),
+            App.ligada("agenda") && blocoAgenda(p.agenda_hoje),
+            App.ligada("chamados") && blocoChamados(p.chamados_abertos), ev && blocoEventos(p.proximos_eventos),
+          ].filter(Boolean).join("");
           grade.setAttribute("aria-busy", "false");
         } catch (err) {
           if (!document.contains(grade)) return;

@@ -186,8 +186,8 @@ globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `s
   aniversariantes do mês; gestor vê também até 4 números e "Precisa da sua atenção".
 - **Documentos**: descrição obrigatória, versão vigente x antiga no upload, histórico com
   "Tornar vigente"; a central mostra só vigentes por padrão.
-- **Diretório**: busca única (nome, cargo, setor, ramal), copiar ramal, visão por setor; o
-  colaborador edita o próprio ramal no Perfil.
+- **Diretório**: abre por setor (ramal do setor e, dentro, cada pessoa com o seu ramal ou o
+  do setor), busca única (nome, cargo, setor, ramal), copiar ramal; só o ADMIN altera ramais.
 - **Carrossel de eventos na Inicial** com a foto de capa (ou fundo da marca), setas, pontos, teclado,
   pausa com mouse/foco e sem troca automática com movimento reduzido. O gestor envia a foto no
   formulário do evento. O CSP do `vercel.json` libera imagens de `https://*.supabase.co` e `blob:`.

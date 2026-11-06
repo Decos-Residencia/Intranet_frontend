@@ -40,7 +40,11 @@
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${fld("LOCAL *", `<input id="ev-local" class="field-input" maxlength="200" placeholder="Ex: Auditório Central (Bloco A)">`)}
-            ${fld("VAGAS", `<input id="ev-vagas" type="number" min="1" max="100000" step="1" inputmode="numeric" class="field-input" placeholder="Em branco = sem limite" aria-describedby="ev-vagas-resumo">`, `Quando as vagas acabam, as inscrições fecham sozinhas. <span id="ev-vagas-resumo" class="font-semibold">Sem limite de vagas.</span>`)}
+            <div id="ev-vagas-box">${fld("VAGAS", `<input id="ev-vagas" type="number" min="1" max="100000" step="1" inputmode="numeric" class="field-input" placeholder="Em branco = sem limite" aria-describedby="ev-vagas-resumo">`, `Quando as vagas acabam, as inscrições fecham sozinhas. <span id="ev-vagas-resumo" class="font-semibold">Sem limite de vagas.</span>`)}</div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${fld("INSCRIÇÃO", `<select id="ev-inscricao" class="field-input" aria-describedby="ev-inscricao-ajuda"><option value="INTRANET">Pela intranet</option><option value="EXTERNA">Por link externo</option><option value="NENHUMA">Sem inscrição</option></select>`, `<span id="ev-inscricao-ajuda">Por link externo: o botão do evento abre o formulário de fora numa nova aba, sem vagas nem lista de inscritos na intranet.</span>`)}
+            <div id="ev-link-box" class="hidden">${fld("LINK DE INSCRIÇÃO *", `<input id="ev-link" type="url" class="field-input" maxlength="500" placeholder="https://..." inputmode="url" autocomplete="off">`, "Começa com https:// (ou http://).")}</div>
           </div>
           ${fld("RESUMO *", `<textarea id="ev-desc" class="field-input" rows="2" maxlength="500" placeholder="Uma ou duas frases para a lista de eventos"></textarea>`)}
           ${fld("DESCRIÇÃO COMPLETA", `<textarea id="ev-longa" class="field-input" rows="6" placeholder="Detalhes do evento. Uma linha em branco separa os parágrafos."></textarea>`)}
@@ -180,12 +184,19 @@
     el.classList.toggle("text-red-600", n === undefined);
   }
   function alternarObrig() { $("ev-obrig-box")?.classList.toggle("hidden", $("ev-tipo").value !== "TREINAMENTO"); }
+  // Vagas só valem na inscrição pela intranet; o link só no modo externo.
+  function alternarInscricao() {
+    const m = $("ev-inscricao").value;
+    $("ev-link-box").classList.toggle("hidden", m !== "EXTERNA");
+    $("ev-vagas-box").classList.toggle("hidden", m !== "INTRANET");
+  }
 
   async function iniciar(id) {
     let status = "NOVO", obrigatorio = null;
     ligarFoto();
     $("ev-tipo").addEventListener("change", alternarObrig);
     $("ev-vagas").addEventListener("input", resumoVagas);
+    $("ev-inscricao").addEventListener("change", alternarInscricao);
     if (id) {
       try {
         const e = await Services.eventos.get(id);
@@ -194,6 +205,9 @@
         $("ev-titulo").value = e.titulo; $("ev-categoria").value = e.categoria; $("ev-tipo").value = e.tipo || "EVENTO"; $("ev-org").value = e.organizador; $("ev-local").value = e.local;
         $("ev-inicio").value = paraLocal(e.inicio); $("ev-fim").value = paraLocal(e.fim); $("ev-vagas").value = e.vagas ?? "";
         $("ev-desc").value = e.descricao; $("ev-longa").value = e.descricao_longa || "";
+        $("ev-inscricao").value = e.inscricao || "INTRANET"; $("ev-link").value = e.inscricao_url || "";
+        $("form-evento").dataset.inscritos = String(e.inscritos || 0);
+        $("form-evento").dataset.inscricao = e.inscricao || "INTRANET";
         obrigatorio = e.obrigatorio_id || null;
         const faixa = $("ev-revisao-aviso");
         if (e.status === "EM_REVISAO") {
@@ -209,6 +223,7 @@
     }
     await carregarTemas(obrigatorio);
     alternarObrig();
+    alternarInscricao();
     resumoVagas();
     const modos = modosPara(status, App.can("approve"));
     const aplicar = (m) => {
@@ -226,7 +241,7 @@
     aplicar(modos[0]);
   }
 
-  async function submitEvento() {
+  async function submitEvento(confirmado = false) {
     const f = $("form-evento"); if (!f) return;
     const v = (i) => $(i).value.trim();
     const modo = f.dataset.modo, id = f.dataset.id, atual = f.dataset.status;
@@ -238,8 +253,18 @@
     if (modo === "publicar" && ini <= new Date()) { msg("erro", "Não é possível publicar um evento que já começou."); return; }
     const vagas = lerVagas();
     if (vagas === undefined) { msg("erro", "Vagas deve ser um número inteiro de 1 a 100000 (ou em branco para sem limite)."); $("ev-vagas").focus(); return; }
-    const corpo = { titulo: v("ev-titulo"), descricao: v("ev-desc"), descricao_longa: v("ev-longa") || null, categoria: v("ev-categoria"), tipo: $("ev-tipo").value, inicio: ini.toISOString(), fim: fim.toISOString(), local: v("ev-local"), organizador: v("ev-org"), vagas,
-      obrigatorio_id: $("ev-tipo").value === "TREINAMENTO" && $("ev-obrig").value ? Number($("ev-obrig").value) : null };
+    const inscricao = $("ev-inscricao").value, link = v("ev-link");
+    if (inscricao === "EXTERNA" && !/^https?:\/\/\S+$/i.test(link)) { msg("erro", "Informe o link de inscrição começando com https:// (ou http://)."); $("ev-link").focus(); return; }
+    const obrigatorio_id = $("ev-tipo").value === "TREINAMENTO" && $("ev-obrig").value ? Number($("ev-obrig").value) : null;
+    if (obrigatorio_id && inscricao !== "INTRANET") { msg("erro", "Turma de treinamento obrigatório usa a inscrição pela intranet (lista de presença)."); $("ev-inscricao").focus(); return; }
+    const jaInscritos = Number(f.dataset.inscritos || 0);
+    if (!confirmado && jaInscritos && f.dataset.inscricao === "INTRANET" && inscricao !== "INTRANET") {
+      App.openConfirm("Mudar a inscrição?", `Este evento já tem <b>${jaInscritos} ${jaInscritos === 1 ? "inscrito" : "inscritos"}</b> pela intranet. Eles continuam na lista, mas ninguém mais se inscreve por aqui.`,
+        () => submitEvento(true), "Mudar mesmo assim", "btn-wine");
+      return;
+    }
+    const corpo = { titulo: v("ev-titulo"), descricao: v("ev-desc"), descricao_longa: v("ev-longa") || null, categoria: v("ev-categoria"), tipo: $("ev-tipo").value, inicio: ini.toISOString(), fim: fim.toISOString(), local: v("ev-local"), organizador: v("ev-org"),
+      vagas: inscricao === "INTRANET" ? vagas : null, obrigatorio_id, inscricao, inscricao_url: inscricao === "EXTERNA" ? link : null };
     const botao = $("ev-salvar"); botao.disabled = true; msg("enviando", "Salvando…");
     try {
       let salvo;

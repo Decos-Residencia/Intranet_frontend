@@ -29,7 +29,9 @@
     items.push({ icon: "megaphone", label: "Comunicação", children: comunicacao });
 
     items.push({ icon: "file-text", label: "Documentos & FAQ", children: [
-      { icon: "file-text", label: gereDocs ? "Gerenciar Documentos" : "Documentos & POPs", route: gereDocs ? "#/admin/documentos" : "#/documentos" },
+      // Quem gerencia também consulta: a central de documentos é a mesma de qualquer colaborador.
+      { icon: "file-text", label: "Documentos & POPs", route: "#/documentos" },
+      ...(gereDocs ? [{ icon: "edit", label: "Gerenciar Documentos", route: "#/admin/documentos" }] : []),
       ...(gereFaq ? [{ icon: "edit", label: "Gerenciar FAQ", route: "#/admin/faqs" }] : []),
       // Quem é responsável por algum documento (ou tem avaliação pendente) revisa aqui.
       ...(App.state.api.minhasRevisoes || App.state.api.avaliacoesPendentes ? [{ icon: "check-check", label: "Minhas revisões", route: "#/revisoes", count: App.state.api.avaliacoesPendentes || 0 }] : []),
@@ -51,12 +53,17 @@
     if (can("manage_users")) adminChildren.push({ icon: "user-cog", label: "Usuários & Setores", route: "#/admin/usuarios" });
     if (can("manage_users")) adminChildren.push({ icon: "key", label: "Controle de acesso", route: "#/admin/acessos" });
     if (can("approve")) adminChildren.push({ icon: "check-check", label: "Revisão de publicações", route: "#/admin/revisao", count: App.state.api.revisaoPendentes || 0 });
-    if (can("manage_tickets")) adminChildren.push({ icon: "help-circle", label: "Chamados", route: "#/admin/chamados", count: App.state.api.chamadosPendentes || 0 });
+    if (can("attend_tickets")) adminChildren.push({ icon: "help-circle", label: "Chamados", route: "#/admin/chamados", count: App.state.api.chamadosPendentes || 0 });
     if (can("manage_users")) adminChildren.push({ icon: "check-check", label: "Solicitações Cadastrais", route: "#/admin/solicitacoes", count: App.state.api.solicitacoesPendentes || 0 });
     if (can("audit_all")) adminChildren.push({ icon: "shield", label: "Auditoria", route: "#/admin/auditoria" });
+    if (can("manage_users")) adminChildren.push({ icon: "settings", label: "Funcionalidades", route: "#/admin/funcionalidades" });
     if (adminChildren.length) items.push({ icon: "shield", label: "Administração", children: adminChildren });
 
-    return items;
+    // Módulos desligados pelo ADMIN somem do menu (consulta e gestão); grupo vazio também some.
+    const ligados = (lista) => lista
+      .map((it) => (it.children ? { ...it, children: ligados(it.children) } : it))
+      .filter((it) => (it.children ? it.children.length : App.rotaLigada(it.route)));
+    return ligados(items);
   }
 
   Object.assign(UI, { menuItems });

@@ -17,7 +17,9 @@
       ? { RASCUNHO: botao("PUBLICADO", "Publicar"), PUBLICADO: botao("CANCELADO", "Cancelar evento"), CANCELADO: botao("PUBLICADO", "Reativar"),
           EM_REVISAO: `<a href="#/admin/revisao" class="btn-outline text-xs px-2.5 py-1.5">Revisar</a>` }
       : { RASCUNHO: botao("EM_REVISAO", "Enviar p/ revisão"), PUBLICADO: botao("CANCELADO", "Cancelar evento") })[e.status] || "";
-    const vagas = e.vagas ? `${e.inscritos}/${e.vagas}` : `${e.inscritos} (sem limite)`;
+    const vagas = e.inscricao === "EXTERNA" ? `Link externo${e.inscritos ? ` · ${e.inscritos} pela intranet` : ""}`
+      : e.inscricao === "NENHUMA" ? "Sem inscrição"
+      : e.vagas ? `${e.inscritos}/${e.vagas}` : `${e.inscritos} (sem limite)`;
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40" data-id="${e.id}">
       <td class="py-3.5 pl-4"><div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-sm">${esc(e.titulo)}</div>
         <div class="text-xs text-slate-400">${esc(e.categoria)} • ${esc(UI.fmtDataHora(e.inicio))} • ${esc(e.local)}</div></td>

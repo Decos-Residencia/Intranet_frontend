@@ -22,7 +22,9 @@
     const globais = (App.state.api.atalhos || []).map((a) => ({ titulo: a.nome, url: a.url, icon: a.icone || "link", origem: "global" }));
     const pessoais = (App.state.user?.preferencias?.atalhos || []).slice().sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
       .map((a) => ({ titulo: a.nome, url: a.url, icon: a.icone || "link", origem: "pessoal" }));
-    return [...globais, ...pessoais, ...DB.acessosRapidos];
+    // Atalhos fixos de módulos desligados somem (o "Abrir chamado" segue o módulo Chamados).
+    const fixos = DB.acessosRapidos.filter((a) => (a.chamado ? App.ligada("chamados") : App.rotaLigada(a.route)));
+    return [...globais, ...pessoais, ...fixos];
   }
 
   Object.assign(UI, { qaLink });

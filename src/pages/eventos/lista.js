@@ -21,7 +21,7 @@
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1 flex-wrap"><span class="tag-outline">${esc(e.tag)}</span>
           ${e.treinamento ? badge("blue", "TREINAMENTO") : ""}${e.visto ? "" : `<span class="badge badge-new">NOVO</span>`}
-          ${e.inscrito ? badge("green", "✓ INSCRITO") : ""}${e.cancelado ? badge("red", "CANCELADO") : e.encerrado ? badge("gray", "ENCERRADO") : ""}
+          ${e.linkExterno ? badge("blue", "INSCRIÇÃO EXTERNA") : ""}${e.inscrito ? badge("green", "✓ INSCRITO") : ""}${e.cancelado ? badge("red", "CANCELADO") : e.encerrado ? badge("gray", "ENCERRADO") : ""}
           <h3 class="font-bold text-slate-800 dark:text-slate-100">${esc(e.titulo)}</h3></div>
         <p class="abre-texto text-sm text-slate-500 dark:text-slate-400 mb-2">${esc(e.desc)}</p>
         <div class="flex gap-4 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
