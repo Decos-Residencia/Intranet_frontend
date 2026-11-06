@@ -23,7 +23,7 @@
   const PERSISTED = ["theme", "sidebarCollapsed"];
 
   const emptyApi = () => ({ avisos: [], documentos: [], faqs: [], usuarios: [], usuariosRaw: [], usuariosTodos: [], setores: [], loaded: false,
-    aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [], solicitacoes: [], solicitacoesPendentes: 0,
+    aniversariantes: [], aniversariantesHoje: [], aniversariantesProximos: [],
     eventosProximos: [], minhasInscricoes: [], eventosHoje: [], chamados: [], chamadosPendentes: 0,
     avaliacoesPendentes: 0, minhasRevisoes: 0, atalhos: [], revisaoPendentes: 0 });
 
@@ -341,7 +341,6 @@
   const ROTULO = {
     avisos: "avisos", documentos: "documentos", faqs: "FAQ", usuarios: "usuários", setores: "setores",
     aniversariantes: "aniversariantes", aniversariantesHoje: "aniversariantes do dia", proximos: "próximos aniversariantes",
-    solicitacoes: "solicitações cadastrais", pendentes: "solicitações pendentes",
     eventosProximos: "eventos", atalhos: "acessos rápidos", eventosHoje: "eventos de hoje", minhasInscricoes: "inscrições em eventos", chamados: "meus chamados", chamadosPermissoes: "fila de chamados", avaliacoesPendentes: "avaliações pendentes", minhasRevisoes: "minhas revisões", revisaoPendentes: "fila de revisão",
   };
 
@@ -377,15 +376,14 @@
     if (minhas.status === "fulfilled") state.api.minhasInscricoes = minhas.value;
   }
 
-  // Atualiza só o que o Perfil mostra (cadastro + minhas solicitações). Devolve true se algo mudou.
+  // Atualiza só o que o Perfil mostra (o cadastro). Devolve true se algo mudou.
   async function refreshPerfil() {
     if (!state.auth || trocaPendente()) return false;
-    const [me, sol] = await Promise.allSettled([Services.auth.me(), Services.cadastro.list({ page_size: 100 })]);
-    if (!state.auth) return false;
-    const antes = JSON.stringify([state.user, state.api.solicitacoes]);
-    if (me.status === "fulfilled" && me.value.id === state.user.id) state.user = me.value;
-    if (sol.status === "fulfilled") state.api.solicitacoes = sol.value.items;
-    return antes !== JSON.stringify([state.user, state.api.solicitacoes]);
+    const me = await Services.auth.me().catch(() => null);
+    if (!state.auth || !me || me.id !== state.user.id) return false;
+    const antes = JSON.stringify(state.user);
+    state.user = me;
+    return antes !== JSON.stringify(state.user);
   }
 
   async function loadApiData() {
@@ -422,9 +420,6 @@
       aniversariantes: se("aniversariantes", () => Services.aniversariantes.list()),
       aniversariantesHoje: se("aniversariantes", () => Services.aniversariantes.hoje()),
       proximos: se("aniversariantes", () => Services.aniversariantes.proximos(30)),
-      solicitacoes: () => Services.cadastro.list({ page_size: 100 }).then((r) => r.items),
-      // ADMIN: quantas solicitações aguardam análise (selo no menu).
-      ...(can("manage_users") ? { pendentes: () => Services.cadastro.list({ status: "PENDENTE", page_size: 1 }).then((r) => r.total) } : {}),
     };
     const keys = Object.keys(jobs);
     const results = await Promise.allSettled(keys.map((k) => jobs[k]()));
@@ -462,8 +457,6 @@
     if (data.aniversariantes) state.api.aniversariantes = data.aniversariantes;
     if (data.aniversariantesHoje) state.api.aniversariantesHoje = data.aniversariantesHoje;
     if (data.proximos) state.api.aniversariantesProximos = data.proximos;
-    if (data.solicitacoes) state.api.solicitacoes = data.solicitacoes;
-    if (typeof data.pendentes === "number") state.api.solicitacoesPendentes = data.pendentes;
     if (data.avisos) state.api.avisos = data.avisos.map(apiAvisoParaCard);
     // O backend já filtra por papel e setor (ADMIN: todos; colaborador: gerais e do seu setor, ativos).
     if (data.documentos) state.api.documentos = data.documentos.map(apiDocumentoParaView);

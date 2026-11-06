@@ -5,7 +5,7 @@
 (function () {
   const { state } = App;
 
-  const EXIGEM_LOGIN = new Set(["inscrever-evento", "cancelar-inscricao", "open-chamado", "celebrate", "open-pedido",
+  const EXIGEM_LOGIN = new Set(["inscrever-evento", "cancelar-inscricao", "open-chamado", "celebrate",
     "download-doc", "open-notif", "aviso-leitores", "evento-inscritos"]);
 
   function wireGlobal() {
@@ -168,7 +168,6 @@
         else App.openChamadoPanel(el.dataset.tipo || "geral");
       }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
-      else if (a === "open-pedido") { e.preventDefault(); App.openPedidoPanel(); }
       else if (a === "preview-noticia") { e.preventDefault(); PagesAdmin.previewNoticia(el.dataset.id); }
       else if (a === "aviso-status") { e.preventDefault();
         const { id, status } = el.dataset;
@@ -214,8 +213,6 @@
         // Parabéns a um colega: persistido no servidor (uma vez por pessoa e ano) e notificado a ele.
         if (el.dataset.id) await App.enviarParabens(el);
         else { App.confettiBurst(el); App.toast(el.dataset.msg || "🎉"); } }
-      else if (a === "approve-solicitacao") { e.preventDefault(); App.aprovarSolicitacao(el); }
-      else if (a === "reject-solicitacao") { e.preventDefault(); App.openRejeitarPanel(el); }
       else if (a === "prevent") { e.preventDefault(); }
       else if (a === "open-menu") { document.querySelector(".sidebar")?.classList.add("sidebar-open"); document.querySelector(".drawer-backdrop")?.classList.add("show"); }
       else if (a === "close-menu") { App.closeMenu(); }

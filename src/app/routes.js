@@ -55,7 +55,6 @@
     { re: /^#\/admin\/revisao$/, page: () => PagesAdmin.adminRevisao(), need: "approve" },
     { re: /^#\/admin\/treinamentos$/, page: () => PagesAdmin.adminTreinamentos(), need: "manage_events" },
     { re: /^#\/admin\/faqs$/, page: () => PagesAdmin.adminFaqs(), need: "manage_faq" },
-    { re: /^#\/admin\/solicitacoes$/, page: () => PagesAdmin.adminSolicitacoes(), need: "manage_users" },
     { re: /^#\/admin\/auditoria$/, page: () => PagesAdmin.adminAuditoria(), need: "audit_all" },
   ];
 
