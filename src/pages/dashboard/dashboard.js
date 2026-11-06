@@ -65,11 +65,7 @@
     if (!lista.length) return "";
     const slides = lista.map((e, i) => `
       <article class="ev-slide" data-slide role="group" aria-roledescription="slide" aria-label="${i + 1} de ${lista.length}: ${esc(e.titulo)}" tabindex="-1">
-        <div class="ev-slide-foto" aria-hidden="true"><span class="ev-slide-sem-foto">${icon("calendar", "w-12 h-12")}</span>${e.fotoDemo
-          ? `<img src="${e.fotoDemo}" alt="" class="ev-slide-img is-loaded" decoding="async">`
-          : e.temBanner || e.temImagem
-          ? `<img data-foto-evento="${e.id}" data-foto-tipo="${e.temBanner ? "banner" : "capa"}" data-preencher="1" alt="" class="ev-slide-img" decoding="async">`
-          : ""}<span class="ev-slide-data">${esc(e.dia)} ${esc(e.mes)}</span></div>
+        <div class="ev-slide-foto" aria-hidden="true"><span class="ev-slide-sem-foto">${icon("calendar", "w-12 h-12")}</span>${App.imgEvento(e, { banner: true, preencher: true })}<span class="ev-slide-data">${esc(e.dia)} ${esc(e.mes)}</span></div>
         <div class="ev-slide-legenda">
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap mb-1"><span class="ev-slide-selo">${e.treinamento ? "Treinamento" : "Evento"}</span>${e.linkExterno ? `<span class="ev-slide-selo">Inscrição externa</span>` : ""}${e.visto ? "" : `<span class="ev-slide-selo ev-slide-novo">Novo</span>`}</div>
@@ -186,7 +182,7 @@
       </section>` : "";
 
     const itemUrgente = (a, i) => `<li class="dash-urg-item" style="--i:${i}">
-        ${a.temImagem ? `<span class="dash-urg-foto" data-foto-caixa><img data-foto-aviso="${a.id}" alt="" decoding="async"></span>` : ""}
+        <span class="dash-urg-foto" data-foto-caixa>${App.imgAviso(a)}</span>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap mb-1">${logado && !a.lido ? `<span class="dash-urg-novo">Não lido</span>` : ""}<span class="text-xs text-white/80">${esc(a.data)}</span></div>
           <h3 class="font-bold text-white leading-snug">${esc(a.titulo)}</h3>

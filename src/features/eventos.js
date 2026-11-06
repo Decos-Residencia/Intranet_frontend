@@ -28,6 +28,8 @@
       aberto: e.inscricoes_abertas, inscrito: e.inscrito, cancelado: e.status === "CANCELADO",
       tipo: e.tipo || "EVENTO", treinamento: e.tipo === "TREINAMENTO", visto: !!e.visto, temImagem: !!e.tem_imagem, temBanner: !!e.tem_banner,
       fotoDemo: e.categoria === "Demonstração" ? fotosDemo[e.titulo] || null : null,
+      // Sem foto enviada, o evento usa uma foto padrão (assets/img/fotos), pela categoria.
+      fotoPadrao: (e.categoria === "Demonstração" && fotosDemo[e.titulo]) || UI.fotoPadrao(e.tipo === "TREINAMENTO" ? "treinamento" : e.categoria, e.id),
       // Inscrição: pela intranet (padrão), num link de fora (abre em nova aba) ou nenhuma.
       inscricao: e.inscricao || "INTRANET", linkExterno: e.inscricao === "EXTERNA" ? e.inscricao_url : null,
       vagasTxt: e.inscricao === "EXTERNA" ? "Inscrição no site externo" : e.inscricao === "NENHUMA" ? "Sem inscrição"
@@ -115,21 +117,41 @@
     fotos.set(chave, { url: r.url, ate: Date.now() + 45000 });
     return r.url;
   }
+  // <img> do evento: a foto enviada (o link assinado é pedido depois) ou, sem ela, a foto padrão.
+  // `banner`: no carrossel o banner largo tem preferência sobre a capa.
+  function imgEvento(e, { alt = "", banner = false, preencher = false } = {}) {
+    const tipo = banner && e.temBanner ? "banner" : "capa";
+    if (!e.fotoDemo && (e.temImagem || (banner && e.temBanner))) {
+      return `<img data-foto-evento="${e.id}" data-foto-tipo="${tipo}" data-foto-padrao="${e.fotoPadrao}" ${preencher ? 'data-preencher="1"' : ""} alt="${UI.esc(alt)}" class="ev-slide-img" decoding="async">`;
+    }
+    return `<img src="${e.fotoPadrao}" alt="${UI.esc(alt)}" class="ev-slide-img is-loaded" decoding="async">`;
+  }
+  function imgAviso(a, alt = "") {
+    if (a.temImagem) return `<img data-foto-aviso="${a.id}" data-foto-padrao="${a.fotoPadrao}" alt="${UI.esc(alt)}" decoding="async">`;
+    return `<img src="${a.fotoPadrao}" alt="${UI.esc(alt)}" class="is-loaded" decoding="async">`;
+  }
+  // A foto enviada não veio (removida, sem storage): fica a padrão no lugar.
+  function usarPadrao(img) {
+    if (!img.dataset.fotoPadrao) return false;
+    img.src = img.dataset.fotoPadrao;
+    img.classList.add("is-loaded");
+    return true;
+  }
   function carregarFotosEventos(raiz = document) {
     raiz.querySelectorAll("img[data-foto-aviso]").forEach((img) => {
       fotoAviso(Number(img.dataset.fotoAviso))
         .then((url) => { img.addEventListener("load", () => img.classList.add("is-loaded"), { once: true }); img.src = url; })
-        .catch(() => img.closest("[data-foto-caixa]")?.remove() ?? img.remove());
+        .catch(() => usarPadrao(img) || (img.closest("[data-foto-caixa]")?.remove() ?? img.remove()));
     });
     raiz.querySelectorAll("img[data-foto-evento]").forEach((img) => {
       fotoEvento(Number(img.dataset.fotoEvento), img.dataset.fotoTipo || "capa")
         .then((url) => { img.addEventListener("load", () => { ajustarFoto(img, url); img.classList.add("is-loaded"); }, { once: true }); img.src = url; })
-        .catch(() => img.remove());
+        .catch(() => usarPadrao(img) || img.remove());
     });
   }
   function esquecerFoto(id) { ["capa", "banner"].forEach((t) => fotos.delete(`${Number(id)}:${t}`)); }
   function esquecerFotoAviso(id) { fotos.delete(`aviso:${Number(id)}`); }
 
-  Object.assign(App, { fotoEvento, fotoAviso, carregarFotos: carregarFotosEventos, carregarFotosEventos, esquecerFoto, esquecerFotoAviso, eventoView, eventosProximos, minhasInscricoes, inscreverEvento: inscrever, cancelarInscricaoEvento: cancelarInscricao, baixarIcs, adicionarAgenda });
+  Object.assign(App, { fotoEvento, fotoAviso, imgEvento, imgAviso, carregarFotos: carregarFotosEventos, carregarFotosEventos, esquecerFoto, esquecerFotoAviso, eventoView, eventosProximos, minhasInscricoes, inscreverEvento: inscrever, cancelarInscricaoEvento: cancelarInscricao, baixarIcs, adicionarAgenda });
   Object.assign(UI, { fmtMesAno: (d) => { const t = mesAno.format(d); return t.charAt(0).toUpperCase() + t.slice(1); }, fmtDataHora: (iso) => dataHora.format(new Date(iso)) });
 })();

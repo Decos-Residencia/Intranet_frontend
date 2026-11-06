@@ -26,6 +26,16 @@
     return `<img class="avatar-img" src="${fotoUrl(nome)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`;
   }
 
+  // Foto padrão (assets/img/fotos) de aviso ou evento sem foto enviada. Categorias com um tema
+  // claro têm a sua; as demais variam pelo id, para cards vizinhos não repetirem a mesma foto.
+  const FOTOS_PADRAO = ["qualidade", "equipe", "vacinacao", "biosseguranca"];
+  const FOTO_DA_CATEGORIA = { campanha: "vacinacao", vacinacao: "vacinacao", treinamento: "biosseguranca", obrigatorio: "biosseguranca", sipat: "biosseguranca", urgente: "biosseguranca", institucional: "qualidade" };
+  function fotoPadrao(categoria, id) {
+    const chave = String(categoria || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const nome = FOTO_DA_CATEGORIA[chave] || FOTOS_PADRAO[Math.abs(Number(id) || 0) % FOTOS_PADRAO.length];
+    return `/assets/img/fotos/${nome}.jpg`;
+  }
+
   // Escapa texto digitado pelo usuário antes de ir para o innerHTML.
   function esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -69,5 +79,5 @@
       : `<span class="read-state read-state-new"><span class="read-dot" aria-hidden="true"></span>Não lido</span>`;
   }
 
-  Object.assign(UI, { iniciais, foto, esc, saudacao, tone, catLabel, CAT_FILTRO, badge, breadcrumb, estadoLeitura });
+  Object.assign(UI, { iniciais, foto, fotoPadrao, esc, saudacao, tone, catLabel, CAT_FILTRO, badge, breadcrumb, estadoLeitura });
 })();
