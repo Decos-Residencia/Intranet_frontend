@@ -1,10 +1,11 @@
 /* =========================================================================
    Tela: Controle de acesso (ADMIN)
    Rota: #/admin/acessos
-   Fonte: GET /acessos/perfis, /acessos/permissoes e /acessos/usuarios.
-   O acesso é por perfil, nunca por pessoa: a matriz "Permissões por perfil" grava em
-   PUT /acessos/perfis/{perfil} (vale para todos do perfil) e cada pessoa só recebe um perfil
-   (PUT /acessos/usuarios/{id}: perfil e situação). O perfil Administrador tem tudo.
+   Fonte: GET /acessos/perfis, /acessos/permissoes, /acessos/usuarios e /funcionalidades.
+   O acesso é por perfil, nunca por pessoa. "Perfis de acesso" mostra um card por perfil; editar
+   um perfil grava as permissões em PUT /acessos/perfis/{perfil} (vale para todos do perfil) e os
+   módulos que ele vê em PUT /funcionalidades/{codigo}. Cada pessoa só recebe um perfil
+   (PUT /acessos/usuarios/{id}: perfil e situação). O perfil Administrador tem todas as permissões.
    ========================================================================= */
 (function () {
   const { icon, badge, esc } = UI;
@@ -70,17 +71,10 @@
       <div class="mb-6"><div class="text-sm text-slate-500 dark:text-slate-400">Hospital Decós Intranet • Administração</div>
         <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">Controle de acesso</h2>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">O acesso é definido por perfil: escolha o que cada perfil pode fazer e depois o perfil de cada pessoa. Toda mudança fica registrada na auditoria.</p></div>
-      <section class="card p-6 mb-8" aria-labelledby="ac-matriz-h">
-        <div class="flex items-center justify-between gap-3 flex-wrap mb-1">
-          <h3 id="ac-matriz-h" class="font-extrabold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">${icon("shield", "w-5 h-5 text-wine")} Permissões por perfil</h3>
-          <div class="flex gap-2"><button type="button" id="ac-matriz-padrao" class="btn-outline px-4 text-sm">Restaurar padrão</button>
-            <button type="button" id="ac-matriz-salvar" class="btn-wine px-4 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Salvar permissões</button></div>
-        </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Marque o que cada perfil pode fazer. Vale na hora para todas as pessoas do perfil. Administrador tem tudo; usuários/acessos e auditoria são só dele.</p>
-        <div class="overflow-x-auto"><table class="w-full text-sm text-left acc-matriz">
-          <caption class="sr-only">Permissões de cada perfil</caption>
-          <thead id="ac-matriz-head"></thead><tbody id="ac-matriz"><tr><td class="py-6 text-slate-500 dark:text-slate-400">Carregando…</td></tr></tbody></table></div>
-        <p id="ac-matriz-status" class="text-sm mt-3 hidden" role="status"></p>
+      <section class="mb-8" aria-labelledby="ac-perfis-h">
+        <h3 id="ac-perfis-h" class="font-extrabold text-lg text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">${icon("shield", "w-5 h-5 text-wine")} Perfis de acesso</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-3xl">São 4 perfis. Em cada um, escolha o que ele pode fazer e quais módulos ele vê; vale na hora para todas as pessoas do perfil. Usuários, acessos e auditoria são sempre só do Administrador.</p>
+        <div id="ac-perfis" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"><p class="text-sm text-slate-500 dark:text-slate-400">Carregando…</p></div>
       </section>
       <h3 class="font-extrabold text-lg text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-2">${icon("users", "w-5 h-5 text-wine")} Pessoas e perfis</h3>
       <div class="flex gap-2 items-center flex-wrap mb-4">
@@ -114,10 +108,11 @@
           if (btn) abrirPainel(Number(btn.dataset.acessoAbrir));
         });
         carregar();
-        carregarMatriz();
-        document.getElementById("ac-matriz").addEventListener("change", marcarMatriz);
-        document.getElementById("ac-matriz-salvar").addEventListener("click", salvarMatriz);
-        document.getElementById("ac-matriz-padrao").addEventListener("click", restaurarPadrao);
+        carregarPerfis();
+        document.getElementById("ac-perfis").addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-perfil-editar]");
+          if (btn) editarPerfil(btn.dataset.perfilEditar);
+        });
         carregarAtalhos();
         document.getElementById("ac-novo-atalho").addEventListener("click", () => formAtalho(null));
         document.getElementById("ac-atalhos").addEventListener("click", (e) => {
@@ -179,79 +174,177 @@
     });
   }
 
-  /* ---------- matriz de permissões por perfil ---------- */
-  const EDITAVEIS = ["LEITURA", "COLABORADOR", "RH"];
-  let rascunhoMatriz = {}; // perfil → Set(códigos) ainda não salvos
+  /* ---------- perfis de acesso: um card e um editor por perfil ---------- */
+  const DESCRICAO_PERFIL = {
+    LEITURA: "Só consulta: lê avisos, documentos e eventos.",
+    COLABORADOR: "O padrão: consulta e interage (chamados, inscrições, parabéns).",
+    RH: "Edita e gerencia conteúdo da intranet.",
+    ADMIN: "Tudo, inclusive usuários, acessos e auditoria.",
+  };
+  // Permissões agrupadas por assunto; o que o catálogo trouxer fora daqui vai em "Outras".
+  const GRUPOS = [
+    ["Consultar", ["baixar"]],
+    ["Interagir", ["interagir"]],
+    ["Conteúdo", ["gerenciar_avisos", "gerenciar_documentos", "gerenciar_faq", "gerenciar_eventos", "gerenciar_avaliacoes", "gerenciar_vagas"]],
+    ["Atendimento e gestão", ["gerenciar_chamados", "aprovar_publicacoes", "ver_indicadores", "excluir_definitivo"]],
+    ["Só do Administrador", ["gerenciar_usuarios", "auditoria"]],
+  ];
+  // Sem tela desde que as Solicitações Cadastrais saíram: não aparece, e o valor gravado é mantido.
+  const OCULTAS = new Set(["editar_perfil"]);
+  const CONTEUDO = ["gerenciar_avisos", "gerenciar_documentos", "gerenciar_faq", "gerenciar_eventos"];
+  // Atalhos que preenchem o editor (nada é gravado até clicar em Salvar).
+  const MODELOS = [
+    ["leitura", "Somente leitura", "Vê e baixa; não interage.", ["baixar"]],
+    ["interagir", "Pode interagir", "Leitura + chamados, inscrições e parabéns.", ["baixar", "interagir"]],
+    ["conteudo", "Edita conteúdo", "Interage e gerencia avisos, documentos, FAQ e eventos.", ["baixar", "interagir", ...CONTEUDO]],
+    ["gestor", "Gestor", "Conteúdo + vagas, avaliações, chamados, aprovações e indicadores.",
+      ["baixar", "interagir", ...CONTEUDO, "gerenciar_vagas", "gerenciar_avaliacoes", "gerenciar_chamados", "aprovar_publicacoes", "ver_indicadores"]],
+  ];
+  let modulos = []; // GET /funcionalidades: [{codigo, rotulo, publicos, ligada_para}]
 
-  async function carregarMatriz() {
+  async function carregarPerfis() {
+    const alvo = document.getElementById("ac-perfis");
     try {
-      const [perfis, cat] = await Promise.all([Services.acessos.perfis(), Services.acessos.permissoes()]);
-      perfisInfo = perfis; catalogo = cat;
-      rascunhoMatriz = Object.fromEntries(perfis.map((p) => [p.perfil, new Set(p.permissoes)]));
-      desenharMatriz();
+      const [perfis, cat, mods] = await Promise.all([Services.acessos.perfis(), Services.acessos.permissoes(), Services.funcionalidades.listar()]);
+      perfisInfo = perfis; catalogo = cat; modulos = mods;
+      desenharPerfis();
     } catch (err) {
-      const alvo = document.getElementById("ac-matriz");
-      if (alvo) alvo.innerHTML = `<tr><td class="py-6 text-slate-500 dark:text-slate-400">Não foi possível carregar as permissões. ${esc(err.message || "")}</td></tr>`;
+      if (alvo && document.contains(alvo)) alvo.innerHTML = `<p class="card p-5 text-sm text-slate-500 dark:text-slate-400 sm:col-span-2 xl:col-span-4">Não foi possível carregar os perfis. ${esc(err.message || "")}</p>`;
     }
   }
 
-  const mudancasMatriz = () => perfisInfo.filter((p) => p.editavel).flatMap((p) => {
-    const antes = new Set(p.permissoes), depois = rascunhoMatriz[p.perfil];
-    return catalogo.filter((c) => antes.has(c.codigo) !== depois.has(c.codigo))
-      .map((c) => ({ perfil: p.perfil, rotulo: c.rotulo, entra: depois.has(c.codigo) }));
-  });
+  const visiveis = () => catalogo.filter((c) => !OCULTAS.has(c.codigo));
+  const modulosDo = (perfil) => modulos.filter((m) => m.publicos.includes(perfil));
 
-  function desenharMatriz() {
-    const head = document.getElementById("ac-matriz-head"), corpo = document.getElementById("ac-matriz");
-    if (!head || !catalogo) return;
-    head.innerHTML = `<tr class="text-xs font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
-      <th scope="col" class="py-3 pr-4">PERMISSÃO</th>${perfisInfo.map((p) => `<th scope="col" class="text-center px-3">${esc(rotuloPerfil(p.perfil).toUpperCase())}<span class="block font-normal normal-case">${p.usuarios_ativos} ${p.usuarios_ativos === 1 ? "pessoa" : "pessoas"}</span></th>`).join("")}</tr>`;
-    corpo.innerHTML = catalogo.map((c) => `<tr class="border-b border-slate-100 dark:border-slate-800">
-      <th scope="row" class="py-2.5 pr-4 font-semibold text-slate-700 dark:text-slate-200">${esc(c.rotulo)}${c.editavel ? "" : `<span class="block text-xs font-normal text-slate-500 dark:text-slate-400">Só Administrador</span>`}</th>
-      ${perfisInfo.map((p) => {
-        const marcado = rascunhoMatriz[p.perfil].has(c.codigo);
-        const travado = !p.editavel || !c.editavel;
-        return `<td class="text-center px-3"><input type="checkbox" class="acc-check" data-perfil="${p.perfil}" data-perm="${c.codigo}" ${marcado ? "checked" : ""} ${travado ? "disabled" : ""}
-          aria-label="${esc(c.rotulo)} para o perfil ${esc(rotuloPerfil(p.perfil))}"></td>`;
-      }).join("")}</tr>`).join("");
-    const n = mudancasMatriz().length;
-    const botao = document.getElementById("ac-matriz-salvar");
-    botao.disabled = !n;
-    botao.textContent = n ? `Salvar ${n} ${n === 1 ? "mudança" : "mudanças"}` : "Salvar permissões";
+  function desenharPerfis() {
+    const alvo = document.getElementById("ac-perfis");
+    if (!alvo || !catalogo) return;
+    alvo.innerHTML = PERFIS.map(([perfil, rotulo]) => {
+      const info = perfisInfo.find((p) => p.perfil === perfil);
+      if (!info) return "";
+      const tem = new Set(info.permissoes);
+      const perms = visiveis().filter((c) => tem.has(c.codigo));
+      const mods = modulosDo(perfil), ligados = mods.filter((m) => m.ligada_para.includes(perfil));
+      const pessoas = info.usuarios_ativos;
+      return `<article class="card p-5 flex flex-col gap-3" data-perfil-card="${perfil}">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0"><div class="flex items-center gap-2 flex-wrap">${badge(COR_PERFIL[perfil] || "gray", rotulo.toUpperCase())}${info.editavel ? "" : `<span class="text-xs text-slate-500 dark:text-slate-400">${icon("lock", "w-3.5 h-3.5 inline")} fixo</span>`}</div>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">${esc(DESCRICAO_PERFIL[perfil] || "")}</p></div>
+        </div>
+        <dl class="grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-lg bg-slate-50 dark:bg-slate-800/40 py-2"><dt class="text-[11px] text-slate-500 dark:text-slate-400">Pessoas</dt><dd class="font-extrabold text-slate-800 dark:text-slate-100" data-perfil-pessoas>${pessoas}</dd></div>
+          <div class="rounded-lg bg-slate-50 dark:bg-slate-800/40 py-2"><dt class="text-[11px] text-slate-500 dark:text-slate-400">Permissões</dt><dd class="font-extrabold text-slate-800 dark:text-slate-100" data-perfil-perms>${perms.length}/${visiveis().length}</dd></div>
+          <div class="rounded-lg bg-slate-50 dark:bg-slate-800/40 py-2"><dt class="text-[11px] text-slate-500 dark:text-slate-400">Módulos</dt><dd class="font-extrabold text-slate-800 dark:text-slate-100" data-perfil-mods>${ligados.length}/${mods.length}</dd></div>
+        </dl>
+        <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-1 flex-1">${perms.length ? perms.slice(0, 4).map((c) => `<li class="flex items-start gap-1.5">${icon("check", "w-3.5 h-3.5 mt-0.5 text-green-600 dark:text-green-400 shrink-0")}<span>${esc(c.rotulo)}</span></li>`).join("") + (perms.length > 4 ? `<li class="text-slate-500 dark:text-slate-400">+ ${perms.length - 4} outras</li>` : "")
+          : `<li class="text-slate-500 dark:text-slate-400">Nenhuma permissão: só vê o que é aberto a todos.</li>`}</ul>
+        <button type="button" class="btn-outline w-full py-2 text-sm" data-perfil-editar="${perfil}" aria-label="Editar o acesso do perfil ${esc(rotulo)}">${icon("edit", "w-4 h-4")} Editar acesso</button>
+      </article>`;
+    }).join("");
   }
 
-  function marcarMatriz(e) {
-    const cb = e.target.closest("[data-perfil]"); if (!cb) return;
-    const conjunto = rascunhoMatriz[cb.dataset.perfil];
-    if (cb.checked) conjunto.add(cb.dataset.perm); else conjunto.delete(cb.dataset.perm);
-    desenharMatriz();
-    document.querySelector(`[data-perfil="${cb.dataset.perfil}"][data-perm="${cb.dataset.perm}"]`)?.focus();
-  }
+  function editarPerfil(perfil) {
+    const info = perfisInfo.find((p) => p.perfil === perfil);
+    if (!info || !catalogo) return;
+    const rotulo = rotuloPerfil(perfil);
+    const permitidas = new Set(info.permissoes);
+    const ligados = new Set(modulosDo(perfil).filter((m) => m.ligada_para.includes(perfil)).map((m) => m.codigo));
+    const conhecidas = new Set(GRUPOS.flatMap(([, cods]) => cods));
+    const grupos = [...GRUPOS, ["Outras", visiveis().filter((c) => !conhecidas.has(c.codigo)).map((c) => c.codigo)]];
+    const porCodigo = new Map(catalogo.map((c) => [c.codigo, c]));
+    // Pode mudar aqui? O perfil ADMIN é fixo e Usuários/Auditoria nunca saem dele.
+    const aceita = (c) => info.editavel && c.editavel;
 
-  function restaurarPadrao() {
-    if (!catalogo) return;
-    EDITAVEIS.forEach((perfil) => { rascunhoMatriz[perfil] = new Set(catalogo.filter((c) => c.perfis_padrao.includes(perfil)).map((c) => c.codigo)); });
-    desenharMatriz();
-    App.toast("Padrão carregado na tabela. Revise e clique em Salvar.");
-  }
+    const blocoPerms = grupos.map(([titulo, cods]) => {
+      const itens = cods.map((cod) => porCodigo.get(cod)).filter((c) => c && !OCULTAS.has(c.codigo));
+      if (!itens.length) return "";
+      return `<fieldset class="mb-4"><legend class="field-label mb-2">${esc(titulo.toUpperCase())}</legend><div class="space-y-2">${itens.map((c) => `
+        <label class="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-200 ${aceita(c) ? "" : "opacity-70"}"><input type="checkbox" class="acc-check mt-0.5" data-pe-perm="${c.codigo}" ${permitidas.has(c.codigo) ? "checked" : ""} ${aceita(c) ? "" : "disabled"}>
+          <span>${esc(c.rotulo)}${aceita(c) ? "" : `<span class="block text-xs text-slate-500 dark:text-slate-400">${info.editavel ? "Só do Administrador" : "O Administrador tem todas"}</span>`}</span></label>`).join("")}</div></fieldset>`;
+    }).join("");
+    const mods = modulosDo(perfil);
+    const blocoMods = mods.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${mods.map((m) => `
+        <label class="flex items-center gap-2.5 text-sm text-slate-700 dark:text-slate-200"><input type="checkbox" class="acc-check" data-pe-mod="${m.codigo}" ${ligados.has(m.codigo) ? "checked" : ""}> ${esc(m.rotulo)}</label>`).join("")}</div>`
+      : `<p class="text-sm text-slate-500 dark:text-slate-400">Nenhum módulo configurável.</p>`;
 
-  function salvarMatriz() {
-    const mud = mudancasMatriz(); if (!mud.length) return;
-    const lista = mud.map((m) => `${m.entra ? "✓ Dar" : "✕ Tirar"} <b>${esc(m.rotulo)}</b> ${m.entra ? "ao" : "do"} perfil ${esc(rotuloPerfil(m.perfil))}`).join("<br>");
-    const pessoas = [...new Set(mud.map((m) => m.perfil))].reduce((t, perfil) => t + (perfisInfo.find((p) => p.perfil === perfil)?.usuarios_ativos || 0), 0);
-    App.openConfirm("Salvar permissões dos perfis?", `${lista}<br><br>Afeta ${pessoas} ${pessoas === 1 ? "pessoa ativa" : "pessoas ativas"} na hora.`, async () => {
-      const status = document.getElementById("ac-matriz-status");
-      try {
-        for (const perfil of new Set(mud.map((m) => m.perfil))) {
-          await Services.acessos.definirPerfil(perfil, catalogo.filter((c) => rascunhoMatriz[perfil].has(c.codigo)).map((c) => c.codigo));
+    App.openPanel(`Acesso do perfil ${esc(rotulo)}`, `<form id="pe-form" class="space-y-5" novalidate>
+      <p class="text-sm text-slate-600 dark:text-slate-300">${esc(DESCRICAO_PERFIL[perfil] || "")} Vale na hora para ${info.usuarios_ativos} ${info.usuarios_ativos === 1 ? "pessoa ativa" : "pessoas ativas"}.</p>
+      ${info.editavel ? `<div><div class="field-label mb-2">COMEÇAR DE UM MODELO</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${MODELOS.map(([id, nome, desc]) => `<button type="button" class="btn-outline !flex flex-col !items-start !justify-start gap-0.5 text-left px-3 py-2" data-pe-modelo="${id}"><span class="block font-bold text-sm">${esc(nome)}</span><span class="block text-xs text-slate-500 dark:text-slate-400 font-normal">${esc(desc)}</span></button>`).join("")}</div>
+        <button type="button" class="text-xs font-bold text-wine mt-2 underline" data-pe-padrao>Restaurar o padrão do perfil ${esc(rotulo)}</button></div>` : ""}
+      <div><h3 class="font-bold text-slate-800 dark:text-slate-100 mb-3">O que pode fazer</h3>${blocoPerms}</div>
+      <div><h3 class="font-bold text-slate-800 dark:text-slate-100 mb-1">Módulos que vê</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Desmarcado, o módulo some do menu e das telas deste perfil; nada é apagado.</p>${blocoMods}</div>
+      <p id="pe-resumo" class="text-sm text-slate-600 dark:text-slate-300" aria-live="polite"></p>
+      <div id="pe-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></div>
+      <button type="submit" id="pe-salvar" class="btn-wine w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Salvar</button>
+    </form>`);
+
+    const form = document.getElementById("pe-form");
+    const marcadas = (attr) => new Set([...form.querySelectorAll(`[data-${attr}]`)].filter((i) => i.checked).map((i) => i.dataset[attr === "pe-perm" ? "pePerm" : "peMod"]));
+    const mudancas = () => {
+      const perms = marcadas("pe-perm"), mods = marcadas("pe-mod");
+      const lista = [];
+      visiveis().forEach((c) => { if (aceita(c) && perms.has(c.codigo) !== permitidas.has(c.codigo)) lista.push([perms.has(c.codigo) ? "✓ Dar" : "✕ Tirar", c.rotulo]); });
+      mods.forEach((m) => { if (!ligados.has(m)) lista.push(["✓ Mostrar", "módulo " + modulos.find((x) => x.codigo === m).rotulo]); });
+      ligados.forEach((m) => { if (!mods.has(m)) lista.push(["✕ Esconder", "módulo " + modulos.find((x) => x.codigo === m).rotulo]); });
+      return { perms, mods, lista };
+    };
+    const atualizar = () => {
+      const { lista } = mudancas(), n = lista.length;
+      const botao = document.getElementById("pe-salvar");
+      botao.disabled = !n;
+      botao.textContent = n ? `Salvar ${n} ${n === 1 ? "mudança" : "mudanças"}` : "Salvar";
+      document.getElementById("pe-resumo").textContent = n ? "" : "Nenhuma mudança ainda.";
+    };
+    const aplicar = (codigos) => {
+      const alvo = new Set(codigos);
+      form.querySelectorAll("[data-pe-perm]:not([disabled])").forEach((i) => { i.checked = alvo.has(i.dataset.pePerm); });
+      atualizar();
+    };
+    form.addEventListener("change", atualizar);
+    form.querySelectorAll("[data-pe-modelo]").forEach((b) => b.addEventListener("click", () => {
+      const [, nome, , codigos] = MODELOS.find(([id]) => id === b.dataset.peModelo);
+      aplicar(codigos);
+      App.toast(`Modelo "${nome}" aplicado. Revise e clique em Salvar.`);
+    }));
+    form.querySelector("[data-pe-padrao]")?.addEventListener("click", () => {
+      aplicar(catalogo.filter((c) => (c.perfis_padrao || []).includes(perfil)).map((c) => c.codigo));
+      App.toast("Padrão do perfil carregado. Revise e clique em Salvar.");
+    });
+    atualizar();
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const { perms, mods, lista } = mudancas();
+      if (!lista.length) return;
+      const texto = lista.map(([acao, nome]) => `${acao} <b>${esc(nome)}</b>`).join("<br>");
+      App.openConfirm(`Salvar o acesso do perfil ${esc(rotulo)}?`, `${texto}<br><br>Afeta ${info.usuarios_ativos} ${info.usuarios_ativos === 1 ? "pessoa ativa" : "pessoas ativas"} na hora.`, async () => {
+        const erro = document.getElementById("pe-erro");
+        try {
+          if (info.editavel) {
+            // Mantém o que não aparece no editor (permissões ocultas) como estava.
+            const novas = catalogo.filter((c) => (aceita(c) && !OCULTAS.has(c.codigo) ? perms.has(c.codigo) : permitidas.has(c.codigo))).map((c) => c.codigo);
+            const mudouPerm = novas.length !== permitidas.size || novas.some((c) => !permitidas.has(c));
+            if (mudouPerm) await Services.acessos.definirPerfil(perfil, novas);
+          }
+          for (const m of modulos) {
+            if (!m.publicos.includes(perfil) || mods.has(m.codigo) === ligados.has(m.codigo)) continue;
+            const ligadaPara = mods.has(m.codigo) ? [...m.ligada_para, perfil] : m.ligada_para.filter((p) => p !== perfil);
+            await Services.funcionalidades.definir(m.codigo, ligadaPara);
+          }
+          App.toast(`Acesso do perfil ${rotulo} atualizado`);
+          App.closePanel();
+          await carregarPerfis();
+          // O próprio ADMIN pode ter mudado o que ele vê: menu e telas se ajustam já.
+          await App.atualizarFuncionalidades?.(true);
+          App.loadApiData?.();
+        } catch (err) {
+          if (erro) { erro.textContent = err.message || "Não foi possível salvar."; erro.classList.remove("hidden"); } else App.toast(err.message || "Não foi possível salvar.");
+          carregarPerfis();
         }
-        App.toast("Permissões dos perfis atualizadas");
-        await carregarMatriz();
-        PagesAdmin.recarregarAcessos?.();
-      } catch (err) {
-        if (status) { status.textContent = err.message || "Não foi possível salvar."; status.className = "text-sm mt-3 text-red-700 dark:text-red-300"; }
-      }
-    }, "Salvar", "btn-wine");
+      }, "Salvar", "btn-wine");
+    });
   }
 
   /* ---------- painel do usuário: só perfil e situação ---------- */
@@ -279,7 +372,7 @@
           <label class="flex items-center gap-2 mt-2 text-sm text-slate-700 dark:text-slate-200"><input id="ac-f-ativo" type="checkbox" ${ativo ? "checked" : ""} ${eu ? "disabled" : ""} aria-labelledby="ac-f-ativo-lbl"> Acesso ativo</label></div>
       </div>
       <div><div class="field-label">O QUE ESTE PERFIL PODE FAZER</div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">As permissões são do perfil, não da pessoa. Para mudar, use a tabela "Permissões por perfil".</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">As permissões são do perfil, não da pessoa. Para mudar, use "Editar acesso" no card do perfil, em Perfis de acesso.</p>
         <div id="ac-perms">${resumoDoPerfil(perfil)}</div></div>
       <div id="ac-erro" class="text-sm text-red-700 dark:text-red-300 hidden" role="alert"></div>
       <button type="submit" class="btn-wine w-full py-3">Salvar alterações</button>
@@ -309,7 +402,7 @@
       App.toast("Acesso atualizado");
       App.closePanel();
       PagesAdmin.recarregarAcessos?.();
-      carregarMatriz(); // contagem de pessoas por perfil
+      carregarPerfis(); // contagem de pessoas por perfil
     } catch (err) {
       const erro = document.getElementById("ac-erro");
       const msg = err.status === 409 ? "Não é possível rebaixar ou desativar o último administrador ativo."

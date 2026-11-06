@@ -1,11 +1,11 @@
 /* =========================================================================
    Formulários em painel
-   Via API: chamado, usuário, setor, FAQ (ADMIN) e pedido de alteração cadastral (ver solicitacoes.js).
+   Via API: chamado, usuário, setor e FAQ (ADMIN).
    ========================================================================= */
 (function () {
   const { state } = App;
 
-  /* ---------- formulários em painel (chamados, pedidos de perfil, usuários) ---------- */
+  /* ---------- formulários em painel (chamados, usuários) ---------- */
   const CHAMADOS = {
     "evento-adverso": { titulo: "Reportar Evento Adverso", intro: "A notificação vai para o Núcleo de Segurança do Paciente. Relatar é cuidar: o objetivo é aprender, não punir.",
       cats: ["Queda de paciente", "Erro de medicação", "Lesão por pressão", "Falha de identificação", "Outro"], anonimo: true },
@@ -293,7 +293,6 @@
       usuario: submitUsuario, senha: submitSenha, setor: submitSetor, faq: submitFaq, chamado: submitChamado,
       "chamado-admin": (form, vals) => PagesAdmin.submitChamadoAdmin(form, vals),
       "avaliacao-resposta": (form, vals) => PagesAvaliacoes.submitResposta(form, vals),
-      pedido: (form, vals) => App.submitPedido(form, vals), rejeitar: (form, vals) => App.submitRejeicao(form, vals),
     };
     const handler = handlers[kind];
     if (!handler) return;
