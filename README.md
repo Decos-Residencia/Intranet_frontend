@@ -53,14 +53,16 @@ para produção; trocar exigiria uma etapa de build.
   sessão e volta ao login; erro de rede mantém o token e oferece "Tentar novamente".
 - O perfil vem de `user.perfil` e **só muda pela tela Controle de acesso** (`#/admin/acessos`, ADMIN).
   Não existe troca nem simulação de perfil pelo topo ou pelo menu.
-- O que cada pessoa pode fazer vem de `user.permissoes` (perfil + permissões concedidas ou
-  retiradas individualmente pelo ADMIN). `App.can()` em `src/app/store.js` traduz os nomes curtos
+- O que cada pessoa pode fazer vem de `user.permissoes`, que são as permissões do perfil dela (não
+  há ajuste por pessoa). Em Controle de acesso, "Perfis de acesso" tem um card por perfil; "Editar
+  acesso" abre o editor do perfil: modelos prontos (Somente leitura, Pode interagir, Edita conteúdo,
+  Gestor), permissões agrupadas e os módulos que o perfil vê. `App.can()` em `src/app/store.js` traduz os nomes curtos
   usados pelas telas (`manage_events`…) para as permissões do servidor (`gerenciar_eventos`…).
 
 | Perfil (API) | Padrão |
 |---|---|
 | `LEITURA` | Consulta e baixa documentos; não interage. |
-| `COLABORADOR` | Interage (chamados, inscrições, parabéns) e edita o próprio perfil. |
+| `COLABORADOR` | Interage (chamados, inscrições, parabéns). |
 | `RH` | Colaborador + gerencia avisos, documentos, FAQ e eventos. |
 | `ADMIN` | Tudo, inclusive usuários, acessos, chamados, avaliações e auditoria. |
 
@@ -177,7 +179,9 @@ src/
 `#/admin/noticias/nova` · `#/admin/documentos` · `#/admin/documentos/novo` ·
 `#/admin/usuarios` · `#/admin/auditoria` · `#/configuracoes` (todos) · `#/revisoes`
 (Minhas revisões: documentos sob minha responsabilidade e avaliações pedidas a mim) · `#/admin/acessos` (Controle de acesso e acessos rápidos
-globais, ADMIN). Cada rota `#/admin/*` exige a permissão correspondente (ver `src/app/routes.js`).
+globais, ADMIN). A tela de Solicitações Cadastrais saiu: só o ADMIN altera o cadastro, em
+Usuários & Setores. Aviso ou evento sem foto enviada mostra uma foto padrão de `assets/img/fotos/`
+(escolhida pela categoria). Cada rota `#/admin/*` exige a permissão correspondente (ver `src/app/routes.js`).
 
 ### Modernização (feature 001, `specs/001-modernizacao-intranet/`)
 

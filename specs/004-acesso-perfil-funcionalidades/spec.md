@@ -44,7 +44,7 @@ Decisões tomadas a partir do pedido e do histórico do projeto (registradas aqu
 - Q: Os ajustes individuais de permissão que existem hoje continuam valendo? → A: Não. O acesso passa a ser só por perfil; ajustes por pessoa deixam de existir e a matriz de cada perfil começa no padrão do sistema.
 - Q: "Desabilitar para todos" inclui o próprio ADMIN e o visitante? → A: Sim. "Todos" vale para os quatro perfis e para quem não está logado. O ADMIN continua tendo a tela de Funcionalidades para religar.
 - Q: "Ramal somente por setor" elimina o ramal da pessoa? → A: Não (resposta do responsável em 2026-11-01). A pessoa continua com o ramal individual, mas o Diretório passa a ser organizado por setor: cada setor com o ramal geral e, dentro, as pessoas com o ramal de cada uma (sem ramal próprio, vale o do setor). Nenhum ramal é apagado.
-- Q: Quem altera o ramal individual? → A: Só o ADMIN (Usuários & Setores ou planilha); a pessoa pede a mudança pela solicitação cadastral.
+- Q: Quem altera o ramal individual? → A: Só o ADMIN (Usuários & Setores ou planilha); a pessoa pede a mudança ao ADMIN (a solicitação cadastral saiu depois, a pedido).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -136,7 +136,7 @@ O Diretório abre organizado por setor: cada setor mostra o seu ramal geral e, d
 
 1. **Given** o Diretório, **When** abre, **Then** a visão inicial é por setor, com o ramal do setor e as pessoas dentro dele.
 2. **Given** uma pessoa com ramal individual, **When** aparece no setor, **Then** mostra o ramal dela (com botão de copiar); **Given** uma pessoa sem ramal próprio, **Then** mostra o ramal do setor indicado como "do setor".
-3. **Given** um colaborador, **When** abre o Meu perfil, **Then** vê o ramal só para leitura e a orientação de pedir a mudança pela solicitação cadastral.
+3. **Given** um colaborador, **When** abre o Meu perfil, **Then** vê o ramal só para leitura e a orientação de falar com o administrador.
 4. **Given** um colaborador, **When** tenta alterar o próprio ramal direto no servidor, **Then** é recusado; **Given** o ADMIN, **When** altera o ramal de alguém, **Then** a mudança vale e fica na auditoria.
 5. **Given** uma busca pelo número do ramal, **When** o número é de uma pessoa ou de um setor, **Then** a pessoa (ou o setor e quem trabalha nele) aparece.
 6. **Given** um chamado aberto por quem não tem ramal próprio, **When** o atendente o abre, **Then** vê o ramal do setor do solicitante.
@@ -220,7 +220,7 @@ Ao criar ou editar um evento, o organizador escolhe como é a inscrição: "Pela
 **Ramais por setor (US5)**
 
 - **FR-023**: O Diretório MUST abrir na visão por setor: ramal do setor e, dentro, as pessoas com o ramal individual ou, sem ele, o do setor identificado como tal.
-- **FR-024**: Só o ADMIN MUST poder cadastrar ou alterar ramais (do setor e da pessoa); a pessoa não edita o próprio ramal e pede a mudança pela solicitação cadastral.
+- **FR-024**: Só o ADMIN MUST poder cadastrar ou alterar ramais (do setor e da pessoa); a pessoa não edita o próprio ramal.
 - **FR-025**: A busca do Diretório por número de ramal MUST encontrar a pessoa (ramal individual) ou o setor e as pessoas dele (ramal do setor).
 - **FR-026**: Nenhum ramal existente MUST ser apagado; chamados mostram o ramal da pessoa ou, sem ele, o do setor.
 
