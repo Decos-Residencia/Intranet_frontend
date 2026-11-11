@@ -7,6 +7,14 @@
         body: credentials,
       });
     },
+    refresh(refreshToken) {
+      return App.API.request("/auth/refresh", {
+        method: "POST",
+        auth: false,
+        skipRefresh: true,
+        body: { refresh_token: refreshToken },
+      });
+    },
     me() {
       return App.API.request("/auth/me");
     },
