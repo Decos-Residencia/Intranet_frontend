@@ -165,7 +165,7 @@
       else if (a === "open-chamado") {
         e.preventDefault(); App.toggleFab(false);
         if (!App.ligada("chamados")) App.toast("Os chamados estão desativados no momento.");
-        else App.openChamadoPanel(el.dataset.tipo || "geral");
+        else App.openChamadoPanel(el.dataset.tipo || "ti");
       }
       else if (a === "open-usuario") { e.preventDefault(); App.openUsuarioPanel(el.dataset.id); }
       else if (a === "preview-noticia") { e.preventDefault(); PagesAdmin.previewNoticia(el.dataset.id); }
