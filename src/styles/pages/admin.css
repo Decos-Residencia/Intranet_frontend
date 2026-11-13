@@ -82,3 +82,4 @@
 .acc-check{ width:1.15rem; height:1.15rem; accent-color:var(--wine, #8b1538); cursor:pointer; }
 .acc-check:disabled{ cursor:not-allowed; opacity:.55; }
 .acc-check:focus-visible{ outline:3px solid var(--wine, #8b1538); outline-offset:2px; }
+.ch-ti-cab{ padding:.85rem 1rem; border-radius:.9rem; border:1px solid var(--border); background:var(--surface-strong); }

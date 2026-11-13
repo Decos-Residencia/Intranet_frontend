@@ -31,6 +31,10 @@
     get(id) {
       return App.API.request(`/chamados/${encodeURIComponent(id)}`);
     },
+    // Técnico autorizado de TI assume o chamado (409 se outro já assumiu).
+    assumir(id) {
+      return App.API.request(`/chamados/${encodeURIComponent(id)}/assumir`, { method: "POST" });
+    },
     update(id, data) {
       return App.API.request(`/chamados/${encodeURIComponent(id)}`, { method: "PUT", body: data });
     },

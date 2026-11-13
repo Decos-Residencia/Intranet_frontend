@@ -162,6 +162,7 @@
       else if (a === "avaliacao-responder") { e.preventDefault(); await PagesAvaliacoes.responder(el.dataset.id); }
       else if (a === "avaliacao-doc") { e.preventDefault(); await App.abrirDocumento(el.dataset.id, true); }
       else if (a === "chamado-abrir") { e.preventDefault(); await PagesAdmin.abrirChamado(el.dataset.id); }
+      else if (a === "chamado-assumir") { e.preventDefault(); await PagesAdmin.assumirChamado(el.dataset.id); }
       else if (a === "open-chamado") {
         e.preventDefault(); App.toggleFab(false);
         if (!App.ligada("chamados")) App.toast("Os chamados estão desativados no momento.");
