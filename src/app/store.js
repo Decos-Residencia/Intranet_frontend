@@ -538,7 +538,7 @@
   }
 
   /* ---------- notificações (reais: GET /notificacoes, geradas pelo backend) ---------- */
-  const ICONE_NOTIF = { urgente: "alert-triangle", aviso: "megaphone", evento: "calendar", documento: "file-text", aniversario: "gift", chamado: "help-circle", cadastro: "user-cog" };
+  const ICONE_NOTIF = { urgente: "alert-triangle", aviso: "megaphone", evento: "calendar", EVENTO_INSCRICAO_CONFIRMADA: "check-check", EVENTO_INSCRICAO_CANCELADA: "x", documento: "file-text", aniversario: "gift", chamado: "help-circle", cadastro: "user-cog" };
 
   function tempoRelativo(iso) {
     const t = new Date(iso).getTime();
@@ -558,6 +558,7 @@
   function notifParaView(n) {
     return {
       id: String(n.id), rota: n.rota || "#/notificacoes", tipo: n.tipo, urgente: n.tipo === "urgente",
+      grupo: String(n.tipo).startsWith("EVENTO_") ? "evento" : n.tipo, // inscrição/cancelamento entram no filtro "Eventos"
       icone: ICONE_NOTIF[n.tipo] || "bell", titulo: n.titulo, texto: n.mensagem, tempo: tempoRelativo(n.criada_em), lida: !!n.lida,
     };
   }

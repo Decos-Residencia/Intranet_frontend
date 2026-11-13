@@ -53,6 +53,7 @@
       const e = await Services.eventos.inscrever(id);
       App.toast(`Inscrição confirmada: ${e.titulo}`);
       await App.refreshEventos();
+      App.loadNotificacoes().catch(() => {}); // o backend já gravou o aviso: o sino mostra na hora
       return e;
     } catch (err) { App.toast(err.message || "Não foi possível concluir a inscrição."); return null; }
   }
@@ -61,6 +62,7 @@
       const e = await Services.eventos.cancelarInscricao(id);
       App.toast("Inscrição cancelada");
       await App.refreshEventos();
+      App.loadNotificacoes().catch(() => {});
       return e;
     } catch (err) { App.toast(err.message || "Não foi possível cancelar a inscrição."); return null; }
   }

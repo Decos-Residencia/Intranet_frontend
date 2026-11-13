@@ -8,7 +8,7 @@
   // Item de notificação (painel do sino e central). Urgente ganha faixa e
   // selo vermelhos para não se perder entre os avisos comuns.
   function notifItem(n, lida, attrs, compacto) {
-    return `<a href="${n.rota || "#/dashboard"}" ${attrs} data-nid="${n.id}" data-tipo="${n.tipo}" data-lida="${lida}"
+    return `<a href="${n.rota || "#/dashboard"}" ${attrs} data-nid="${n.id}" data-tipo="${n.grupo || n.tipo}" data-lida="${lida}"
       class="notif-item ${lida ? "" : "notif-unread"} ${n.urgente ? "notif-urgent" : ""}">
       <span class="notif-icon">${icon(n.icone, "w-5 h-5")}</span>
       <div class="flex-1 min-w-0">

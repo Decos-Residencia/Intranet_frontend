@@ -92,7 +92,7 @@
           if (alvo()) { alvo().innerHTML = corpo(e, outros); App.carregarFotosEventos(alvo()); }
         } catch (err) {
           if (alvo()) alvo().innerHTML = `<div class="min-h-[50vh] flex flex-col items-center justify-center text-center p-8"><div class="text-5xl mb-3">🗂️</div>
-            <h2 class="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">Evento não encontrado</h2><p class="text-slate-500 dark:text-slate-400 mb-6">${esc(err.status === 404 ? "Este evento não existe ou ainda não foi publicado." : err.message || "")}</p><a href="#/eventos" class="btn-wine px-6 py-2.5">Voltar aos eventos</a></div>`;
+            <h2 class="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">Evento não encontrado</h2><p class="text-slate-500 dark:text-slate-400 mb-6">${esc(err.status === 404 ? "Este evento não está mais disponível: ele pode ter sido excluído ou ainda não foi publicado." : err.message || "")}</p><a href="#/eventos" class="btn-wine px-6 py-2.5">Voltar aos eventos</a></div>`;
         }
       },
     };
