@@ -70,11 +70,11 @@
           button.textContent = "Entrando...";
           const lento = setTimeout(() => { button.textContent = "Aguardando o servidor..."; }, 6000);
           try {
-            const token = await Services.auth.login({
+            const tokens = await Services.auth.login({
               email: form.elements.email.value.trim(),
               senha: form.elements.senha.value,
             });
-            const user = await App.startSession(token.access_token); // GET /auth/me + dados da API
+            const user = await App.startSession(tokens); // GET /auth/me + dados da API
             form.reset();                                // a senha não fica no campo
             if (user.must_change_password) {
               App.toast("Primeiro acesso: defina sua nova senha para continuar.");

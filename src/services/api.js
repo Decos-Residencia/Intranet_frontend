@@ -1,12 +1,15 @@
 /* =========================================================================
    Cliente HTTP da API (FastAPI)
    Único lugar que chama fetch(): URL base, JSON, Bearer, timeout, erros e
-   expiração de sessão. O JWT vive somente em localStorage (TOKEN_KEY).
+   expiração e renovação de sessão. Os tokens são mantidos como um par.
    ========================================================================= */
 (function () {
-  const TOKEN_KEY = "decos_intranet_token";
+  const SESSION_KEY = "decos_intranet_session";
+  const LEGACY_TOKEN_KEY = "decos_intranet_token";
   const TIMEOUT_MS = 20000;
-  let memoryToken = ""; // fallback quando o localStorage está indisponível
+  const REFRESH_MARGIN_MS = 30000;
+  let memorySession = null; // fallback quando o localStorage está indisponível
+  let refreshInFlight = null;
 
   class ApiError extends Error {
     constructor(message, status, payload) {
@@ -21,20 +24,59 @@
     return (App.config?.apiBaseUrl || "").replace(/\/+$/, "");
   }
 
-  function getToken() {
-    try { return localStorage.getItem(TOKEN_KEY) || memoryToken; }
-    catch (_) { return memoryToken; }
+  function getSession() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session && session.accessToken && session.refreshToken) return session;
+      }
+    } catch (_) { /* usa o fallback em memória */ }
+    return memorySession;
   }
 
-  function setToken(token) {
-    memoryToken = token || "";
+  function getToken() { return getSession()?.accessToken || ""; }
+  function getRefreshToken() { return getSession()?.refreshToken || ""; }
+
+  // A resposta de login, refresh e troca de senha sempre substitui o par inteiro.
+  // Persistir um único objeto evita deixar access/refresh de rotações diferentes.
+  function setTokens(tokens) {
+    const accessToken = tokens?.access_token;
+    const refreshToken = tokens?.refresh_token;
+    if (!accessToken || !refreshToken) throw new Error("Resposta de autenticação inválida.");
+    const expiresIn = Number(tokens.expires_in);
+    const session = {
+      accessToken,
+      refreshToken,
+      accessExpiresAt: Number.isFinite(expiresIn) && expiresIn > 0 ? Date.now() + expiresIn * 1000 : 0,
+    };
+    memorySession = session;
     try {
-      if (token) localStorage.setItem(TOKEN_KEY, token);
-      else localStorage.removeItem(TOKEN_KEY);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
     } catch (_) { /* sem localStorage: segue só em memória */ }
   }
 
-  function clearToken() { setToken(""); }
+  // Compatibilidade com chamadas antigas: não deve ser usado para criar sessões novas.
+  function setToken(token) {
+    if (!token) return clearToken();
+    const session = getSession();
+    if (!session?.refreshToken) throw new Error("Não é possível iniciar uma sessão sem refresh token.");
+    setTokens({ access_token: token, refresh_token: session.refreshToken });
+  }
+
+  function clearToken() {
+    memorySession = null;
+    try {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+    } catch (_) { /* sem localStorage */ }
+  }
+
+  function accessTokenExpiring() {
+    const expiresAt = getSession()?.accessExpiresAt || 0;
+    return expiresAt > 0 && Date.now() >= expiresAt - REFRESH_MARGIN_MS;
+  }
 
   /* ---------- mensagens de erro ---------- */
   const CAMPOS = {
@@ -95,9 +137,36 @@
     })[status] || "Não foi possível concluir a operação.";
   }
 
+  async function refreshSession() {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) throw new ApiError("Sessão expirada. Faça login novamente.", 401, null);
+    if (refreshInFlight) return refreshInFlight;
+
+    refreshInFlight = request("/auth/refresh", {
+      method: "POST",
+      auth: false,
+      skipRefresh: true,
+      body: { refresh_token: refreshToken },
+    }).then((tokens) => {
+      setTokens(tokens);
+      return tokens;
+    }).finally(() => { refreshInFlight = null; });
+    return refreshInFlight;
+  }
+
   /* ---------- requisição ---------- */
   async function request(path, options = {}) {
     if (!baseUrl()) throw new ApiError(App.config?.notConfiguredMessage || "API não configurada para este ambiente.", 0, null);
+
+    // Renova antes de enviar chamadas protegidas que estejam próximas da expiração.
+    // Login, refresh e rotas públicas não entram neste fluxo.
+    if (options.auth !== false && !options.skipRefresh && !options.retried && getToken() && accessTokenExpiring()) {
+      try { await refreshSession(); }
+      catch (err) {
+        App.expireSession?.();
+        throw err;
+      }
+    }
 
     const method = (options.method || "GET").toUpperCase();
     const headers = new Headers(options.headers || {});
@@ -139,8 +208,21 @@
     }
 
     if (!response.ok) {
-      // 401 em chamada autenticada = sessão inválida/expirada. O próprio login
-      // (auth:false) nunca derruba a sessão, o que evita laço de redirecionamento.
+      // Um 401 de rota protegida pode ser access token vencido. A requisição
+      // original é repetida uma única vez depois de rotacionar o par de tokens.
+      if (response.status === 401 && options.auth !== false && token && !options.retried) {
+        try {
+          // Outra chamada pode já ter concluído a rotação enquanto esta aguardava.
+          if (getToken() === token) await refreshSession();
+          return request(path, { ...options, retried: true, skipRefresh: true });
+        } catch (err) {
+          const detalhe = payload && typeof payload === "object" ? payload.detail : "";
+          App.expireSession?.(typeof detalhe === "string" && /senha/i.test(detalhe) ? detalhe : undefined);
+          throw err;
+        }
+      }
+      // Depois de uma repetição, ou em uma chamada sem possibilidade de refresh,
+      // um 401 encerra a sessão sem tentar novamente.
       if (response.status === 401 && options.auth !== false && token) {
         const detalhe = payload && typeof payload === "object" ? payload.detail : "";
         App.expireSession?.(typeof detalhe === "string" && /senha/i.test(detalhe) ? detalhe : undefined);
@@ -155,6 +237,6 @@
   function wake() { return request("/health", { auth: false }).catch(() => {}); }
 
   Object.assign(App, {
-    API: { ApiError, request, getToken, setToken, clearToken, baseUrl, wake },
+    API: { ApiError, request, getToken, getRefreshToken, setToken, setTokens, clearToken, refreshSession, baseUrl, wake },
   });
 })();

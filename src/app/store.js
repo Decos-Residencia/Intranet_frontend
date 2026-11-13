@@ -4,7 +4,7 @@
    • PERSISTIDO (localStorage, decos_intranet_state): só preferências visuais do
      aparelho (tema e menu recolhido). Nenhum dado de negócio.
    • EM MEMÓRIA: sessão (usuário, papel) e tudo que vem da API. Nada disso é
-     gravado no navegador; o JWT fica à parte, em decos_intranet_token (api.js).
+     gravado no navegador; os tokens ficam à parte, em decos_intranet_session (api.js).
    O papel da interface vem exclusivamente de GET /auth/me → user.perfil.
    ========================================================================= */
 (function () {
@@ -161,9 +161,9 @@
     } finally { expiring = false; }
   }
 
-  // Valida o token com GET /auth/me e carrega os dados. Lança ApiError se falhar.
-  async function startSession(accessToken) {
-    App.API.setToken(accessToken);
+  // Salva o par devolvido pelo backend, valida-o em GET /auth/me e carrega os dados.
+  async function startSession(tokens) {
+    App.API.setTokens(tokens);
     let user;
     try { user = await Services.auth.me(); }
     catch (err) { App.API.clearToken(); throw err; }
@@ -356,10 +356,10 @@
     App.go("#/trocar-senha");
   }
 
-  // Troca a senha, guarda o token novo e deixa a sessão consistente (dados carregados).
+  // Troca a senha, guarda o novo par de tokens e deixa a sessão consistente.
   async function changePassword(senhaAtual, novaSenha) {
-    const token = await Services.auth.changePassword(senhaAtual, novaSenha);
-    App.API.setToken(token.access_token);
+    const tokens = await Services.auth.changePassword(senhaAtual, novaSenha);
+    App.API.setTokens(tokens);
     const user = await Services.auth.me();
     App.setSession(user);
     await loadApiData();
