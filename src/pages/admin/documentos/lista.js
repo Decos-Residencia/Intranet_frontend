@@ -47,8 +47,8 @@
   function linha(d) {
     return `<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 ${d.ativo ? "" : "opacity-70"}" data-id="${d.id}">
       <td class="py-3.5 pl-4"><div class="flex items-center gap-2 mb-1 flex-wrap">${badge("blue", esc(d.categoria))}${d.vigente ? "" : badge("gray", "Sem versão vigente")}<span class="text-xs text-slate-500 dark:text-slate-400">v${esc(d.versao)}${d.total_versoes > 1 ? ` (${d.total_versoes} versões)` : ""} • atualizado em ${esc(quando(d.atualizado_em))}</span>${d.revisar_em ? seloValidade(d.revisar_em) : ""}</div>
-        <div class="font-bold text-slate-800 dark:text-slate-100 truncate max-w-sm">${esc(d.titulo)}</div>
-        <div class="text-xs text-slate-400 truncate max-w-sm">${esc(d.arquivo_nome)}</div></td>
+        <div class="font-bold text-slate-800 dark:text-slate-100 max-w-sm" style="overflow-wrap:anywhere">${esc(d.titulo)}</div>
+        <div class="text-xs text-slate-400 max-w-sm" style="overflow-wrap:anywhere">${esc(d.arquivo_nome)}</div></td>
       <td class="text-sm text-slate-500 dark:text-slate-400">${esc(d.enviado_por || "—")}</td>
       <td>${d.ativo ? badge("green", "Ativo") : badge("gray", "Inativo")}</td>
       <td class="text-sm text-slate-500 dark:text-slate-400">${d.setor ? `${icon("lock", "w-3.5 h-3.5 inline -mt-0.5")} ${esc(d.setor)}` : "Geral"}</td>

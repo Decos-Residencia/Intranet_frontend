@@ -74,7 +74,7 @@
       <div class="painel-progresso" role="progressbar" aria-valuemin="0" aria-valuemax="${b.total}" aria-valuenow="${b.feitos}" aria-label="${b.feitos} de ${b.total} tarefas feitas"><span style="width:${pct}%"></span></div>
       <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">${b.feitos} de ${b.total} feita${b.total === 1 ? "" : "s"}</p>
       <ul class="painel-lista">${b.itens.map((t) => `<li class="painel-item abre-mouse ${t.feito ? "painel-feito" : ""}">
-        <span class="painel-check" aria-hidden="true">${t.feito ? icon("check", "w-3.5 h-3.5") : ""}</span>
+        <input type="checkbox" class="painel-check" data-painel-agenda="${t.id}" ${t.feito ? "checked" : ""} aria-label="Concluir: ${esc(t.texto)}">
         <span class="min-w-0 flex-1 abre-linha">${t.hora ? `<b>${esc(t.hora.slice(0, 5))}</b> · ` : ""}${esc(t.texto)}</span>
         <span class="sr-only">${t.feito ? "(feita)" : "(a fazer)"}</span></li>`).join("")}</ul>`
       : emDia("Nada anotado para hoje.");
@@ -100,7 +100,7 @@
 
   function chamadoItem(c) {
     const [tom, rotulo] = STATUS_CH[c.status] || ["gray", c.status];
-    return `<li class="card p-5">
+    return `<li class="card p-5 painel-chamado">
       <div class="flex items-start justify-between gap-3 flex-wrap mb-2">
         <div class="min-w-0"><div class="text-xs font-bold text-slate-500 dark:text-slate-400">${esc(TIPO_CH[c.tipo] || c.tipo)} · ${esc(c.protocolo)}</div>
           <h4 class="font-bold text-slate-800 dark:text-slate-100">${esc(c.categoria)}</h4></div>${badge(tom, rotulo)}</div>
@@ -164,6 +164,25 @@
         const grade = document.getElementById("painel-grade");
         const resumo = document.getElementById("painel-resumo");
         if (App.ligada("chamados")) carregarChamados();
+        grade.addEventListener("change", async (e) => {
+          const campo = e.target.closest("[data-painel-agenda]");
+          if (!campo) return;
+          campo.disabled = true;
+          let salvo = false;
+          try {
+            await Services.agenda.atualizar(campo.dataset.painelAgenda, { feito: campo.checked });
+            salvo = true;
+            const p = await Services.painel.resumo();
+            if (!document.contains(grade)) return;
+            const blocoAtual = grade.querySelector('[aria-labelledby="pb-agenda"]');
+            if (blocoAtual) blocoAtual.outerHTML = blocoAgenda(p.agenda_hoje);
+            const total = p.avisos_nao_lidos.total + p.treinamentos_pendentes.total + p.chamados_abertos.total + p.agenda_hoje.total - p.agenda_hoje.feitos;
+            resumo.textContent = total ? `${nome}, você tem ${total} ${total === 1 ? "pendência" : "pendências"} hoje.` : `Tudo em dia, ${nome}! Nenhuma pendência no momento.`;
+          } catch (err) {
+            if (!salvo) campo.checked = !campo.checked;
+            App.toast(salvo ? "Tarefa atualizada. Recarregue o painel para atualizar as contagens." : (err.message || "Não foi possível atualizar a tarefa."));
+          } finally { campo.disabled = false; }
+        });
         grade.addEventListener("click", (e) => {
           if (!e.target.closest("[data-ir-chamados]")) return;
           e.preventDefault(); document.getElementById("painel-chamados-h")?.focus();

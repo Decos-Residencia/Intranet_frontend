@@ -17,6 +17,8 @@ a.painel-item:hover{ background:var(--surface-strong); }
 .dark .painel-data{ background:rgba(142,27,46,.22); color:#f7b8c2; }
 .painel-data b{ font-size:1.05rem; }
 .painel-check{ width:1.25rem; height:1.25rem; border-radius:.4rem; border:2px solid var(--border-strong); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.painel-check{ accent-color:#15803d; cursor:pointer; }
+.painel-chamado{ min-width:0; overflow-wrap:anywhere; }
 .painel-feito .painel-check{ background:#15803d; border-color:#15803d; color:#fff; }
 .painel-feito{ color:var(--muted); text-decoration:line-through; }
 .painel-progresso{ height:.5rem; border-radius:999px; background:var(--surface-strong); overflow:hidden; margin-bottom:.35rem; }
